@@ -8,7 +8,7 @@
 const connectionString ={
   user: 'postgres',
   host: '172.16.1.200',
-  database: 'db_zityztyle_live',
+  database: 'db_pretty_girl',
   password: 'postgres',
   port: 5432,
 }

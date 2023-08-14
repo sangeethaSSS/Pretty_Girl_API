@@ -209,7 +209,7 @@ try {
           await client.query(`INSERT INTO  tbl_fg_items(fg_id, size_id,no_of_set, no_of_pieces, user_id, created_at, ironmachine_id, date) VALUES ($1, $2, $3, $4,$5, CURRENT_TIMESTAMP,$6,$7) `,[fg_id, box_array[i].value, box_array[i].qty,total_piece, user_id, box_array[i].machineid,box_array[i].boxingdate]);        
         } 
       } 
-      const FGPrint_Result = await client.query(`SELECT a.fg_id, a.size_id,e.color_name,c.design_id,d.item_name,start_size,end_size,total_set,ironmachine_id,concat(c.design_id,' - ',(SELECT substring(e.color_name for 1))) as designname,(SELECT machine_no FROM tbl_ironmachine_master where machine_id = a.ironmachine_id ) as machine_no FROM tbl_fg_items as a inner join tbl_item_sizes as b on a.size_id = b.size_id inner join tbl_item_management as c on b.trans_no = c.trans_no inner join tbl_def_item as d on c.item_code = d.item_id inner join tbl_color as e on b.color_id = e.color_id where a.fg_id =$1`, [fg_id]);
+      const FGPrint_Result = await client.query(`SELECT a.fg_id, a.size_id,e.color_name,c.design_id,d.item_name,start_size,end_size,total_set,ironmachine_id,concat(c.design_id,' - ',(SELECT substring(e.color_name for 1))) as designname,(SELECT machine_no FROM tbl_ironmachine_master where machine_id = a.ironmachine_id ) as machine_no FROM tbl_fg_items as a inner join tbl_item_sizes as b on a.size_id = b.size_id inner join tbl_item_management as c on b.trans_no = c.trans_no inner join tbl_def_item as d on c.item_code = d.item_id left join tbl_color as e on b.color_id = e.color_id where a.fg_id =$1`, [fg_id]);
       let FGPrint_json = FGPrint_Result && FGPrint_Result.rows ? FGPrint_Result.rows[0] : {};
       // if(fg_job_array && fg_job_array.length > 0 ){  
       //   for(let i=0; i < fg_job_array?.length; i++){ 
@@ -286,7 +286,7 @@ module.exports.getFGList = async (req) => {
         }
         if(process == 'excel') { 
           const item_exec_Result = await client.query(`SELECT a.fg_id, a.size_id,e.color_name,c.design_id,d.item_name,start_size,end_size,total_set,ironmachine_id,concat(c.design_id,' - ',(SELECT substring(e.color_name for 1))) as designname,(SELECT machine_no || coalesce(' - ' || machine_name,'') FROM tbl_ironmachine_master where machine_id = a.ironmachine_id ) as machine_name,(SELECT machine_no FROM tbl_ironmachine_master where machine_id = a.ironmachine_id ) as machine_no,f.user_name,to_char(date, 'dd-MM-YYYY') as fg_date,sum(a.no_of_set) as qty,b.qr_code,sum(a.no_of_pieces) as no_of_pieces FROM tbl_fg_items as a inner join tbl_item_sizes as b on a.size_id = b.size_id inner join tbl_item_management as c on b.trans_no = c.trans_no inner join tbl_def_item as d on
-          c.item_code = d.item_id inner join tbl_color as e on b.color_id = e.color_id 
+          c.item_code = d.item_id left  join tbl_color as e on b.color_id = e.color_id 
           inner join tbl_user as f on f.user_id=a.user_id where ${fg_date} and ${design_code} and ${machineid}
           group by a.fg_id, a.size_id,e.color_name,c.design_id,d.item_name,start_size,end_size,total_set,ironmachine_id,f.user_name,a.date,b.qr_code
           order by date,a.fg_id ` ); 
@@ -299,7 +299,7 @@ module.exports.getFGList = async (req) => {
         let fg_total = fg_total_Result && fg_total_Result.rows.length > 0 ? fg_total_Result.rows[0].totalcount : 0; 
         // const boxing_Result = await client.query(` select a.size_id,sum(a.no_of_set) as qty,a.user_id,b.qr_code,c.user_name,d.design_id from tbl_fg_items as a  inner join tbl_item_sizes as b on a.size_id=b.size_id   inner join tbl_user as c on c.user_id=a.user_id  inner join tbl_item_management as d on d.trans_no =b.trans_no where ${fg_date} and ${design_code} and ${customer_code} group by a.size_id,a.user_id,b.qr_code,c.user_name,d.design_id  `);
         const boxing_Result = await client.query(`SELECT a.fg_id, a.size_id,e.color_name,c.design_id,d.item_name,start_size,end_size,total_set,ironmachine_id,concat(c.design_id,' - ',(SELECT substring(e.color_name for 1))) as designname,(SELECT machine_no || coalesce(' - ' || machine_name,'') FROM tbl_ironmachine_master where machine_id = a.ironmachine_id ) as machine_name,(SELECT machine_no FROM tbl_ironmachine_master where machine_id = a.ironmachine_id ) as machine_no,f.user_name,to_char(date, 'dd-MM-YYYY') as fg_date,sum(a.no_of_set) as qty,b.qr_code,sum(a.no_of_pieces) as no_of_pieces FROM tbl_fg_items as a inner join tbl_item_sizes as b on a.size_id = b.size_id inner join tbl_item_management as c on b.trans_no = c.trans_no inner join tbl_def_item as d on
-        c.item_code = d.item_id inner join tbl_color as e on b.color_id = e.color_id 
+        c.item_code = d.item_id left  join tbl_color as e on b.color_id = e.color_id 
         inner join tbl_user as f on f.user_id=a.user_id where ${fg_date} and ${design_code} and ${machineid}
         group by a.fg_id, a.size_id,e.color_name,c.design_id,d.item_name,start_size,end_size,total_set,ironmachine_id,f.user_name,a.date,b.qr_code
         order by date,a.fg_id  ${get_limit} `);
@@ -384,12 +384,12 @@ module.exports.getCurrentStock = async (req) => {
           coalesce((SELECT sum(dispatch_set) from tbl_dispatch_details where status_flag = 1 and  size_id = a.size_id ),0)) as qty,a.user_id,b.qr_code,c.user_name,d.design_id from tbl_fg_items as a  
           inner join tbl_item_sizes as b on a.size_id=b.size_id  
           inner join tbl_user as c on c.user_id=a.user_id  inner join 
-          tbl_item_management as d on d.trans_no =b.trans_no inner join tbl_color as f on f.color_id =b.color_id inner join tbl_def_item as e on d.item_code = e.item_id where ${designid_val}  and ${machineid} and ${getcolor_id}
+          tbl_item_management as d on d.trans_no =b.trans_no left  join tbl_color as f on f.color_id =b.color_id inner join tbl_def_item as e on d.item_code = e.item_id where ${designid_val}  and ${machineid} and ${getcolor_id}
           group by a.size_id,a.user_id,b.qr_code,c.user_name,d.design_id order by d.design_id ` ); 
           let CS_array = Current_Stock_Result && Current_Stock_Result.rows ? Current_Stock_Result.rows : []; 
           const company_Result = await client.query(`SELECT * from tbl_print_setting`);
           const Current_Stock_widget = await client.query( `SELECT count(size_id) as count,item_name,item_id FROM (select a.size_id,d.item_code from tbl_fg_items as a inner join tbl_item_sizes as
-            b on a.size_id=b.size_id inner join tbl_user as c on c.user_id=a.user_id inner join tbl_item_management as d on d.trans_no =b.trans_no  inner join tbl_color as f on f.color_id =b.color_id where ${designid_val}  and ${machineid} and ${getcolor_id} group by a.size_id,d.item_code 
+            b on a.size_id=b.size_id inner join tbl_user as c on c.user_id=a.user_id inner join tbl_item_management as d on d.trans_no =b.trans_no  left  join tbl_color as f on f.color_id =b.color_id where ${designid_val}  and ${machineid} and ${getcolor_id} group by a.size_id,d.item_code 
                ) as dev inner join tbl_def_item as e on dev.item_code = e.item_id  group by item_name,item_id order by item_id`);
           let Company_Array = company_Result && company_Result.rows ? company_Result.rows : []; 
           responseData = { "CurrentStockArray": CS_array, "Company_Array":Company_Array,"CurrentStockwidget":Current_Stock_widget && Current_Stock_widget.rows ? Current_Stock_widget.rows : [] }
@@ -398,7 +398,7 @@ module.exports.getCurrentStock = async (req) => {
           coalesce((SELECT sum(dispatch_set) from tbl_dispatch_details where status_flag = 1 and size_id = a.size_id ),0)) as qty,a.user_id,b.qr_code,c.user_name,d.design_id from tbl_fg_items as a  
           inner join tbl_item_sizes as b on a.size_id=b.size_id  
           inner join tbl_user as c on c.user_id=a.user_id  inner join 
-          tbl_item_management as d on d.trans_no =b.trans_no  inner join tbl_color as f on f.color_id =b.color_id inner join tbl_def_item as e on d.item_code = e.item_id where ${designid_val}  and ${machineid} and ${getcolor_id}
+          tbl_item_management as d on d.trans_no =b.trans_no  left  join tbl_color as f on f.color_id =b.color_id inner join tbl_def_item as e on d.item_code = e.item_id where ${designid_val}  and ${machineid} and ${getcolor_id}
           group by a.size_id,a.user_id,b.qr_code,c.user_name,d.design_id order by d.design_id ` ); 
           let fg_total = fg_total_Result && fg_total_Result.rows.length > 0 ? fg_total_Result.rowCount : 0; 
           
@@ -406,13 +406,13 @@ module.exports.getCurrentStock = async (req) => {
           coalesce((SELECT sum(dispatch_set) from tbl_dispatch_details where status_flag = 1 and size_id = a.size_id ),0)) as qty,a.user_id,b.qr_code,c.user_name,d.design_id from tbl_fg_items as a  
           inner join tbl_item_sizes as b on a.size_id=b.size_id  
           inner join tbl_user as c on c.user_id=a.user_id  inner join 
-          tbl_item_management as d on d.trans_no =b.trans_no inner join tbl_color as f on f.color_id =b.color_id  inner join tbl_def_item as e on 
+          tbl_item_management as d on d.trans_no =b.trans_no left  join tbl_color as f on f.color_id =b.color_id  inner join tbl_def_item as e on 
           d.item_code = e.item_id where ${designid_val}  and ${machineid} and ${getcolor_id}
           group by a.size_id,a.user_id,b.qr_code,c.user_name,d.design_id order by d.design_id ${get_limit} `);
           
        
           const Current_Stock_widget = await client.query( `SELECT count(size_id) as count,item_name,item_id FROM (select a.size_id,d.item_code from tbl_fg_items as a inner join tbl_item_sizes as
-          b on a.size_id=b.size_id inner join tbl_user as c on c.user_id=a.user_id inner join tbl_item_management as d on d.trans_no =b.trans_no  inner join tbl_color as f on f.color_id =b.color_id where ${designid_val}  and ${machineid} and ${getcolor_id} group by a.size_id,d.item_code 
+          b on a.size_id=b.size_id inner join tbl_user as c on c.user_id=a.user_id inner join tbl_item_management as d on d.trans_no =b.trans_no  left  join tbl_color as f on f.color_id =b.color_id where ${designid_val}  and ${machineid} and ${getcolor_id} group by a.size_id,d.item_code 
              ) as dev inner join tbl_def_item as e on dev.item_code = e.item_id  group by item_name,item_id order by item_id`);
           responseData = { "CurrentStockArray": Current_Stock_Result && Current_Stock_Result.rows ? Current_Stock_Result.rows : [], "CurrentStock_total":fg_total, "CurrentStockwidget":Current_Stock_widget && Current_Stock_widget.rows ? Current_Stock_widget.rows : [] }
         }

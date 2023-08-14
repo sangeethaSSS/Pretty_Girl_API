@@ -50,7 +50,7 @@ module.exports.itemManagementList = async (req) => {
 
                 if (Lists.length > 0) {
                     for (let i = 0; i < Lists.length; i++) {
-                        const size_Result = await client.query(`select a.size_id,a.trans_no,a.start_size as starting_size,a.end_size as ending_size,a.total_set as total_pieces,a.trans_no,a.color_id,b.color_name,a.qr_code,a.current_stock,c.item_code,c.design_id,d.item_name from tbl_item_sizes as a inner join tbl_color as b on a.color_id = b.color_id inner join tbl_item_management as c on a.trans_no = c.trans_no inner join tbl_def_item as d on c.item_code = d.item_id where a.trans_no = ` + Lists[i].trans_no );
+                        const size_Result = await client.query(`select a.size_id,a.trans_no,a.start_size as starting_size,a.end_size as ending_size,a.total_set as total_pieces,a.trans_no,a.color_id,b.color_name,a.qr_code,a.current_stock,c.item_code,c.design_id,d.item_name from tbl_item_sizes as a left  join tbl_color as b on a.color_id = b.color_id inner join tbl_item_management as c on a.trans_no = c.trans_no inner join tbl_def_item as d on c.item_code = d.item_id where a.trans_no = ` + Lists[i].trans_no );
                         let size_Array = size_Result && size_Result.rows ? size_Result.rows : [];
                         let obj = Lists[i]
                         obj['SizeArray'] = size_Array
@@ -152,7 +152,7 @@ module.exports.saveItemManagement = async (req) => {
                             for (let i = 0; i < insert_array.length; i++) {
                                 const size = await client.query(`select coalesce (max(size_id),0) + 1 as mr FROM tbl_item_sizes`)
                                 var size_max = size && size.rows[0].mr;
-                                const sizeresult = await client.query(`INSERT INTO "tbl_item_sizes"("trans_no","start_size","end_size","total_set","size_id","color_id","qr_code","current_stock","created_date") values ($1, $2, $3, $4,$5,$6,$7,$8,CURRENT_TIMESTAMP) `, [ item_max, insert_array[i].starting_size, insert_array[i].ending_size, insert_array[i].total_pieces,size_max,insert_array[i].color_id,insert_array[i].qr_code,insert_array[i].current_stock]);
+                                const sizeresult = await client.query(`INSERT INTO "tbl_item_sizes"("trans_no","start_size","end_size","total_set","size_id","color_id","qr_code","current_stock","created_date","settype") values ($1, $2, $3, $4,$5,$6,$7,$8,CURRENT_TIMESTAMP,$9) `, [ item_max, insert_array[i].starting_size, insert_array[i].ending_size, insert_array[i].total_pieces,size_max,insert_array[i].color_id,insert_array[i].qr_code,insert_array[i].current_stock,insert_array[i].settype]);
                                 let size_code = sizeresult && sizeresult.rowCount ? sizeresult.rowCount : 0;
                                 console.log(size_code)
                             }
@@ -301,7 +301,8 @@ module.exports.editItemList = async (req) => {
             if (decoded) {
                 const item_Result = await client.query(`select a.item_code,a.trans_no,a.design_id,a.status_id,c.item_name,b.status_name from tbl_item_management as a  inner join tbl_def_status as b on a.status_id = b.status_id inner join tbl_def_item as c on a.item_code = c.item_id    where a.trans_no = ` + trans_no);
 
-                const size_Result = await client.query(`select a.size_id,a.trans_no,a.start_size as starting_size,a.end_size as ending_size,a.total_set as total_pieces,a.trans_no,a.color_id,b.color_name,a.qr_code,a.current_stock from tbl_item_sizes as a inner join tbl_color as b on a.color_id = b.color_id where a.trans_no = ` + trans_no);
+                // const size_Result = await client.query(`select a.size_id,a.trans_no,a.start_size as starting_size,a.end_size as ending_size,a.total_set as total_pieces,a.trans_no,a.color_id,b.color_name,a.qr_code,a.current_stock,a.settype from tbl_item_sizes as a left  join tbl_color as b on a.color_id = b.color_id where a.trans_no = ` + trans_no);
+                const size_Result = await client.query(`select a.size_id,a.trans_no,a.start_size as starting_size,a.end_size as ending_size,a.total_set as total_pieces,a.trans_no,0 as color_id,'' as color_name,a.qr_code,a.current_stock,a.settype from tbl_item_sizes as a  where a.trans_no = ` + trans_no);
                 if (client) {
                     client.end();
                 }

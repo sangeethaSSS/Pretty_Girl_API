@@ -88,7 +88,7 @@ module.exports.ChangeAutoItemCode = async (req) => {
       if (decoded != null) {
         const { itemcode } = decoded.data
 
-        const Size_Result = await client.query(`select a.trans_no,b.start_size,b.size_id,b.end_size,b.total_set,b.qr_code,b.color_id,'' as qty,a.item_code,c.item_name,d.color_name,a.design_id from tbl_item_management as a inner join tbl_item_sizes as b on a.trans_no = b.trans_no inner join tbl_def_item as c on a.item_code = c.item_id inner join tbl_color as d on b.color_id = d.color_id where b.size_id = $1`, [itemcode]);
+        const Size_Result = await client.query(`select a.trans_no,b.start_size,b.size_id,b.end_size,b.total_set,b.qr_code,b.color_id,'' as qty,a.item_code,c.item_name,d.color_name,a.design_id from tbl_item_management as a inner join tbl_item_sizes as b on a.trans_no = b.trans_no inner join tbl_def_item as c on a.item_code = c.item_id left  join tbl_color as d on b.color_id = d.color_id where b.size_id = $1`, [itemcode]);
         let sizeList = Size_Result && Size_Result.rows ? Size_Result.rows[0] : '';
         if (client) {
           client.end();
@@ -485,7 +485,7 @@ module.exports.editOrderTaking = async (req) => {
         if (Lists.length > 0) {
 
           for (let i = 0; i < Lists.length; i++) {
-            const order_item_Result = await client.query(`select a.order_no,a.item_code,a.design_code as design_id,a.color_id,a.item_size,a.qty,b.item_name,c.color_name,a.size_id,e.start_size,e.size_id,e.end_size,e.total_set,e.qr_code,a.old_qty from tbl_order_taking_items as a inner join tbl_def_item as b on a.item_code = b.item_id inner join tbl_color as c on a.color_id = c.color_id inner join tbl_item_sizes as e on a.size_id = e.size_id where lower (a.order_no)  = lower($1)`, [Lists[i].order_no]);
+            const order_item_Result = await client.query(`select a.order_no,a.item_code,a.design_code as design_id,a.color_id,a.item_size,a.qty,b.item_name,c.color_name,a.size_id,e.start_size,e.size_id,e.end_size,e.total_set,e.qr_code,a.old_qty from tbl_order_taking_items as a inner join tbl_def_item as b on a.item_code = b.item_id left  join tbl_color as c on a.color_id = c.color_id inner join tbl_item_sizes as e on a.size_id = e.size_id where lower (a.order_no)  = lower($1)`, [Lists[i].order_no]);
             let Order_ListArray = order_item_Result && order_item_Result.rows ? order_item_Result.rows : [];
             let obj = Lists[i]
             obj['Order_ItemList'] = Order_ListArray
@@ -547,7 +547,7 @@ module.exports.printOrderSlip = async (req) => {
 
       if (decoded) {
 
-        const Order_Slip_Result = await client.query(`select a.order_no,b.item_code,c.item_name,b.design_code,b.item_size,b.qty,b.color_id,b.size_id,d.color_name,e.total_set,a.order_date from tbl_order_taking  as a inner join tbl_order_taking_items as b on a.order_no = b.order_no inner join tbl_def_item as c on b.item_code = c.item_id inner join tbl_color as d on b.color_id = d.color_id inner join tbl_item_sizes as e on b.size_id = e.size_id
+        const Order_Slip_Result = await client.query(`select a.order_no,b.item_code,c.item_name,b.design_code,b.item_size,b.qty,b.color_id,b.size_id,d.color_name,e.total_set,a.order_date,e.settype from tbl_order_taking  as a inner join tbl_order_taking_items as b on a.order_no = b.order_no inner join tbl_def_item as c on b.item_code = c.item_id left  join tbl_color as d on b.color_id = d.color_id inner join tbl_item_sizes as e on b.size_id = e.size_id
         where lower(a.order_no) = lower('`+ order_no + `') order by b.item_code asc`);
 
         const Customer_Result = await client.query(`select a.order_no,b.customer_code,b.street,b.area,b.transport_name,b.gstin_no,b.transport_contact_no,b.transport_contact_person,b.transport_location,b.customer_name,b.city,b.contact_person,b.mobile_no,b.gstin_no,b.alternative_mobile_no,b.agent_code,c.agent_name  from tbl_order_taking as a inner join tbl_customer as b on a.customer_code = b.customer_code inner join tbl_agent as c on b.agent_code = c.agent_code where lower(a.order_no) = lower('` + order_no + `')`);
@@ -746,7 +746,7 @@ module.exports.ChangeAutoItemName = async (req) => {
       if (decoded != null) {
         const { itemname } = decoded.data
 
-        const Size_Result = await client.query(`select a.trans_no,b.start_size,b.size_id,b.end_size,b.total_set,b.qr_code,b.color_id,'' as qty,a.item_code,c.item_name,d.color_name,a.design_id from tbl_item_management as a inner join tbl_item_sizes as b on a.trans_no = b.trans_no inner join tbl_def_item as c on a.item_code = c.item_id inner join tbl_color as d on b.color_id = d.color_id where lower(b.qr_code) = lower($1)`, [itemname]);
+        const Size_Result = await client.query(`select a.trans_no,b.start_size,b.size_id,b.end_size,b.total_set,b.qr_code,b.color_id,'' as qty,a.item_code,c.item_name,d.color_name,a.design_id from tbl_item_management as a inner join tbl_item_sizes as b on a.trans_no = b.trans_no inner join tbl_def_item as c on a.item_code = c.item_id left  join tbl_color as d on b.color_id = d.color_id where lower(b.qr_code) = lower($1)`, [itemname]);
         let sizeList = Size_Result && Size_Result.rows ? Size_Result.rows[0] : '';
         if (client) {
           client.end();
