@@ -1,0 +1,776 @@
+const commonService = require('../service/commonService')
+const constants = require('../constants');
+const connectionString = require('../database/connection');
+//Connect Postgres
+const { Client } = require('pg');
+
+//Bind Company Name
+module.exports.ChangeAutoCompanyNamejwt = async (req) => {
+  try {
+    const token = await commonService.jwtCreate(req);
+    return { token };
+
+  } catch (error) {
+    throw new Error(error);
+  }
+}
+
+module.exports.ChangeAutoCompanyName = async (req) => {
+  const client = new Client({
+    user: connectionString.user,
+    host: connectionString.host,
+    database: connectionString.database,
+    password: connectionString.password,
+    port: connectionString.port,
+  });
+  await client.connect();
+  try {
+    if (req.jwtToken) {
+      const decoded = await commonService.jwtVerify(req.jwtToken);
+      if (decoded != null) {
+        const { searchvalue } = decoded.data
+        if (searchvalue !== "") {
+          const CustomerList = await client.query(`select distinct a.customer_code as value, a.customer_name as label,a.customer_name,a.contact_person,a.mobile_no,a.alternative_mobile_no,a.street,a.area,a.city,a.pincode,a.state,a.gstin_no from tbl_customer as a where a.status_code = 1 and Lower(a.customer_name) like '%'||Lower($1)||'%' order by a.customer_name`, [searchvalue])
+          if (client) { client.end(); }
+          let List_Array = CustomerList && CustomerList.rows ? CustomerList.rows : [];
+          var response = {}
+          response = { "CompanyList": List_Array }
+          if (response) {
+            return response
+          }
+          else {
+            return response
+          }
+        }
+        else {
+          response = { "CompanyList": [] }
+          return response
+        }
+      } else {
+        if (client) { client.end(); }
+        throw new Error(constants.userMessage.USER_NOT_FOUND);
+      }
+    } else {
+      if (client) { client.end(); }
+      throw new Error(constants.token.INVALID_TOKEN);
+    }
+  } catch (error) {
+    if (client) { client.end(); }
+    throw new Error(error);
+  } finally {
+    if (client) { client.end(); }
+  }
+}
+
+//Bind Item Code
+module.exports.ChangeAutoItemCodejwt = async (req) => {
+  try {
+    const token = await commonService.jwtCreate(req);
+    return { token };
+
+  } catch (error) {
+    throw new Error(error);
+  }
+}
+
+module.exports.ChangeAutoItemCode = async (req) => {
+  const client = new Client({
+    user: connectionString.user,
+    host: connectionString.host,
+    database: connectionString.database,
+    password: connectionString.password,
+    port: connectionString.port,
+  });
+  await client.connect();
+  try {
+    if (req.jwtToken) {
+      const decoded = await commonService.jwtVerify(req.jwtToken);
+      if (decoded != null) {
+        const { itemcode } = decoded.data
+
+        const Size_Result = await client.query(`select a.trans_no,b.start_size,b.size_id,b.end_size,b.total_set,b.qr_code,b.color_id,'' as qty,a.item_code,c.item_name,d.color_name,a.design_id from tbl_item_management as a inner join tbl_item_sizes as b on a.trans_no = b.trans_no inner join tbl_def_item as c on a.item_code = c.item_id inner join tbl_color as d on b.color_id = d.color_id where b.size_id = $1`, [itemcode]);
+        let sizeList = Size_Result && Size_Result.rows ? Size_Result.rows[0] : '';
+        if (client) {
+          client.end();
+
+          if (sizeList && Object.keys(sizeList).length > 0) {
+            return response = { "ItemList": sizeList }
+          }
+          else {
+            return response = { "ItemList": [] }
+          }
+
+        }
+      } else {
+        if (client) { client.end(); }
+        throw new Error(constants.userMessage.USER_NOT_FOUND);
+      }
+    } else {
+      if (client) { client.end(); }
+      throw new Error(constants.token.INVALID_TOKEN);
+    }
+  } catch (error) {
+    if (client) { client.end(); }
+    throw new Error(error);
+  } finally {
+    if (client) { client.end(); }
+  }
+}
+
+//create Save Check Order Taking jwt 
+module.exports.saveOrderTakingjwt = async (req) => {
+  try {
+    const token = await commonService.jwtCreate(req);
+    return { token };
+  } catch (error) {
+    throw new Error(error);
+  }
+}
+
+//create Save Check Order Taking
+module.exports.saveOrderTaking = async (req) => {
+  const client = new Client({
+    user: connectionString.user,
+    host: connectionString.host,
+    database: connectionString.database,
+    password: connectionString.password,
+    port: connectionString.port,
+  });
+  await client.connect();
+  try {
+    if (req.jwtToken) {
+      const decoded = await commonService.jwtVerify(req.jwtToken);
+      const { order_date, customer_id, user_id, order_id, status_id, type, item_array, ref_no, process_flag, remarks } = decoded.data;
+      if (decoded) {
+        if (process_flag === 'Check_flag') {
+          if (item_array && item_array.length > 0) {
+            for (let i = 0; i < item_array.length; i++) {
+              const total_qty = await client.query(`select coalesce(sum(current_stock),0) as stock  from tbl_item_sizes where size_id = $1 `, [item_array[i].size_id])
+              var current_stock = total_qty && total_qty.rows[0].stock;
+              if (current_stock > 0 && (order_id == '0' || order_id == 0)) {
+                const CheckQty = await client.query(`select count(1) from (select coalesce(current_stock,0) + (select coalesce(sum(inward),0) - coalesce(sum(outward),0) from tbl_stock_transaction where size_id = $1 ) as current_stock from tbl_item_sizes where size_id = $1) as dev where current_stock >= $2`, [item_array[i].size_id, item_array[i].qty])
+
+                let Stock_count = CheckQty && CheckQty.rows[0].count;
+                if (Number(Stock_count) === 0) {
+                  let text_message = item_array[i].item_name + " / " + item_array[i].qr_code
+                  return response = { "message": `Quantity should be less than or equal to stock qty for this ` + text_message + `  `, "statusFlag": 2 };
+                }
+              }
+              if (current_stock > 0 && order_id) {
+                const total_qty = await client.query(`select distinct b.size_id,(sum(coalesce(inward,0))+
+                coalesce(b.current_stock,0)-sum(coalesce(outward,0))) as currentstock 
+                from tbl_stock_transaction as  a right join  tbl_item_sizes 
+                as b on a.size_id=b.size_id where b.size_id = $1  group by b.size_id`, [item_array[i].size_id])
+
+                var currentstock = total_qty && total_qty.rows[0].currentstock;
+
+                const CheckQty = await client.query(`select coalesce(sum(inward),0) - coalesce(sum(outward),0) as old_qty from tbl_stock_transaction where size_id = $1 and lower(trans_no) = lower($2)`, [item_array[i].size_id, order_id])
+                let old_Stock = CheckQty && CheckQty.rows[0].old_qty;
+                let now_stock = (Number(currentstock) + Number(old_Stock)) - Number(item_array[i].qty);
+                if (now_stock < Number(item_array[i].qty)) {
+                  let text_message = item_array[i].qr_code
+                  return response = { "message": `Quantity should be less than or equal to stock qty for this ` + text_message + `  `, "statusFlag": 2 };
+                }
+              }
+
+            }
+          }
+        }
+
+        if (order_id == '0') {
+          const id_max = await client.query(`select case when coalesce(max(ref_no),0) + 1 <= 9999 then  (select LPAD((SELECT coalesce(max(ref_no),0) + 1 from tbl_order_taking where type = 'Portal' )::text,4,'0')) else (select (SELECT coalesce(max(ref_no),0) + 1 from tbl_order_taking where type = 'Portal' )::text) end as order_number from tbl_order_taking where type = 'Portal' `)
+          var order_max = id_max && id_max.rows[0].order_number;
+
+          const user_max = await client.query(`select case when `+ user_id + ` <= 99 then  (select LPAD(`+ user_id + `::text,2,'0'))  else (`+ user_id + ` ::text) end as userid`)
+
+          var userid = user_max && user_max.rows[0].userid;
+
+          var makerid = await commonService.insertLogs(user_id, "Insert Order Taking");
+
+          var order_number = 'P' + userid + '-' + order_max
+          const order_taking_result = await client.query(`INSERT INTO "tbl_order_taking"("ref_no","order_no","order_date","customer_code","status_code","type","maker_id","user_id","created_date",remarks) values ($1, $2, $3, $4, $5, $6,$7,$8,CURRENT_TIMESTAMP,$9) `, [order_max, order_number, order_date, customer_id, status_id, type, makerid, user_id,remarks]);
+
+          if (item_array && item_array.length > 0) {
+            for (let i = 0; i < item_array.length; i++) {
+              const item_size = item_array[i].start_size + '-' + item_array[i].end_size
+              const Item_list = await client.query(`INSERT INTO "tbl_order_taking_items"("order_no","item_code","design_code","item_size","color_id","qty","size_id","user_id","status_code","old_qty","created_date") values ($1, $2, $3, $4,$5,$6,$7,$8,$9,$10,CURRENT_TIMESTAMP) `, [order_number, item_array[i].item_code, item_array[i].design_id, item_size, item_array[i].color_id, item_array[i].qty, item_array[i].size_id, user_id, 1, item_array[i].qty]);
+              let normal_code = Item_list && Item_list.rowCount ? Item_list.rowCount : 0;
+              console.log(normal_code)
+
+              const Stock_list = await client.query(`INSERT INTO "tbl_stock_transaction"("stock_date","size_id","trans_no","inward","outward","user_id","created_date") values ($1, $2, $3, $4,$5,$6,CURRENT_TIMESTAMP) `, [order_date, item_array[i].size_id, order_number, 0, item_array[i].qty, user_id]);
+              let stock_code = Stock_list && Stock_list.rowCount ? Stock_list.rowCount : 0;
+              console.log(stock_code)
+
+            }
+          }
+
+          if (client) {
+            client.end();
+          }
+          let create_code = order_taking_result && order_taking_result.rowCount ? order_taking_result.rowCount : 0;
+          if (create_code == 1) {
+            return response = { "message": constants.userMessage.USER_CREATED, "statusFlag": 1 };
+          }
+          else { return '' }
+        }
+        else {
+          var makerid = await commonService.insertLogs(user_id, "Update Order Taking");
+          const count = await client.query(`select count(*) as count FROM tbl_order_taking where lower(order_no) = lower($1)`, [order_id])
+          var count_Check = count && count.rows[0].count
+          if (count_Check != 0 && count_Check != null && count_Check != undefined && count_Check != "") {
+
+            const update_result = await client.query(`UPDATE "tbl_order_taking" set ref_no=$1,order_date=$2,customer_code=$3,status_code=$4,maker_id = $5,"user_id"= $6,updated_date=CURRENT_TIMESTAMP,remarks=$8 where order_no = $7 `, [ref_no, order_date, customer_id, status_id, makerid, user_id, order_id,remarks]);
+
+            await client.query(`DELETE FROM tbl_order_taking_items where lower(order_no) = lower($1)`, [order_id])
+            await client.query(`DELETE FROM tbl_stock_transaction where lower(trans_no) = lower($1) and user_id = $2`, [order_id, user_id])
+
+            if (item_array && item_array.length > 0) {
+              for (let i = 0; i < item_array.length; i++) {
+                var item_size = ''
+                if (item_array[i].start_size && item_array[i].end_size) {
+                  item_size = item_array[i].start_size + '-' + item_array[i].end_size
+                } else {
+                  item_size = item_array[i].item_size
+                }
+
+                const Item_list = await client.query(`INSERT INTO "tbl_order_taking_items"("order_no","item_code","design_code","item_size","color_id","qty","size_id","user_id","status_code","old_qty","created_date") values ($1, $2, $3, $4,$5,$6,$7,$8,$9,$10,CURRENT_TIMESTAMP) `, [order_id, item_array[i].item_code, item_array[i].design_id, item_size, item_array[i].color_id, item_array[i].qty, item_array[i].size_id, user_id, 1, item_array[i].qty]);
+                let normal_code = Item_list && Item_list.rowCount ? Item_list.rowCount : 0;
+                console.log(normal_code)
+
+                const Stock_list = await client.query(`INSERT INTO "tbl_stock_transaction"("stock_date","size_id","trans_no","inward","outward","user_id","created_date") values ($1, $2, $3, $4,$5,$6,CURRENT_TIMESTAMP) `, [order_date, item_array[i].size_id, order_id, 0, item_array[i].qty, user_id]);
+                let stock_code = Stock_list && Stock_list.rowCount ? Stock_list.rowCount : 0;
+                console.log(stock_code)
+
+              }
+            }
+            if (client) {
+              client.end();
+            }
+            let update_code = update_result && update_result.rowCount ? update_result.rowCount : 0;
+            if (update_code == 1) {
+              return response = { "message": constants.userMessage.USER_UPDATED, "statusFlag": 1 };
+            }
+            else { return '' }
+          }
+        }
+      }
+      else {
+        if (client) { client.end(); }
+      }
+    } else {
+      if (client) { client.end(); }
+      throw new Error(constants.userMessage.TOKEN_MISSING);
+    }
+  } catch (error) {
+    if (client) { client.end(); }
+    throw new Error(error);
+  }
+  finally {
+    if (client) { client.end(); }// always close the resource
+  }
+}
+
+
+
+//create Order Taking List jwt 
+module.exports.orderTakingListjwt = async (req) => {
+  try {
+    const token = await commonService.jwtCreate(req);
+    return { token };
+
+  } catch (error) {
+    throw new Error(error);
+  }
+}
+//create Order Taking LIST
+module.exports.orderTakingList = async (req) => {
+  const client = new Client({
+    user: connectionString.user,
+    host: connectionString.host,
+    database: connectionString.database,
+    password: connectionString.password,
+    port: connectionString.port,
+  });
+  await client.connect();
+  try {
+    if (req.jwtToken) {
+      const decoded = await commonService.jwtVerify(req.jwtToken);
+      const { from_date, to_date } = decoded.data;
+      if (decoded) {
+        if (from_date && to_date) {
+          datediff = `to_char(a.order_date,'YYYY-MM-DD') :: date BETWEEN `
+            .concat(`to_date('` + from_date + `','YYYY-MM-DD') AND to_date('` + to_date + `','YYYY-MM-DD')`);
+        }
+        const order_Result = await client.query(`select a.ref_no,a.order_no,b.customer_code,b.customer_name,b.city,b.contact_person,b.mobile_no,b.gstin_no,b.alternative_mobile_no,(select coalesce(sum(qty),0) from tbl_order_taking_items where order_no= a.order_no) as totalset,a.order_date as order_date,(select user_name from tbl_user where user_id = (select user_id from tbl_userlog  where autonum = a.maker_id limit 1)) as employeename,(select coalesce(to_char(log_date,'DD-MM-YYYY HH12:MI PM'),'') from tbl_userlog where autonum = a.maker_id limit 1) as createddate from tbl_order_taking as a inner join tbl_customer as b on a.customer_code = b.customer_code where a.status_code = 1 and  ` + datediff + ` order by a.created_date desc`);
+
+        let Lists = order_Result && order_Result.rows ? order_Result.rows : [];
+
+        if (client) {
+          client.end();
+        }
+        responseData = { "OrderTakinglist": Lists }
+        if (responseData) {
+          return responseData;
+        }
+        else {
+          return '';
+        }
+      }
+      else {
+        if (client) { client.end(); }
+      }
+    } else {
+      if (client) { client.end(); }
+      throw new Error(constants.userMessage.TOKEN_MISSING);
+    }
+  } catch (error) {
+    if (client) { client.end(); }
+    throw new Error(error);
+  }
+
+  finally {
+    if (client) { client.end(); }// always close the resource
+  }
+}
+
+//Delete Order Taking jwt 
+module.exports.deleteOrderTakingjwt = async (req) => {
+  try {
+    const token = await commonService.jwtCreate(req);
+    return { token };
+  } catch (error) {
+    throw new Error(error);
+  }
+}
+
+//Delete Order Taking service
+module.exports.deleteOrderTaking = async (req) => {
+  const client = new Client({
+    user: connectionString.user,
+    host: connectionString.host,
+    database: connectionString.database,
+    password: connectionString.password,
+    port: connectionString.port,
+  });
+  await client.connect();
+  try {
+    if (req.jwtToken) {
+      var responseData = {}
+      const decoded = await commonService.jwtVerify(req.jwtToken);
+      const { user_id, order_no } = decoded.data;
+      if (decoded) {
+        const taking_Count = await client.query(`select count(*) as count FROM tbl_order_taking where lower(order_no) = lower($1)`, [order_no])
+        var count_Check = taking_Count && taking_Count.rows[0].count;
+        if (count_Check != 0 && count_Check != null && count_Check != undefined && count_Check != "") {
+          var maker_id = await commonService.insertLogs(user_id, "Delete Order Taking");
+          await client.query(`DELETE FROM tbl_stock_transaction where lower(trans_no) = lower($1)`, [order_no])
+          await client.query(`Update tbl_order_taking_items set "status_code"=$1 ,"maker_id" = $2 where lower(order_no) = lower($3) `, [2, maker_id, order_no]);
+          const delete_result = await client.query(`Update tbl_order_taking set "status_code"=$1 ,"maker_id" = $2 where lower(order_no) = lower($3) `, [2, maker_id, order_no]);
+
+          if (client) {
+            client.end();
+          }
+          let deletecode = delete_result && delete_result.rowCount ? delete_result.rowCount : 0;
+          if (deletecode == 1) {
+            responseData = { "message": constants.userMessage.USER_DELETED, "statusFlag": 2 }
+            if (responseData) {
+              return responseData;
+            }
+            else {
+              return '';
+            }
+          }
+          else { return '' }
+        }
+      }
+      else {
+        if (client) { client.end(); }
+      }
+    } else {
+      if (client) { client.end(); }
+      throw new Error(constants.userMessage.TOKEN_MISSING);
+    }
+  } catch (error) {
+    if (client) { client.end(); }
+    throw new Error(error);
+  }
+  finally {
+    if (client) { client.end(); }// always close the resource
+  }
+}
+
+//Bind Company List Name
+module.exports.customerListjwt = async (req) => {
+  try {
+    const token = await commonService.jwtCreate(req);
+    return { token };
+
+  } catch (error) {
+    throw new Error(error);
+  }
+}
+
+module.exports.customerList = async (req) => {
+  const client = new Client({
+    user: connectionString.user,
+    host: connectionString.host,
+    database: connectionString.database,
+    password: connectionString.password,
+    port: connectionString.port,
+  });
+  await client.connect();
+  try {
+    if (req.jwtToken) {
+      const decoded = await commonService.jwtVerify(req.jwtToken);
+      if (decoded != null) {
+        const { customer_id } = decoded.data
+        const CustomerList = await client.query(`select distinct a.customer_code as value, a.customer_name as label,a.customer_name,a.contact_person,a.mobile_no,a.alternative_mobile_no,a.street,a.area,a.city,a.pincode,a.state,a.gstin_no from tbl_customer as a where Lower(a.customer_code) = Lower($1)`, [customer_id])
+        if (client) { client.end(); }
+        let List_Array = CustomerList && CustomerList.rows ? CustomerList.rows : [];
+        var response = {}
+        response = { "CustomerList": List_Array }
+        if (response) {
+          return response
+        }
+        else {
+          return response
+        }
+      } else {
+        if (client) { client.end(); }
+        throw new Error(constants.userMessage.USER_NOT_FOUND);
+      }
+    } else {
+      if (client) { client.end(); }
+      throw new Error(constants.token.INVALID_TOKEN);
+    }
+  } catch (error) {
+    if (client) { client.end(); }
+    throw new Error(error);
+  } finally {
+    if (client) { client.end(); }
+  }
+}
+
+//Edit Order Taking List jwt 
+module.exports.editOrderTakingjwt = async (req) => {
+  try {
+    const token = await commonService.jwtCreate(req);
+    return { token };
+
+  } catch (error) {
+    throw new Error(error);
+  }
+}
+//Edit Order Taking List
+module.exports.editOrderTaking = async (req) => {
+  const client = new Client({
+    user: connectionString.user,
+    host: connectionString.host,
+    database: connectionString.database,
+    password: connectionString.password,
+    port: connectionString.port,
+  });
+  await client.connect();
+  try {
+    if (req.jwtToken) {
+      const decoded = await commonService.jwtVerify(req.jwtToken);
+      const { order_no } = decoded.data;
+      if (decoded) {
+        const order_Result = await client.query(`select a.ref_no,a.order_no,a.order_date as order_date,a.type,a.customer_code,b.customer_name,coalesce(a.remarks,'') as remarks 
+              from tbl_order_taking as a inner join tbl_customer as b on a.customer_code = b.customer_code where lower (a.order_no) = lower ($1) ` , [order_no]);
+
+        let Lists = order_Result && order_Result.rows ? order_Result.rows : [];
+        let result = [];
+
+        if (Lists.length > 0) {
+
+          for (let i = 0; i < Lists.length; i++) {
+            const order_item_Result = await client.query(`select a.order_no,a.item_code,a.design_code as design_id,a.color_id,a.item_size,a.qty,b.item_name,c.color_name,a.size_id,e.start_size,e.size_id,e.end_size,e.total_set,e.qr_code,a.old_qty from tbl_order_taking_items as a inner join tbl_def_item as b on a.item_code = b.item_id inner join tbl_color as c on a.color_id = c.color_id inner join tbl_item_sizes as e on a.size_id = e.size_id where lower (a.order_no)  = lower($1)`, [Lists[i].order_no]);
+            let Order_ListArray = order_item_Result && order_item_Result.rows ? order_item_Result.rows : [];
+            let obj = Lists[i]
+            obj['Order_ItemList'] = Order_ListArray
+            result.push(obj)
+          }
+        }
+        if (client) {
+          client.end();
+        }
+        if (Lists && Lists.length > 0) {
+          return response = { "EditOrderList": result }
+        }
+        else {
+          return response = { "EditOrderList": [] }
+        }
+      }
+      else {
+        if (client) { client.end(); }
+      }
+    } else {
+      if (client) { client.end(); }
+      throw new Error(constants.userMessage.TOKEN_MISSING);
+    }
+  } catch (error) {
+    if (client) { client.end(); }
+    throw new Error(error);
+  }
+
+  finally {
+    if (client) { client.end(); }// always close the resource
+  }
+}
+
+//Print Order Slip Jwt
+module.exports.printOrderSlipjwt = async (req) => {
+  try {
+    const token = await commonService.jwtCreate(req);
+    return { token };
+
+  } catch (error) {
+    throw new Error(error);
+  }
+}
+
+//Print Order Slip
+module.exports.printOrderSlip = async (req) => {
+  const client = new Client({
+    user: connectionString.user,
+    host: connectionString.host,
+    database: connectionString.database,
+    password: connectionString.password,
+    port: connectionString.port,
+  });
+  await client.connect();
+  try {
+    if (req.jwtToken) {
+      const decoded = await commonService.jwtVerify(req.jwtToken);
+      const { order_no } = decoded.data;
+
+      if (decoded) {
+
+        const Order_Slip_Result = await client.query(`select a.order_no,b.item_code,c.item_name,b.design_code,b.item_size,b.qty,b.color_id,b.size_id,d.color_name,e.total_set,a.order_date from tbl_order_taking  as a inner join tbl_order_taking_items as b on a.order_no = b.order_no inner join tbl_def_item as c on b.item_code = c.item_id inner join tbl_color as d on b.color_id = d.color_id inner join tbl_item_sizes as e on b.size_id = e.size_id
+        where lower(a.order_no) = lower('`+ order_no + `') order by b.item_code asc`);
+
+        const Customer_Result = await client.query(`select a.order_no,b.customer_code,b.street,b.area,b.transport_name,b.gstin_no,b.transport_contact_no,b.transport_contact_person,b.transport_location,b.customer_name,b.city,b.contact_person,b.mobile_no,b.gstin_no,b.alternative_mobile_no,b.agent_code,c.agent_name  from tbl_order_taking as a inner join tbl_customer as b on a.customer_code = b.customer_code inner join tbl_agent as c on b.agent_code = c.agent_code where lower(a.order_no) = lower('` + order_no + `')`);
+
+        const item_count = await client.query(`select count(*) as total_count,item_code from tbl_order_taking_items where lower(order_no) = lower('` + order_no + `')  group by item_code`)
+
+        const company_Result = await client.query(`SELECT * from tbl_print_setting`);
+
+        if (client) {
+          client.end();
+        }
+
+        var itemcount = item_count && item_count.rows ? item_count.rows : [];
+        let Customer_array = Customer_Result && Customer_Result.rows ? Customer_Result.rows : [];
+        let Company_Array = company_Result && company_Result.rows ? company_Result.rows : [];
+        let Lists = Order_Slip_Result && Order_Slip_Result.rows ? Order_Slip_Result.rows : [];
+
+        responseData = {
+          "OrderSlip": Lists, "CustomerArray": Customer_array, "CompanyArray": Company_Array, "ItemCount": itemcount
+        }
+
+        if (responseData) {
+          return responseData;
+        }
+        else {
+          return '';
+        }
+      }
+      else {
+        if (client) { client.end(); }
+      }
+    } else {
+      if (client) { client.end(); }
+      throw new Error(constants.userMessage.TOKEN_MISSING);
+    }
+  } catch (error) {
+    if (client) { client.end(); }
+    throw new Error(error);
+  }
+
+  finally {
+    if (client) { client.end(); }// always close the resource
+  }
+}
+
+//Bind Design Name
+module.exports.ChangeAutoDesignNamejwt = async (req) => {
+  try {
+    const token = await commonService.jwtCreate(req);
+    return { token };
+
+  } catch (error) {
+    throw new Error(error);
+  }
+}
+
+module.exports.ChangeAutoDesignName = async (req) => {
+  const client = new Client({
+    user: connectionString.user,
+    host: connectionString.host,
+    database: connectionString.database,
+    password: connectionString.password,
+    port: connectionString.port,
+  });
+  await client.connect();
+  try {
+    if (req.jwtToken) {
+      const decoded = await commonService.jwtVerify(req.jwtToken);
+      if (decoded != null) {
+        const { searchvalue } = decoded.data
+        if (searchvalue !== "") {
+          const DesignList = await client.query(`select distinct b.size_id as value, b.qr_code as label,coalesce(((select sum(coalesce(no_of_set,0)) from tbl_fg_items where size_id=b.size_id) +coalesce(b.current_stock,0))
+          - (select coalesce(sum(coalesce(dispatch_set,0)),0) from tbl_dispatch_details where status_flag = 1 and  size_id=b.size_id ),0) as current_stock , (select coalesce(sum(a.qty),0) as qty from tbl_order_taking_items as a inner join tbl_order_taking as d on a.order_no = d.order_no where d.order_date=CURRENT_DATE and size_id = b.size_id 
+          and d.status_code = 1) as order_qty from tbl_item_sizes  as b where  Lower(b.qr_code) like '%'||$1||'%'  `, [searchvalue])
+          if (client) { client.end(); }
+          let List_Array = DesignList && DesignList.rows ? DesignList.rows : [];
+          var response = {}
+          response = { "DesignList": List_Array }
+          if (response) {
+            return response
+          }
+          else {
+            return response
+          }
+        }
+        else {
+          response = { "DesignList": [] }
+          return response
+        }
+      } else {
+        if (client) { client.end(); }
+        throw new Error(constants.userMessage.USER_NOT_FOUND);
+      }
+    } else {
+      if (client) { client.end(); }
+      throw new Error(constants.token.INVALID_TOKEN);
+    }
+  } catch (error) {
+    if (client) { client.end(); }
+    throw new Error(error);
+  } finally {
+    if (client) { client.end(); }
+  }
+}
+
+
+//Check Qty
+module.exports.onChangeQtyjwt = async (req) => {
+  try {
+    const token = await commonService.jwtCreate(req);
+    return { token };
+
+  } catch (error) {
+    throw new Error(error);
+  }
+}
+
+module.exports.onChangeQty = async (req) => {
+  const client = new Client({
+    user: connectionString.user,
+    host: connectionString.host,
+    database: connectionString.database,
+    password: connectionString.password,
+    port: connectionString.port,
+  });
+  await client.connect();
+  try {
+    if (req.jwtToken) {
+      const decoded = await commonService.jwtVerify(req.jwtToken);
+      if (decoded != null) {
+        const { qty, size_id } = decoded.data
+
+        const total_qty = await client.query(`select coalesce(sum(current_stock),0) as stock  from tbl_item_sizes where size_id = $1 `, [size_id])
+        var order_qty = total_qty && total_qty.rows[0].stock;
+        if (order_qty > 0) {
+          const CheckQty = await client.query(`select count(1) from (select coalesce(current_stock,0) + 
+          (select coalesce(sum(inward),0) - coalesce(sum(outward),0) from tbl_stock_transaction where size_id = $1 ) 
+          as current_stock from tbl_item_sizes where size_id = $1) as dev where current_stock >= $2`, [size_id, qty])
+
+          if (client) { client.end(); }
+
+          let Stock_count = CheckQty && CheckQty.rows[0].count;
+          var response = {}
+          response = { "StockCount": Stock_count }
+          if (response) {
+            return response
+          }
+          else {
+            return response
+          }
+        } else {
+          var response = {}
+          response = { "StockCount": 1 }
+          return response
+        }
+      } else {
+        if (client) { client.end(); }
+        throw new Error(constants.userMessage.USER_NOT_FOUND);
+      }
+    } else {
+      if (client) { client.end(); }
+      throw new Error(constants.token.INVALID_TOKEN);
+    }
+  } catch (error) {
+    if (client) { client.end(); }
+    throw new Error(error);
+  } finally {
+    if (client) { client.end(); }
+  }
+}
+
+
+//Bind Item Name
+module.exports.ChangeAutoItemNamejwt = async (req) => {
+  try {
+    const token = await commonService.jwtCreate(req);
+    return { token };
+
+  } catch (error) {
+    throw new Error(error);
+  }
+}
+
+module.exports.ChangeAutoItemName = async (req) => {
+  const client = new Client({
+    user: connectionString.user,
+    host: connectionString.host,
+    database: connectionString.database,
+    password: connectionString.password,
+    port: connectionString.port,
+  });
+  await client.connect();
+  try {
+    if (req.jwtToken) {
+      const decoded = await commonService.jwtVerify(req.jwtToken);
+      if (decoded != null) {
+        const { itemname } = decoded.data
+
+        const Size_Result = await client.query(`select a.trans_no,b.start_size,b.size_id,b.end_size,b.total_set,b.qr_code,b.color_id,'' as qty,a.item_code,c.item_name,d.color_name,a.design_id from tbl_item_management as a inner join tbl_item_sizes as b on a.trans_no = b.trans_no inner join tbl_def_item as c on a.item_code = c.item_id inner join tbl_color as d on b.color_id = d.color_id where lower(b.qr_code) = lower($1)`, [itemname]);
+        let sizeList = Size_Result && Size_Result.rows ? Size_Result.rows[0] : '';
+        if (client) {
+          client.end();
+
+          if (sizeList && Object.keys(sizeList).length > 0) {
+            return response = { "ScanSizeList": sizeList }
+          }
+          else {
+            return response = { "ScanSizeList": [] }
+          }
+
+        }
+      } else {
+        if (client) { client.end(); }
+        throw new Error(constants.userMessage.USER_NOT_FOUND);
+      }
+    } else {
+      if (client) { client.end(); }
+      throw new Error(constants.token.INVALID_TOKEN);
+    }
+  } catch (error) {
+    if (client) { client.end(); }
+    throw new Error(error);
+  } finally {
+    if (client) { client.end(); }
+  }
+}

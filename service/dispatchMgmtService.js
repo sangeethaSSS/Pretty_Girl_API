@@ -1,0 +1,712 @@
+/****************************
+ File    : DispatchMasterService.js
+ Author  : Suriya
+ Date    : 07-04-2023
+ Purpose : Dispatch Master Service 
+ * ********************** */
+ const connectionString = require('../database/connection');
+ const commonService = require('../service/commonService');
+ const jwt = require('jsonwebtoken');
+ const constants = require('../constants');
+ //Connect Postgres
+ const { Client } = require('pg'); 
+ //create jwt 
+ module.exports.itemCustomerWiseListJwt = async (req) => {
+   try {
+     const token = await commonService.jwtCreate(req);
+     return { token };
+ 
+   } catch (error) {
+     throw new Error(error);
+   }
+ }
+ // Get Dispatch list  
+ module.exports.itemCustomerWiseList = async (req) => {
+   const client = new Client({
+     user: connectionString.user,
+     host: connectionString.host,
+     database: connectionString.database,
+     password: connectionString.password,
+     port: connectionString.port,
+   });
+   await client.connect();
+   try {
+     if (req.jwtToken) {
+       var responseData = {}
+       const decoded = await commonService.jwtVerify(req.jwtToken);  
+       if (decoded) { 
+        const {process,size_id,customer_code} = decoded.data
+        let item_exec_Result  = ''
+        let result = [];
+        if(process == 'itemwise'){
+       
+          let sizeid_val = '1=1';
+          if(size_id  && size_id != "" && size_id != "0"){
+            const size_id_val = size_id ? '\'' + size_id.split(',').join('\',\'') + '\'' : '' 
+            sizeid_val = ` b.size_id in (${size_id_val})`
+          }
+          
+          // item_exec_Result = await client.query(` SELECT size_id,qr_code FROM (SELECT a.order_no,b.size_id,qr_code,to_char(a.order_date,'DD-MM-YYYY') as order_date,sum(b.qty)::Integer - coalesce((select sum(coalesce(dispatch_set,0)) from tbl_dispatch_details   where status_flag = 1 and order_no=a.order_no),0) as total_piece,coalesce((select sum(coalesce(no_of_set,0)) from tbl_fg_items where size_id=b.size_id),0) - coalesce((select sum(coalesce(dispatch_set,0)) from tbl_dispatch_details  where status_flag = 1 and size_id=b.size_id),0) as fg_qty FROM tbl_order_taking as a inner join tbl_order_taking_items as b on a.order_no=b.order_no inner join tbl_item_sizes as c on b.size_id=c.size_id where ${sizeid_val} group by a.order_no,b.size_id,qr_code,a.order_date ) as dev where total_piece > 0 and fg_qty > 0 group by size_id,qr_code`)
+          item_exec_Result = await client.query(`Select * from (select a.order_no,a.ref_no,to_char(a.order_date,'DD-MM-YYYY') as order_date,a.customer_code, b.size_id,sum(b.qty)::Integer - coalesce((select sum(coalesce(dispatch_set,0)) from tbl_dispatch_details   where status_flag = 1 and order_no=a.order_no),0) as total_piece,d.customer_name,d.mobile_no, coalesce(d.city,'')||' - '||coalesce(d.pincode,'') as city,'0' as dispatch_qty, coalesce((select sum(coalesce(no_of_set,0)) from tbl_fg_items where size_id=b.size_id),0) - coalesce((select sum(coalesce(dispatch_set,0)) from tbl_dispatch_details  where status_flag = 1 and size_id=b.size_id),0) as fg_qty from tbl_order_taking as a inner join tbl_order_taking_items as b on a.order_no=b.order_no  inner join tbl_item_sizes as c on b.size_id=c.size_id inner join tbl_customer as d  on d.customer_code=a.customer_code where  ${sizeid_val} group by a.order_no,a.ref_no,a.order_date,a.customer_code,b.size_id,d.customer_name,d.mobile_no,d.city,d.pincode) as dev where total_piece > 0 and fg_qty > 0`);
+          // let dispatch_array = item_exec_Result && item_exec_Result.rows ? item_exec_Result.rows : [];      
+          // result = [];
+          
+          
+          // if (dispatch_array.length > 0) {
+          //   for (let i = 0; i < dispatch_array.length; i++) {
+          //     const item_Result = await client.query(` Select * from (select a.order_no,a.ref_no,to_char(a.order_date,'DD-MM-YYYY') as order_date,a.customer_code, b.size_id,sum(b.qty)::Integer - coalesce((select sum(coalesce(dispatch_set,0)) from tbl_dispatch_details   where status_flag = 1 and order_no=a.order_no),0) as total_piece,d.customer_name,d.mobile_no, coalesce(d.city,'')||' - '||coalesce(d.pincode,'') as city,'0' as dispatch_qty, coalesce((select sum(coalesce(no_of_set,0)) from tbl_fg_items where size_id=b.size_id),0) - coalesce((select sum(coalesce(dispatch_set,0)) from tbl_dispatch_details  where status_flag = 1 and size_id=b.size_id),0) as fg_qty from tbl_order_taking as a inner join tbl_order_taking_items as b on a.order_no=b.order_no  inner join tbl_item_sizes as c on b.size_id=c.size_id inner join tbl_customer as d  on d.customer_code=a.customer_code where  b.size_id= $1 group by a.order_no,a.ref_no,a.order_date,a.customer_code,b.size_id,d.customer_name,d.mobile_no,d.city,d.pincode) as dev where total_piece > 0 and fg_qty > 0`,[dispatch_array[i].size_id] );
+          //     let item_Array = item_Result && item_Result.rows ? item_Result.rows : []; 
+          //     let obj = dispatch_array[i]
+          //     obj['ItemArray'] = item_Array
+          //     result.push(obj)
+          //   }
+          // }   
+        }
+        if(process == 'customerwise'){
+          let customercode_val = '1=1';
+          if(customer_code && customer_code != "" && customer_code != "0"){
+            const customer_code_val = customer_code ? '\'' + customer_code.split(',').join('\',\'') + '\'' : ''
+            customercode_val = `  lower(a.customer_code) = lower(${customer_code_val})`
+          }
+          // const customer_code_val = customer_code ? '\'' + customer_code.split(',').join('\',\'') + '\'' : ''
+       
+          // let customercode_val = '1=1';
+          // if(customer_code_val && customer_code_val != "0" && customer_code_val !='0' && customer_code_val !="" &&  customer_code_val !=''){
+          //   customercode_val = `  lower(a.customer_code) = lower(${customer_code_val})`
+          // }    
+          // item_exec_Result = await client.query(`SELECT customer_code,customer_name  from (
+          //   SELECT a.order_no,to_char(a.order_date,'DD-MM-YYYY') as order_date,a.customer_code,
+          //   d.customer_name,coalesce((select sum(coalesce(no_of_set,0)) from 
+          //   tbl_fg_items where size_id=b.size_id),0) - 
+          //   coalesce((select sum(coalesce(dispatch_set,0)) from tbl_dispatch_details  where status_flag = 1 and 
+          //   size_id=b.size_id),0) as fg_qty, sum(b.qty)::Integer - coalesce((select sum(coalesce(dispatch_set,0)) from tbl_dispatch_details  
+          //   where status_flag = 1 and order_no=a.order_no),0) as total_piece  from tbl_order_taking as a inner join tbl_order_taking_items as b 
+          //   on a.order_no=b.order_no inner join tbl_item_sizes as  c on b.size_id=c.size_id inner join tbl_customer 
+          //   as d on d.customer_code=a.customer_code group by a.order_no,a.order_date,a.customer_code,d.customer_name,b.size_id
+          //         ) as dev where total_piece > 0 and fg_qty > 0 group by customer_code,customer_name  `)  
+          item_exec_Result = await client.query(`select * from (select a.order_no,a.ref_no,to_char(a.order_date,'DD-MM-YYYY') as order_date,a.customer_code,b.size_id,c.qr_code, 
+          sum(b.qty)::Integer - coalesce((select sum(coalesce(dispatch_set,0)) from tbl_dispatch_details  where status_flag = 1 and order_no=a.order_no),0) as total_piece,'0' as dispatch_qty,
+          b.size_id, coalesce((select sum(coalesce(no_of_set,0)) from tbl_fg_items where size_id=b.size_id),0) - coalesce((select sum(coalesce(dispatch_set,0)) from tbl_dispatch_details  where status_flag = 1 and size_id=b.size_id),0) as fg_qty from tbl_order_taking as a inner join tbl_order_taking_items as b on a.order_no=b.order_no inner join tbl_item_sizes as  c on b.size_id=c.size_id inner join tbl_customer as d on d.customer_code=a.customer_code
+          where ${customercode_val} and c.size_id in (select size_id from tbl_fg_items) 
+          group by a.order_no,a.ref_no,a.order_date,a.customer_code,b.size_id,c.qr_code,b.size_id) as dev where  total_piece > 0 and fg_qty > 0`);
+          // SELECT customer_code,customer_name  from (
+          //   SELECT a.order_no,to_char(a.order_date,'DD-MM-YYYY') as order_date,a.customer_code,
+          //   d.customer_name,coalesce((select sum(coalesce(no_of_set,0)) from 
+          //   tbl_fg_items where size_id=b.size_id),0) - 
+          //   coalesce((select sum(coalesce(dispatch_set,0)) from tbl_dispatch_details  where status_flag = 1 and 
+          //   size_id=b.size_id),0) as fg_qty, sum(b.qty)::Integer - coalesce((select sum(coalesce(dispatch_set,0)) from tbl_dispatch_details  
+          //   where status_flag = 1 and order_no=a.order_no),0) as total_piece  from tbl_order_taking as a inner join tbl_order_taking_items as b 
+          //   on a.order_no=b.order_no inner join tbl_item_sizes as  c on b.size_id=c.size_id inner join tbl_customer 
+          //   as d on d.customer_code=a.customer_code group by a.order_no,a.order_date,a.customer_code,d.customer_name,b.size_id
+          //         ) as dev where total_piece > 0 and fg_qty > 0 group by customer_code,customer_name
+        }
+        
+         if (client) {
+           client.end();
+         }  
+         let item_Array = item_exec_Result && item_exec_Result.rows ? item_exec_Result.rows : [];
+        //  responseData = { "itemArray": result}
+         responseData = { "itemArray": item_Array }
+         if (responseData) {
+           return responseData;
+         }
+         else {
+           return '';
+         }
+       }
+       else {
+         if (client) { client.end(); }
+       }
+     } else {
+       if (client) { client.end(); }
+       throw new Error(constants.userMessage.TOKEN_MISSING);
+     }
+   } catch (error) {
+     if (client) { client.end(); }
+     throw new Error(error);
+   }
+ 
+   finally {
+     if (client) { client.end(); }// always close the resource
+   }
+ }
+  //create jwt 
+  module.exports.designListJwt = async (req) => {
+    try {
+      const token = await commonService.jwtCreate(req);
+      return { token };
+  
+    } catch (error) {
+      throw new Error(error);
+    }
+  }
+  // Get design list  
+  module.exports.designList = async (req) => {
+    const client = new Client({
+      user: connectionString.user,
+      host: connectionString.host,
+      database: connectionString.database,
+      password: connectionString.password,
+      port: connectionString.port,
+    });
+    await client.connect();
+    try {
+      if (req.jwtToken) {
+        var responseData = {}
+        const decoded = await commonService.jwtVerify(req.jwtToken);  
+        if (decoded) {   
+          const item_exec_Result = await client.query(`SELECT 'All' as label,'0' as value, 0 as total_piece, '0' as fg_id 
+          UNION ALL
+          SELECT * FROM (select * from (select qr_code as label,a.size_id as value,sum(coalesce(no_of_set,0))-coalesce((select  sum(coalesce(dispatch_set,0)) from  tbl_dispatch_details where status_flag = 1 and size_id=a.size_id),0)  as total_piece,  string_agg(fg_id::text,',') as fg_id from tbl_fg_items as a inner join tbl_item_sizes as b on a.size_id=b.size_id 	inner join tbl_order_taking_items as c on a.size_id=c.size_id  group by a.size_id,qr_code) as dev where total_piece > 0 order by label) as d`); 
+          const customer_exec_Result = await client.query(`SELECT 'All' as label,'0' as value, 0 as total_piece, '0' as fg_id
+          UNION ALL
+          SELECT * FROM (select distinct label,value,sum(total_piece) as total_piece,fg_id from (select  coalesce(d.customer_name,'') ||' - '||  coalesce(d.mobile_no,'') as label,d.customer_code  as value,sum(b.qty)::Integer -  coalesce((select sum(coalesce(dispatch_set,0)) from tbl_dispatch_details  where status_flag = 1 and order_no=a.order_no),0) as order_qty,coalesce((select sum(coalesce(no_of_set,0)) from tbl_fg_items where size_id=b.size_id),0) - coalesce((select sum(coalesce(dispatch_set,0)) from tbl_dispatch_details  where status_flag = 1 and size_id=b.size_id),0) as total_piece,(select  string_agg(fg_id::text,',') from tbl_fg_items where size_id=b.size_id) as fg_id  from tbl_order_taking as a inner join tbl_order_taking_items as b on a.order_no=b.order_no inner join tbl_item_sizes as c on b.size_id=c.size_id inner join tbl_customer  as d on d.customer_code=a.customer_code  and c.size_id in  (select size_id from tbl_fg_items) group by a.order_no,d.customer_name, d.mobile_no,d.customer_code,b.size_id ) as dev where order_qty > 0 and total_piece > 0  group by label,value,fg_id) as d`); 
+          const company_Result = await client.query(`SELECT * from tbl_print_setting`);
+          if (client) {
+            client.end();
+          }  
+          let item_Array = item_exec_Result && item_exec_Result.rows ? item_exec_Result.rows : [];
+          let Customer_Array = customer_exec_Result && customer_exec_Result.rows ? customer_exec_Result.rows : [];
+          let Company_Array = company_Result && company_Result.rows ? company_Result.rows : []; 
+          responseData = { "DesignArray": item_Array , "Customer_Array":Customer_Array, "Company_Array":Company_Array }
+          if (responseData) {
+            return responseData;
+          }
+          else {
+            return '';
+          }
+        }
+        else {
+          if (client) { client.end(); }
+        }
+      } else {
+        if (client) { client.end(); }
+        throw new Error(constants.userMessage.TOKEN_MISSING);
+      }
+    } catch (error) {
+      if (client) { client.end(); }
+      throw new Error(error);
+    }
+  
+    finally {
+      if (client) { client.end(); }// always close the resource
+    }
+  }
+ 
+  
+//create jwt 
+module.exports.saveItemWiseDispatchJwt = async (req) => {
+  try {
+      let obj = {} 
+      obj['user_id'] = req.user_id; 
+      const token = await commonService.jwtCreate(obj); 
+      return { token };
+
+  } catch (error) {
+      throw new Error(error);
+  }
+}
+//Save item wise dispatch
+module.exports.saveItemWiseDispatch = async (req) => {
+const client = new Client({
+  user: connectionString.user,
+  host: connectionString.host,
+  database: connectionString.database,
+  password: connectionString.password,
+  port: connectionString.port,
+});
+await client.connect();
+try {
+  if (req.jwtToken) { 
+  const decoded = await commonService.jwtVerify(req.jwtToken);  
+  const {item_details, order_details,dispatch_date} = req; 
+  if (decoded) { 
+    const {user_id} = decoded.data
+    if(order_details && order_details.length > 0 ){
+      const id_max = await client.query(`select coalesce (max(dispatch_id),0) + 1 as dispatch_id FROM tbl_dispatch_details`)
+      var dispatch_id = id_max && id_max.rows[0].dispatch_id;
+      const dispacth_number = await client.query(`select   'D'||case when `+user_id+` <= 99 then  (select LPAD(`+user_id+`::text,2,'0'))    else (`+user_id+` ::text) end  || '-' || case when coalesce(max(dispatch_id),0) + 1 <= 9999 then  (select LPAD((SELECT coalesce(max(dispatch_id),0) + 1 from tbl_dispatch_details)::text,4,'0')) else (select (SELECT coalesce(max(dispatch_id),0) + 1 from tbl_dispatch_details  )::text)
+      end as dispatch_id from tbl_dispatch_details `) 
+      var dispatch_no = dispacth_number && dispacth_number.rows[0].dispatch_id;
+      for(let i=0; i < order_details.length; i++){
+        if(order_details[i].dispatch_qty && order_details[i].dispatch_qty != '0'){
+           await client.query(`INSERT INTO  tbl_dispatch_details(dispatch_id, order_no, customer_code, order_set, dispatch_set, size_id, dispatch_type, user_id, created_at,dispatch_date,dispatch_no,status_flag) VALUES ($1, $2, $3, $4, $5,$6, $7, $8, CURRENT_TIMESTAMP,$9,$10,1) `,[dispatch_id, order_details[i].order_no, order_details[i].customer_code,order_details[i].total_piece,order_details[i].dispatch_qty,order_details[i].size_id,'itemwise' , user_id,dispatch_date,dispatch_no]);
+        }
+      } 
+    } 
+    
+    if (client) {
+      client.end();
+    } 
+    return response = { "message": "Dispatched successfully", "statusFlag": 1, "itemdispatchId": dispatch_id }; 
+  }
+  else {
+      if (client) { client.end(); }
+      return ""; 
+  }
+  } else {
+    if (client) { client.end(); }
+    throw new Error(constants.userMessage.TOKEN_MISSING);
+  }
+} catch (error) {
+  if (client) { client.end(); }
+  throw new Error(error);
+}
+
+finally {
+  if (client) { client.end(); }// always close the resource
+}
+}
+
+//create jwt 
+module.exports.saveCustomerWiseDispatchJwt = async (req) => {
+  try {
+      let obj = {} 
+      obj['user_id'] = req.user_id; 
+      const token = await commonService.jwtCreate(obj); 
+      return { token };
+
+  } catch (error) {
+      throw new Error(error);
+  }
+}
+//Save Customer wise dispatch
+module.exports.saveCustomerWiseDispatch = async (req) => {
+const client = new Client({
+  user: connectionString.user,
+  host: connectionString.host,
+  database: connectionString.database,
+  password: connectionString.password,
+  port: connectionString.port,
+});
+await client.connect();
+try {
+  if (req.jwtToken) { 
+  const decoded = await commonService.jwtVerify(req.jwtToken);  
+  const {customer_details, order_details,dispatch_date} = req; 
+  if (decoded) { 
+    const {user_id} = decoded.data
+    if(order_details && order_details.length > 0 ){
+      const id_max = await client.query(`select coalesce (max(dispatch_id),0) + 1 as dispatch_id FROM tbl_dispatch_details`)
+      var dispatch_id = id_max && id_max.rows[0].dispatch_id;
+      const dispacth_number = await client.query(`select   'D'||case when `+user_id+` <= 99 then  (select LPAD(`+user_id+`::text,2,'0'))    else (`+user_id+` ::text) end  || '-' || case when coalesce(max(dispatch_id),0) + 1 <= 9999 then  (select LPAD((SELECT coalesce(max(dispatch_id),0) + 1 from tbl_dispatch_details)::text,4,'0')) else (select (SELECT coalesce(max(dispatch_id),0) + 1 from tbl_dispatch_details  )::text)
+      end as dispatch_id from tbl_dispatch_details `) 
+      var dispatch_no = dispacth_number && dispacth_number.rows[0].dispatch_id;
+      for(let i=0; i < order_details.length; i++){
+        if(order_details[i].dispatch_qty && order_details[i].dispatch_qty != '0'){
+          await client.query(`INSERT INTO  tbl_dispatch_details(dispatch_id, order_no, customer_code, order_set, dispatch_set, size_id, dispatch_type, user_id, created_at,dispatch_date,dispatch_no,status_flag) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CURRENT_TIMESTAMP, $9, $10,1) `,[dispatch_id, order_details[i].order_no, order_details[i].customer_code,order_details[i].total_piece,order_details[i].dispatch_qty,order_details[i].size_id,'customerwise' , user_id,dispatch_date,dispatch_no]);
+        }
+      } 
+    }  
+    if (client) {
+      client.end();
+    } 
+    return response = { "message": "Dispatched successfully", "statusFlag": 1,"customerdispatchId": dispatch_id }; 
+  }
+  else {
+      if (client) { client.end(); }
+      return ""; 
+  }
+  } else {
+    if (client) { client.end(); }
+    throw new Error(constants.userMessage.TOKEN_MISSING);
+  }
+} catch (error) {
+  if (client) { client.end(); }
+  throw new Error(error);
+}
+
+finally {
+  if (client) { client.end(); }// always close the resource
+}
+}
+
+ //create jwt 
+ module.exports.itemWisePendingOrderListJwt = async (req) => {
+  try {
+    const token = await commonService.jwtCreate(req);
+    return { token };
+
+  } catch (error) {
+    throw new Error(error);
+  }
+}
+// Get itemWisePendingOrder  list  
+module.exports.itemWisePendingOrderList = async (req) => {
+  const client = new Client({
+    user: connectionString.user,
+    host: connectionString.host,
+    database: connectionString.database,
+    password: connectionString.password,
+    port: connectionString.port,
+  });
+  await client.connect();
+  try {
+    if (req.jwtToken) {
+      var responseData = {}
+      const decoded = await commonService.jwtVerify(req.jwtToken);  
+      if (decoded) {   
+        const item_exec_Result = await client.query(`select a.order_no,a.ref_no,a.customer_code,b.size_id,c.customer_name,c.city,c.mobile_no,
+        sum(b.qty*coalesce(d.total_set,'0')::Integer) as order_qty,
+        sum(b.qty*coalesce(d.total_set,'0')::Integer) - 
+        coalesce((select sum(coalesce(dispatch_qty,0)) from tbl_dispatch_details
+        where status_flag = 1 and size_id=b.size_id),0) as pending_qty
+        from tbl_order_taking as a inner join tbl_order_taking_items as b on a.order_no = b.order_no
+        inner join tbl_customer as c on a.customer_code=c.customer_code inner join tbl_item_sizes as d 
+        on d.size_id=b.size_id group by   a.order_no,a.ref_no,a.customer_code,b.size_id,c.customer_name,c.city,c.mobile_no`); 
+        
+        if (client) {
+          client.end();
+        }  
+        let item_pending_order_array = item_exec_Result && item_exec_Result.rows ? item_exec_Result.rows : []; 
+
+        responseData = { "item_pending_order_array": item_pending_order_array }
+        if (responseData) {
+          return responseData;
+        }
+        else {
+          return '';
+        }
+      }
+      else {
+        if (client) { client.end(); }
+      }
+    } else {
+      if (client) { client.end(); }
+      throw new Error(constants.userMessage.TOKEN_MISSING);
+    }
+  } catch (error) {
+    if (client) { client.end(); }
+    throw new Error(error);
+  }
+
+  finally {
+    if (client) { client.end(); }// always close the resource
+  }
+}
+
+
+
+ //create jwt 
+ module.exports.dispatchListJwt = async (req) => {
+  try {
+    const token = await commonService.jwtCreate(req);
+    return { token };
+
+  } catch (error) {
+    throw new Error(error);
+  }
+}
+// Get dispatch  list  
+module.exports.dispatchList = async (req) => {
+  const client = new Client({
+    user: connectionString.user,
+    host: connectionString.host,
+    database: connectionString.database,
+    password: connectionString.password,
+    port: connectionString.port,
+  });
+  await client.connect();
+  try {
+    if (req.jwtToken) {
+      var responseData = {}
+      const decoded = await commonService.jwtVerify(req.jwtToken);  
+      if (decoded) {   
+        const {dispatch_from_date, dispatch_to_date,filter_type, limit, offset, designcode, customercode, itemcategary_code, agent_code, process} = decoded.data;    
+        let dispatch_date = '1=1';
+        let design_code = '1=1';
+        let customer_code = '1=1';
+        let itemcategarycode = '1=1'
+        let agentcode = '1=1'
+        let get_limit = '';
+        if(dispatch_from_date && dispatch_to_date){
+          dispatch_date = `dispatch_date between '`+dispatch_from_date+`' and '`+dispatch_to_date+`' `;
+        }
+        if(designcode && designcode != "" && designcode != "0" && filter_type === 'itemwise'){
+          const design_code_val = designcode ? '\'' + designcode.split(',').join('\',\'') + '\'' : ''
+          design_code = `c.design_id in (` + design_code_val + `) `
+        }
+        if(customercode && customercode != "" && customercode != "0"  && filter_type === 'customerwise'){
+          const customer_code_val = customercode ? '\'' + customercode.split(',').join('\',\'') + '\'' : ''
+          customer_code = `a.customer_code in (` + customer_code_val + `) `
+        }
+        if(itemcategary_code && itemcategary_code != "" && itemcategary_code != "0"){
+          const itemcategory_code_val = Number(itemcategary_code)
+          itemcategarycode = `c.item_code = ` + itemcategory_code_val + ``
+        }
+        if(agent_code && agent_code != "" && agent_code != "0"){
+          const agent_code_val = Number(agent_code)
+          agentcode = `e.agent_code = ` + agent_code_val + ` `
+        }
+        if(process != 'excel'){
+          get_limit =`LIMIT ${limit} OFFSET ${offset}`;
+        }
+        if(process == 'excel') { 
+          const item_exec_Result = await client.query(`SELECT dispatch_id, coalesce(order_set,0) as order_set,coalesce(dispatch_set,0) as dispatch_set ,a.user_id,dispatch_no,to_char(dispatch_date, 'dd-MM-YYYY') as dispatch_date,b.qr_code,a.order_no,d.customer_name  from tbl_dispatch_details a inner join tbl_item_sizes as b ON b.size_id = a.size_id inner join tbl_item_management as c on c.trans_no=b.trans_no inner join tbl_customer as d ON d.customer_code = a.customer_code inner join tbl_agent as e on d.agent_code = e.agent_code where a.dispatch_type = '${filter_type}' and a.status_flag = 1 and ${dispatch_date} and ${design_code} and ${customer_code} and ${itemcategarycode} and ${agentcode} order by dispatch_id desc ` ); 
+          let dispatch_array = item_exec_Result && item_exec_Result.rows ? item_exec_Result.rows : []; 
+          const company_Result = await client.query(`SELECT * from tbl_print_setting`);
+          let Company_Array = company_Result && company_Result.rows ? company_Result.rows : []; 
+          responseData = { "dispatch_array": dispatch_array, "Company_Array":Company_Array }
+        } else { 
+            const item_total_Result = await client.query(`SELECT count(dispatch_id) as totalcount   from tbl_dispatch_details where dispatch_type ='${filter_type}' and status_flag = 1 and ${dispatch_date} ` ); 
+            //  group by dispatch_id
+            let dispatch_total = item_total_Result && item_total_Result.rows.length > 0 ? item_total_Result.rows[0].totalcount : 0;
+            const item_exec_Result = await client.query(`SELECT dispatch_id,sum(coalesce(order_set,0)) as order_set,sum(coalesce(dispatch_set,0)) as dispatch_set ,a.user_id,dispatch_no,to_char(dispatch_date, 'dd-MM-YYYY') as dispatch_date  from tbl_dispatch_details a inner join tbl_item_sizes as b ON b.size_id = a.size_id inner join tbl_item_management as c on c.trans_no=b.trans_no inner join tbl_customer as d on a.customer_code = d.customer_code inner join tbl_agent as e on d.agent_code = e.agent_code where a.dispatch_type = '${filter_type}' and a.status_flag = 1 and  ${dispatch_date} and ${design_code} and ${customer_code} and ${itemcategarycode} and ${agentcode} group by dispatch_id,a.user_id,dispatch_no,dispatch_date order by dispatch_id desc  ${get_limit}`); 
+            let dispatch_array = item_exec_Result && item_exec_Result.rows ? item_exec_Result.rows : []; 
+            let result = [];
+            if (dispatch_array.length > 0) {
+              for (let i = 0; i < dispatch_array.length; i++) {
+                const item_Result = await client.query(` select b.qr_code,order_set ,dispatch_set,order_no,d.customer_name from tbl_dispatch_details as a inner join tbl_item_sizes as b ON b.size_id = a.size_id  inner join tbl_item_management as c on c.trans_no=b.trans_no  inner join tbl_customer as d ON d.customer_code = a.customer_code inner join tbl_agent as e on d.agent_code = e.agent_code  where a.dispatch_type = '${filter_type}' and a.status_flag = 1 and dispatch_id=$1 and ${design_code} and ${customer_code} and ${itemcategarycode} and ${agentcode}`,[dispatch_array[i].dispatch_id] );
+                let item_Array = item_Result && item_Result.rows ? item_Result.rows : []; 
+                let obj = dispatch_array[i]
+                obj['ItemArray'] = item_Array
+                result.push(obj)
+              }
+            } 
+            responseData = { "dispatch_array": result, "dispatch_total":dispatch_total }
+        }
+        if (client) {
+          client.end();
+        }  
+       
+       
+        if (responseData) {
+          return responseData;
+        }
+        else {
+          return '';
+        }
+      }
+      else {
+        if (client) { client.end(); }
+      }
+    } else {
+      if (client) { client.end(); }
+      throw new Error(constants.userMessage.TOKEN_MISSING);
+    }
+  } catch (error) {
+    if (client) { client.end(); }
+    throw new Error(error);
+  }
+
+  finally {
+    if (client) { client.end(); }// always close the resource
+  }
+}
+
+ //create jwt 
+ module.exports.dispatchDropdownListJwt = async (req) => {
+  try {
+    const token = await commonService.jwtCreate(req);
+    return { token };
+
+  } catch (error) {
+    throw new Error(error);
+  }
+}
+// Get design list  
+module.exports.dispatchDropdownList = async (req) => {
+  const client = new Client({
+    user: connectionString.user,
+    host: connectionString.host,
+    database: connectionString.database,
+    password: connectionString.password,
+    port: connectionString.port,
+  });
+  await client.connect();
+  try {
+    if (req.jwtToken) {
+      var responseData = {}
+      const decoded = await commonService.jwtVerify(req.jwtToken);  
+      if (decoded) {   
+        const item_exec_Result = await client.query(`select 'All' as label, '0' as value union all select distinct c.design_id as label,c.design_id as value from tbl_dispatch_details as a inner join tbl_item_sizes as b ON b.size_id = a.size_id inner join 
+        tbl_item_management as c on c.trans_no=b.trans_no where a.status_flag = 1 and a.dispatch_type='itemwise'`); 
+        const customer_exec_Result = await client.query(`select 'All' as label, '0' as value union all select c.customer_name || '-'||c.mobile_no as label,a.customer_code as value  from tbl_dispatch_details as a  inner join tbl_customer as c ON c.customer_code = a.customer_code where a.status_flag = 1 and a.dispatch_type='customerwise' `); 
+        const itemcategory_exec_Result = await client.query(`select 'All' as label, '0' as value union all  SELECT * FROM (select d.item_name as label,c.item_code as value from tbl_dispatch_details as a inner join tbl_item_sizes as b on a.size_id=b.size_id inner join tbl_item_management as c on c.trans_no =b.trans_no inner join tbl_def_item as d on c.item_code = d.item_id where status_flag = 1 ) as dev       group by value ,label `); 
+        const agent_exec_Result = await client.query(`select 'All' as label, '0' as value union all
+        SELECT * FROM (SELECT a.agent_name as label,a.agent_code as value from tbl_agent as a inner join 
+        tbl_customer as b on a.agent_code = b.agent_code
+        inner join tbl_dispatch_details as c on b.customer_code = c.customer_code where
+        status_flag = 1 ) as dev group by label,value `); 
+        
+       
+        if (client) {
+          client.end();
+        }  
+        let item_Array = item_exec_Result && item_exec_Result.rows ? item_exec_Result.rows : [];
+        let Customer_Array = customer_exec_Result && customer_exec_Result.rows ? customer_exec_Result.rows : [];
+        let itemCategory_Array = itemcategory_exec_Result && itemcategory_exec_Result.rows ? itemcategory_exec_Result.rows : [];
+        let Agent_Array = agent_exec_Result && agent_exec_Result.rows ? agent_exec_Result.rows : [];
+
+        responseData = { "DesignArray": item_Array , "Customer_Array":Customer_Array, "itemCategory_Array":itemCategory_Array, "Agent_Array":Agent_Array }
+        if (responseData) {
+          return responseData;
+        }
+        else {
+          return '';
+        }
+      }
+      else {
+        if (client) { client.end(); }
+      }
+    } else {
+      if (client) { client.end(); }
+      throw new Error(constants.userMessage.TOKEN_MISSING);
+    }
+  } catch (error) {
+    if (client) { client.end(); }
+    throw new Error(error);
+  }
+
+  finally {
+    if (client) { client.end(); }// always close the resource
+  }
+}
+
+//create jwt 
+module.exports.cancelDispatchDataJwt = async (req) => {
+  try {
+    const token = await commonService.jwtCreate(req);
+    return { token };
+
+  } catch (error) {
+      throw new Error(error);
+  }
+}
+//Save Customer wise dispatch
+module.exports.cancelDispatchData = async (req) => {
+const client = new Client({
+  user: connectionString.user,
+  host: connectionString.host,
+  database: connectionString.database,
+  password: connectionString.password,
+  port: connectionString.port,
+});
+await client.connect();
+try {
+  if (req.jwtToken) { 
+  const decoded = await commonService.jwtVerify(req.jwtToken);  
+  const {user_id, dispatch_id} = decoded.data; 
+  if (decoded) { 
+    var makerid = await commonService.insertLogs(user_id, "Cancel Dispatch");
+    const update_result = await client.query(`UPDATE tbl_dispatch_details set status_flag = 2 where dispatch_id = $1 `,[dispatch_id]);     
+     
+    if (client) {
+      client.end();
+    } 
+    let update_code = update_result && update_result.rowCount ? update_result.rowCount : 0;
+    if (update_code > 0) {
+      return response = { "message": constants.userMessage.CANCEL_SUCCESS, "statusFlag": 1 };
+    }else{
+      return response = { "message": constants.userMessage.CANCEL_SUCCESS, "statusFlag": 2 }; 
+
+    }
+  }
+  else {
+      if (client) { client.end(); }
+      return ""; 
+  }
+  } else {
+    if (client) { client.end(); }
+    throw new Error(constants.userMessage.TOKEN_MISSING);
+  }
+} catch (error) {
+  if (client) { client.end(); }
+  throw new Error(error);
+}
+
+finally {
+  if (client) { client.end(); }// always close the resource
+}
+}
+
+module.exports.printItemCustomerWiseDispatchJwt = async (req) => {
+  try {
+    const token = await commonService.jwtCreate(req);
+    return { token };
+
+  } catch (error) {
+    throw new Error(error);
+  }
+}
+// Get Dispatch list  
+module.exports.printItemCustomerWiseDispatch = async (req) => {
+  const client = new Client({
+    user: connectionString.user,
+    host: connectionString.host,
+    database: connectionString.database,
+    password: connectionString.password,
+    port: connectionString.port,
+  });
+  await client.connect();
+  try {
+    if (req.jwtToken) {
+      var responseData = {}
+      const decoded = await commonService.jwtVerify(req.jwtToken);  
+      if (decoded) { 
+       const {process,dispatch_id} = decoded.data
+       let item_exec_Result  = ''      
+       let result = [];
+       if(process == 'itemwise'){
+        item_exec_Result = await client.query(`SELECT a.dispatch_id,a.size_id,qr_code FROm tbl_dispatch_details as a inner join tbl_item_sizes as b on a.size_id=b.size_id 
+        where dispatch_type = '${process}' and dispatch_id=${dispatch_id} and status_flag = 1 group by a.dispatch_id,a.size_id,qr_code`)
+         let dispatch_array = item_exec_Result && item_exec_Result.rows ? item_exec_Result.rows : [];      
+         result = [];
+         
+         
+         if (dispatch_array.length > 0) {
+           for (let i = 0; i < dispatch_array.length; i++) {
+             const item_Result = await client.query(` SELECT a.dispatch_id,a.order_no,a.customer_code,a.order_set,a.dispatch_set,a.size_id,qr_code,
+             (SELECT customer_name from tbl_customer where customer_code = a.customer_code) as customer_name
+             FROm tbl_dispatch_details as a inner join tbl_item_sizes as b on a.size_id=b.size_id  where a.dispatch_type = '${process}' and a.status_flag = 1 and dispatch_id=$1 and a.size_id=$2 group by a.order_no,a.dispatch_id,a.customer_code,a.order_set,a.dispatch_set,a.size_id,
+             qr_code,created_at order by created_at desc`,[dispatch_array[i].dispatch_id,dispatch_array[i].size_id] );
+             let item_Array = item_Result && item_Result.rows ? item_Result.rows : []; 
+             let obj = dispatch_array[i]
+             obj['ItemArray'] = item_Array
+             result.push(obj)
+           }
+         }          
+       }
+       if(process == 'customerwise'){
+        item_exec_Result = await client.query(`SELECT a.dispatch_id,b.customer_code,b.customer_name FROm tbl_dispatch_details as a inner join tbl_customer as b on a.customer_code=b.customer_code where a.dispatch_type = '${process}' and dispatch_id=${dispatch_id} and status_flag = 1 group by a.dispatch_id,b.customer_code,b.customer_name `)
+        let dispatch_array = item_exec_Result && item_exec_Result.rows ? item_exec_Result.rows : [];          
+         
+         if (dispatch_array.length > 0) {
+           for (let i = 0; i < dispatch_array.length; i++) {
+             const item_Result = await client.query(` SELECT a.dispatch_id,a.order_no,b.customer_code,a.order_set,a.dispatch_set,a.size_id,(SELECT qr_code from tbl_item_sizes where size_id=a.size_id) as qr_code,b.customer_name,mobile_no FROm tbl_dispatch_details as a inner join tbl_customer as b on a.customer_code = b.customer_code  where a.dispatch_type = '${process}' and a.status_flag = 1 and dispatch_id=$1 and a.customer_code=$2 group by a.order_no,a.dispatch_id,b.customer_code,a.order_set,a.dispatch_set,a.size_id,b.customer_name,created_at order by created_at desc`,[dispatch_array[i].dispatch_id,dispatch_array[i].customer_code] );
+             let item_Array = item_Result && item_Result.rows ? item_Result.rows : []; 
+             let obj = dispatch_array[i]
+             obj['ItemArray'] = item_Array
+             result.push(obj)
+           }
+         }
+       }
+       const company_Result = await client.query(`SELECT * from tbl_print_setting`);
+       let Company_Array = company_Result && company_Result.rows ? company_Result.rows : []; 
+       responseData = { "dispatch_array": result,"Company_Array":Company_Array}
+        if (client) {
+          client.end();
+        }  
+        if (responseData) {
+          return responseData;
+        }
+        else {
+          return '';
+        }
+      }
+      else {
+        if (client) { client.end(); }
+      }
+    } else {
+      if (client) { client.end(); }
+      throw new Error(constants.userMessage.TOKEN_MISSING);
+    }
+  } catch (error) {
+    if (client) { client.end(); }
+    throw new Error(error);
+  }
+
+  finally {
+    if (client) { client.end(); }// always close the resource
+  }
+}

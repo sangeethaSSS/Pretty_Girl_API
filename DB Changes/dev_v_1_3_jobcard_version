@@ -1,0 +1,50 @@
+/************************* 28-02-2023 *************************/
+ALTER TABLE IF EXISTS public.tbl_job_details
+    ADD COLUMN IF NOT EXISTS size_name character varying;
+
+ALTER TABLE IF EXISTS public.tbl_job_details DROP CONSTRAINT IF EXISTS design_forgnkey;
+
+ALTER TABLE IF EXISTS public.tbl_job_details DROP CONSTRAINT IF EXISTS size_forgnkey;
+
+ALTER TABLE IF EXISTS public.tbl_job_details
+    ADD CONSTRAINT design_id_forgnkey FOREIGN KEY (design_id)
+    REFERENCES public.tbl_item_sizes (size_id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION
+    NOT VALID;
+ALTER TABLE IF EXISTS public.tbl_job_details DROP CONSTRAINT IF EXISTS item_forgnkey;
+
+ALTER TABLE IF EXISTS public.tbl_job_details
+    ADD CONSTRAINT item_forgnkey FOREIGN KEY (item_id)
+    REFERENCES public.tbl_def_item (item_id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION
+    NOT VALID;
+/************************* 28-02-2023 *************************/
+
+/************************* 02-03-2023 *************************/
+ALTER TABLE IF EXISTS public.tbl_order_taking
+    ADD COLUMN IF NOT EXISTS pdf_sent_status character varying;
+
+    CREATE TABLE public.tbl_credentials
+(
+    uid integer NOT NULL GENERATED ALWAYS AS IDENTITY ( INCREMENT 1 START 1 ),
+    bucketname character varying,
+    secretkey character varying,
+    accesskey character varying,
+    PRIMARY KEY (uid)
+)
+WITH (
+    OIDS = FALSE
+);
+
+ALTER TABLE IF EXISTS public.tbl_credentials
+    OWNER to postgres;
+
+ALTER TABLE IF EXISTS public.tbl_credentials
+    ADD COLUMN IF NOT EXISTS credential_type character varying;
+/************************* 02-03-2023 *************************/
+/************************* 03-03-2023 *************************/
+ALTER TABLE IF EXISTS public.tbl_credentials
+    ADD COLUMN IF NOT EXISTS whatsappurl character varying;
+/************************* 03-03-2023 *************************/

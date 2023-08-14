@@ -1,0 +1,3006 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "This is a simple example NodeJS API project to demonstrate Swagger Documentation",
+        "version": "1.0.0",
+        "title": "GudMed API",
+        "contact": {
+            "email": "abc@gmail.com"
+        },
+        "license": {
+            "name": "Apache 2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+        }
+    },
+    "host": "apidev-env.eba-gfasd2ew.ap-south-1.elasticbeanstalk.com",    
+    "basePath": "/api/v1",
+    "paths" : {
+          "/userMgmt/loginjwt" : {
+              "post" : {
+                  "tags":["User Management"],
+                  "summary" : "Loginjwt",
+                  "description": "Loginjwt",
+                  "parameters": [
+                    {
+                        "in": "body",
+                        "name": "body",
+                        "description": "Parameters",
+                        "required": true,
+                        "example": {
+                            "agentId" : "AD8873",
+                            "pwd": "Gudmed$123"                        
+                        }                  
+                    }
+                  ],
+                  "responses": {
+                    
+                  }
+              }
+          },
+          "/userMgmt/login" : {
+              "post" : {
+                "tags":["User Management"],
+                  "summary" : "Login",
+                  "description": "Login",
+                  "parameters": [
+                    {
+                        "in": "body",
+                        "name": "body",
+                        "description": "Parameters",
+                        "required": true  ,
+                        "example": {
+                          "agentId" : "AD8873",
+                          "pwd": "Gudmed$123",
+                          "jwtToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7InVzZXJsb2dpbiI6W3siZk5hbWUiOiJEaHJ1diIsImxOYW1lIjoiU2hhcm1hIiwicm9sZUlkIjoxLCJyb2xlTmFtZSI6IkFkbWluIiwicHdkIjoiMjM5YmQwOWQyNDc1M2MyMTYyMWEiLCJtb2JpbGVOYnIiOiI5ODc2NTQ1MjMyIiwiZW1haWwiOiJhZG1pbkBndWRtZWQuaW4iLCJ"
+                        }                      
+                    }
+                  ],
+                  "responses": {
+                    
+                  }
+              }
+          },
+          "/userMgmt/createjwt" : {
+            "post" : {
+                "tags":["User Management"],
+                "summary" : "createjwt",
+                "description": "Create new user",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example": {
+                        "agentCode": 6979,
+                        "agentId": "SK6979",
+                        "crdBy": 4,
+                        "ctcDtls": {"mobileNbr": "9347384611", "email": "sharma@gmail.com"},
+                        "fName": "Sharma",
+                        "lName": "Khan",
+                        "permission": {"permission": [null, 2, null, null]},
+                        "pwd": "Gudmed$123",
+                        "roleId": 2,
+                        "roleName": "L1 Operator",
+                        "status": 1,
+                        "userCode": 4,
+                        "userId": "admin@gudmed.in"
+                      }                       
+                  }
+                ],
+                "responses": {
+                  
+                }
+            }
+          },
+          "/userMgmt/create" : {
+            "post" : {
+                "tags":["User Management"],
+                "summary" : "create",
+                "description": "Create new user",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{
+                        "agentCode": 6979,
+                        "agentId": "SK6979",
+                        "crdBy": 4,
+                        "ctcDtls": {"mobileNbr": "9347384611", "email": "sharma@gmail.com"},
+                        "fName": "Sharma",
+                        "lName": "Khan",
+                        "permission": {"permission": [null, 2, null, null]},
+                        "pwd": "Gudmed$123",
+                        "roleId": 2,
+                        "roleName": "L1 Operator",
+                        "status": 1,
+                        "userCode": 4,
+                        "userId": "admin@gudmed.in",
+                        "jwtToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7ImZOYW1lIjoiU2hhcm1hIiwibE5hbWUiOiJLaGFuIiwiY3JkQnkiOjQsImN0Y0R0bHMiOnsibW9iaWxlTmJyIjoiOTM0NzM4NDYxMSIsImVtYWlsIjoic2hhcm1hQGdtYWlsLmNvbSJ9LCJyb2xlSWQiOjIsInJvbGVOYW1lIjoiTDEgT3BlcmF0b3IiLCJwd2QiOiIyMzliZDA5ZDI0NzUzYzIxNjIxYSIsInN0YXR1cyI6MSwidXNlcklkIjoiYWRtaW5AZ3VkbWVkLmluIiwiYWdlbnRJZCI6IlNLNjk3OSIsImFnZW50Q29kZSI6Njk3OSwidXNlckNvZGUiOjQsInBlcm1pc3Npb24iOnsicGVybWlzc2lvbiI6W251bGwsMixudWxsLG51bGxdfX0sImlhdCI6MTYyOTIwNTM2NCwiZXhwIjoxNjI5MjkxNzY0fQ.McKUWdx364PUGLcM-7wQTeokRJcGVPtkiL1vPLQZgN4"
+                      }                      
+                  }
+                ],
+                "responses": {
+                  
+                }
+            }
+          },
+          "/userMgmt/getUsersjwt" : {
+            "post" : {
+                "tags":["User Management"],
+                "summary" : "getUsersjwt",
+                "description": "Get userlist",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example": {
+                        "userCode": 4,
+                        "userId": "admin@gudmed.in"
+                      }                   
+                  }
+                ],
+                "responses": {
+                  
+                }
+            }
+          },
+          "/userMgmt/getUsers" : {
+            "post" : {
+              "tags":["User Management"],
+                "summary" : "getUsers",
+                "description": "Get userlist",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example": {
+                        "jwtToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjpbeyJmTmFtZSI6IlNoYXJtYSIsImxOYW1lIjoiS2hhbiIsInJvbGVJZCI6Miwicm9sZU5hbWUiOiJMMSBPcGVyYXRvciIsImFnZW50SWQiOiJTSzY5NzkiLCJhZ2VudENvZGUiOiI2OTc5IiwicHdkIjoiMjM5YmQwOWQyNDc1M2MyMTYyMWEiLCJtb2JpbGVOYnIiOiI5MzQ3Mzg0NjExIiwiZW1haWwiOiJzaGFybWFAZ21haWwuY29tIiwic3RhdHVzIjoxLCJ1c2VySWQiOiJzaGFybWFAZ21haWwuY29tIiwidXNlckNvZGUiOjUsInN0YXR1c05hbWUiOiJBY3RpdmUiLCJzZXNzaW9uc3RhdHVzIjoiT2ZmbGluZSJ9LHsiZk5hbWUiOiJEaHJ1diIsImxOYW1lIjoiU2hhcm1hIiwicm9sZUlkIjoxLCJyb2xlTmFtZSI6IkFkbWluIiwiYWdlbnRJZCI6IkFEODg3MyIsImFnZW50Q29kZSI6bnVsbCwicHdkIjoiMjM5YmQwOWQyNDc1M2MyMTYyMWEiLCJtb2JpbGVOYnIiOiI5ODc2NTQ1MjMyIiwiZW1haWwiOiJhZG1pbkBndWRtZWQuaW4iLCJzdGF0dXMiOjEsInVzZXJJZCI6ImFkbWluQGd1ZG1lZC5pbiIsInVzZXJDb2RlIjo0LCJzdGF0dXNOYW1lIjoiQWN0aXZlIiwic2Vzc2lvbnN0YXR1cyI6Ik9ubGluZSJ9XSwiaWF0IjoxNjI5MjA1MzY1LCJleHAiOjE2MjkyOTE3NjV9.FVa9XkO3XDb3WlmN6kMBHFddWgqvQDKQc8wEJUtli6A",
+                        "userCode": 4,
+                        "userId": "admin@gudmed.in"
+                      }                   
+                  }
+                ],
+                "responses": {
+                  
+                }
+            }
+          },
+          "/userMgmt/getuserJwt" : {
+            "post" : {
+              "tags":["User Management"],
+                "summary" : "getuserJwt",
+                "description": "getuserJwt",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{                    
+                        "edituserCode": 4,
+                        "userCode": 4,
+                        "userId": "admin@gudmed.in"
+                      }
+                  }
+                ],
+                "responses": {
+                  
+                }
+            }
+          },
+          "/userMgmt/getuser" : {
+            "post" : {
+              "tags":["User Management"],
+                "summary" : "getuserJwt",
+                "description": "getuserJwt",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{                    
+                        "edituserCode": 4,
+                        "jwtToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7InVzZXJJZCI6ImFkbWluQGd1ZG1lZC5pbiIsImVkaXR1c2VyQ29kZSI6NCwidXNlckNvZGUiOjR9LCJpYXQiOjE2MjkyMDU4NDksImV4cCI6MTYyOTI5MjI0OX0.tYShrE1X4F_MlU2izXjfR133BNFc2vjHAAsw3FDyVZc",
+                        "userCode": 4,
+                        "userId": "admin@gudmed.in"
+                      }
+                  }
+                ],
+                "responses": {
+                  
+                }
+            }
+          },
+          "/userMgmt/updatejwt" : {
+            "post" : {
+              "tags":["User Management"],
+                "summary" : "updatejwt",
+                "description": "updatejwt",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{
+                        "agentId": "AD8873",
+                        "crdBy": 4,
+                        "ctcDtls": {"mobileNbr": "9876545232", "email": "admin@gudmed.in"},
+                        "edituserCode": 4,
+                        "fName": "Dhruv",
+                        "lName": "Sharma",
+                        "permission": {"permission": [1, 2, 3, 4]},
+                        "roleId": 1,
+                        "roleName": "Admin",
+                        "status": 1,
+                        "userCode": 4,
+                        "userId": "admin@gudmed.in"
+                      }                        
+                  }
+                ],
+                "responses": {
+                  
+                }
+            }
+          },
+          "/userMgmt/update" : {
+            "post" : {
+              "tags":["User Management"],
+                "summary" : "update",
+                "description": "update",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{
+                        "agentId": "AD8873",
+                        "crdBy": 4,
+                        "ctcDtls": {"mobileNbr": "9876545232", "email": "admin@gudmed.in"},
+                        "edituserCode": 4,
+                        "fName": "Dhruv",
+                        "jwtToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7ImZOYW1lIjoiRGhydXYiLCJsTmFtZSI6IlNoYXJtYSIsImNyZEJ5Ijo0LCJjdGNEdGxzIjp7Im1vYmlsZU5iciI6Ijk4NzY1NDUyMzIiLCJlbWFpbCI6ImFkbWluQGd1ZG1lZC5pbiJ9LCJyb2xlSWQiOjEsInJvbGVOYW1lIjoiQWRtaW4iLCJzdGF0dXMiOjEsImFnZW50SWQiOiJBRDg4NzMiLCJ1c2VySWQiOiJhZG1pbkBndWRtZWQuaW4iLCJlZGl0dXNlckNvZGUiOjQsInVzZXJDb2RlIjo0LCJwZXJtaXNzaW9uIjp7InBlcm1pc3Npb24iOlsxLDIsMyw0XX19LCJpYXQiOjE2MjkyMDY0ODYsImV4cCI6MTYyOTI5Mjg4Nn0.bXsj2ZfL50PC4JIN0agDnmKP75ZzBhWCVDLOROavoiw",
+                        "lName": "Sharma",
+                        "permission": {"permission": [1, 2, 3, 4]},
+                        "roleId": 1,
+                        "roleName": "Admin",
+                        "status": 1,
+                        "userCode": 4,
+                        "userId": "admin@gudmed.in"
+                      }                        
+                  }
+                ],
+                "responses": {
+                  
+                }
+            }
+          },
+          "/userMgmt/deleteUserjwt" : {
+            "post" : {
+              "tags":["User Management"],
+                "summary" : "deleteUserjwt",
+                "description": "deleteUserjwt",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{
+                        "deleteuserCode": 5,
+                        "email": "sharma@gmail.com",
+                        "userCode": 4,
+                        "userId": "sharma@gmail.com"
+                      }                           
+                  }
+                ],
+                "responses": {
+                  
+                }
+            }
+          },
+          "/userMgmt/deleteUser" : {
+            "post" : {
+              "tags":["User Management"],
+                "summary" : "deleteUser",
+                "description": "deleteUser",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{
+                        "deleteuserCode": 5,
+                        "jwtToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7ImVtYWlsIjoic2hhcm1hQGdtYWlsLmNvbSIsInVzZXJJZCI6InNoYXJtYUBnbWFpbC5jb20iLCJ1c2VyQ29kZSI6NCwiZGVsZXRldXNlckNvZGUiOjV9LCJpYXQiOjE2MjkyMDg4NjgsImV4cCI6MTYyOTI5NTI2OH0.1KLw1qSaDz1jdO_AVO-6zFcyokom10w-kYzI1yJ5M8U",
+                        "userCode": 4,
+                        "userId": "sharma@gmail.com"
+                      }                        
+                  }
+                ],
+                "responses": {
+                  
+                }
+            }
+          },
+         
+          "/userMgmt/changePaswdJwt" : {
+            "post" : {
+              "tags":["User Management"],
+                "summary" : "changePaswdJwt",
+                "description": "changePaswdJwt",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{
+                        "email": "sharma@gmail.com",
+                        "oldpwd": "Shiva$123",
+                        "pwd": "Shiva$1234",
+                        "userCode": 5,
+                        "userId": "sharma@gmail.com"
+                      }                          
+                  }
+                ],
+                "responses": {
+                  
+                }
+            }
+          },
+          "/userMgmt/changePaswd" : {
+            "post" : {
+              "tags":["User Management"],
+                "summary" : "changePaswd",
+                "description": "changePaswd",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{
+                        "email": "sharma@gmail.com",
+                        "jwtToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7ImVtYWlsIjoic2hhcm1hQGdtYWlsLmNvbSIsInVzZXJJZCI6InNoYXJtYUBnbWFpbC5jb20iLCJ1c2VyQ29kZSI6NSwib2xkcHdkIjoiU2hpdmEkMTIzIiwicHdkIjoiMzc4NmRkODYyMDM1MjkyMjYzMWQifSwiaWF0IjoxNjI5MjA3ODM3LCJleHAiOjE2MjkyOTQyMzd9.-xsJLWdTtn88IfwWPBmBWvDshnzLEKz0IVHRxIqGegk",
+                        "oldpwd": "Shiva$123",
+                        "pwd": "Shiva$1234",
+                        "userCode": 5,
+                        "userId": "sharma@gmail.com"
+                      }                       
+                  }
+                ],
+                "responses": {
+                  
+                }
+            }
+          },
+          "/userMgmt/resetUserPaswdJwt" : {
+            "post" : {
+              "tags":["User Management"],
+                "summary" : "resetUserPaswdJwt",
+                "description": "resetUserPaswdJwt",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{
+                        "pwd": "Shiva$123",
+                        "resetUserCode": 5,
+                        "userCode": 4
+                      }                           
+                  }
+                ],
+                "responses": {
+                  
+                }
+            }
+          },
+          "/userMgmt/resetUserPaswd" : {
+            "post" : {
+              "tags":["User Management"],
+                "summary" : "resetUserPaswd",
+                "description": "resetUserPaswd",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{
+                        "jwtToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7InVzZXJDb2RlIjo0LCJyZXNldFVzZXJDb2RlIjo1LCJwd2QiOiIzNzg2ZGQ4NjIwMzUyOTIyNjMifSwiaWF0IjoxNjI5MjA3MTQwLCJleHAiOjE2MjkyOTM1NDB9.Yw2q9hLOcCUehf_v-t4o6eTlzWZxZCTwXUVJ7GRHw7s",
+                        "pwd": "Shiva$123",
+                        "resetUserCode": 5,
+                        "userCode": 4
+                      }                       
+                  }
+                ],
+                "responses": {
+                  
+                }
+            }
+          },
+          "/userMgmt/storeOnlineOfflineJwt" : {
+            "post" : {
+              "tags":["User Management"],
+                "summary" : "storeOnlineOfflineJwt",
+                "description": "storeOnlineOfflineJwt",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{
+                        "onlineStatus": "Offline",
+                        "userCode": 5,
+                        "userId": "sharma@gmail.com"
+                      }                      
+                  }
+                ],
+                "responses": {
+                  
+                }
+            }
+          },
+          "/userMgmt/storeOnlineOffline" : {
+            "post" : {
+              "tags":["User Management"],
+                "summary" : "storeOnlineOffline",
+                "description": "storeOnlineOffline",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{
+                        "jwtToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7InVzZXJJZCI6InNoYXJtYUBnbWFpbC5jb20iLCJ1c2VyQ29kZSI6NSwib25saW5lU3RhdHVzIjoiT2ZmbGluZSJ9LCJpYXQiOjE2MjkyMDc1NjgsImV4cCI6MTYyOTI5Mzk2OH0.mR5RZZjvHiwnpIvO6INibxTqTkeaif-nmYojm7RpXvY",
+                        "onlineStatus": "Offline",
+                        "userCode": 5,
+                        "userId": "sharma@gmail.com"
+                      }                        
+                  }
+                ],
+                "responses": {
+                  
+                }
+            }
+          },
+          "/userMgmt/getForgotPasswordOtpGudmed" : {
+            "post" : {
+              "tags":["User Management"],
+                "summary" : "getForgotPasswordOtpGudmed",
+                "description": "getForgotPasswordOtpGudmed",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{
+                        "agentid": "SK6979"
+                      }                   
+                  }
+                ],
+                "responses": {
+                  
+                }
+            }
+          },
+          "/userMgmt/forgetpaswdjwt" : {
+            "post" : {
+              "tags":["User Management"],
+                "summary" : "forgetpaswdjwt",
+                "description": "forgetpaswdjwt",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{
+                        "agentid": "SK6979",
+                        "newpaswd": "Shiva$1234",
+                        "otp": "62345"
+                      }                      
+                  }
+                ],
+                "responses": {
+                  
+                }
+            }
+          },
+          "/userMgmt/forgetpaswd" : {
+            "post" : {
+              "tags":["User Management"],
+                "summary" : "forgetpaswd",
+                "description": "forgetpaswd",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{
+                        "agentid": "SK6979",
+                        "newpaswd": "Shiva$1234",
+                        "otp": "6234d5",
+                        "jwtToken":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7ImVtYWlsIjoic2hhcm1hQGdtYWlsLmNvbSIsInVzZXJJZCI6InNoYXJtYUBnbWFpbC5jb20iLCJ1c2VyQ29kZSI6NSwib2xkcHdkIjoiU2hpdmEkMTIzIiwicHdkIjoiMzc4NmRkODYyMDM1MjkyMjYzMWQifSwiaWF0IjoxNjI5MjA3ODM3LCJleHAiOjE2MjkyOTQyMzd9.-xsJLWdTtn88IfwWPBmBWvDshnzLEKz0IVHRxIqGegk"
+                      }                      
+                  }
+                ],
+                "responses": {
+                  
+                }
+            }
+          },          
+          "/patMgmt/loginjwt" : {
+            "post" : {
+              "tags":["Patient Management"],
+                "summary" : "loginjwt",
+                "description": "loginjwt",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{
+                        "mobileNbr": "7886869641",
+                        "paswd": "Shiva$123"
+                      }                      
+                  }
+                ],
+                "responses": {
+                  
+                }
+            }
+          },
+          "/patMgmt/login" : {
+            "post" : {
+              "tags":["Patient Management"],
+                "summary" : "login",
+                "description": "login",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{
+                        "mobileNbr": "7886869641",
+                        "paswd": "Shiva$123"
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/patMgmt/signupjwt" : {
+            "post" : {
+              "tags":["Patient Management"],
+                "summary" : "forgetpaswd",
+                "description": "forgetpaswd",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{
+                        "fName": "John",
+                        "lName": "David",
+                        "email": "john@gmail.com",
+                        "mobileNo": "9876543210",
+                        "otp": "897261",
+                        "paswd": "Shiva$123"
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/patMgmt/signup" : {
+            "post" : {
+              "tags":["Patient Management"],
+                "summary" : "forgetpaswd",
+                "description": "forgetpaswd",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{
+                        "fName": "John",
+                        "lName": "David",
+                        "email": "john@gmail.com",
+                        "mobileNo": "9876543210",
+                        "otp": "897261",
+                        "paswd": "Shiva$123",
+                        "jwtToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7InBhdGllbnRDb2RlIjo0LCJmTmFtZSI6IlNoYW5tdWdhIiwibE5hbWUiOiJQcml5YSIsImVtYWlsIjoicHJpeWFAZ21haWwuY29tIiwibW9iaWxlTmJyIjoiNzU0ODg5ODY4NSIsImRhdGVPZkJpcnRoIjoiMTkwMC0wMS0wMSIsImdlbmRlciI6MiwiYWdlZGF5IjowLCJhZ2Vtb250aCI6MCwiYWdleWVhciI6MCwiYWRkcmVzc0xpbmUxIjoiMTYwQyxQYW5kaWFuIE5hZ2FyIiwiYWRkcmVzc0xpbmUyIjoiQWRkcmVzczIiLCJjaXR5IjoiQ2hlbm5haSIsInN0YXRlIjoyMiwicGluY29kZSI6IjYyNjEzMCJ9LCJpYXQiOjE2MjkyNjc1NTcsImV4cCI6MTYyOTM1Mzk1N30.u7ycJC8unepP5NNnfygJcXcuT67r1D-cgVMuaungFRw"
+
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/patMgmt/patientCompletedListjwt" : {
+            "post" : {
+              "tags":["Patient Management"],
+                "summary" : "patientCompletedListjwt",
+                "description": "patientCompletedListjwt",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{
+                        "limit": 10,
+                        "mobileNbr": "7868869641",
+                        "offset": 0,
+                        "patId": ""
+                      }                      
+                  }
+                ],
+                "responses": {                 
+                }
+            }
+          },
+          "/patMgmt/patientCompletedList" : {
+            "post" : {
+              "tags":["Patient Management"],
+                "summary" : "patientCompletedListjwt",
+                "description": "patientCompletedListjwt",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{
+                        "jwtToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7Im1vYmlsZU5iciI6Ijc4Njg4Njk2NDEiLCJwYXRJZCI6IiIsImxpbWl0IjoxMCwib2Zmc2V0IjowfSwiaWF0IjoxNjI5MjY1MzI1LCJleHAiOjE2MjkzNTE3MjV9.-6hCY2BH-q-tIPxwALVe4hspLNwFO1q1mlcBCgntYZY",
+                        "limit": 10,
+                        "mobileNbr": "7868869641",
+                        "offset": 0,
+                        "patId": ""
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/patMgmt/changepaswdjwt" : {
+            "post" : {
+              "tags":["Patient Management"],
+                "summary" : "changepaswdjwt",
+                "description": "changepaswdjwt",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{
+                        "mobileNbr": "7548898685",
+                        "newpaswd": "Shiva$1234",
+                        "oldpaswd": "Shiva$123",
+                        "patientCode": 4
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/patMgmt/changepaswd" : {
+            "post" : {
+              "tags":["Patient Management"],
+                "summary" : "changepaswd",
+                "description": "changepaswd",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{
+                        "jwtToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7Im9sZHBhc3dkIjoiU2hpdmEkMTIzIiwibmV3cGFzd2QiOiJTaGl2YSQxMjM0IiwibW9iaWxlTmJyIjoiNzU0ODg5ODY4NSIsInBhdGllbnRDb2RlIjo0fSwiaWF0IjoxNjI5MjY2MTY5LCJleHAiOjE2MjkzNTI1Njl9.f_S6seCSrWWl_qEtZKZ3l8oqkmHi3x-QWy_cZUt6ZPY",
+                        "mobileNbr": "7548898685",
+                        "newpaswd": "Shiva$1234",
+                        "oldpaswd": "Shiva$123",
+                        "patientCode": 4
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/patMgmt/getPatientDataJwt" : {
+            "post" : {
+              "tags":["Patient Management"],
+                "summary" : "getPatientDataJwt",
+                "description": "getPatientDataJwt",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{
+                        "mobileNbr": "7548898685",
+                        "patientCode": 4
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/patMgmt/getPatientData" : {
+            "post" : {
+              "tags":["Patient Management"],
+                "summary" : "getPatientData",
+                "description": "getPatientData",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{
+                        "jwtToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7InBlcnNvbmFsIjp7InBhdGllbnRDb2RlIjo0LCJmTmFtZSI6IlNoYW5tdWdhIiwibE5hbWUiOiJQcml5YSIsIm1vYmlsZU5vIjoiNzU0ODg5ODY4NSIsImVtYWlsIjoiIiwiZGF0ZU9mQmlydGgiOm51bGwsImdlbmRlciI6MCwiYWdlZGF5IjowLCJhZ2Vtb250aCI6MCwiYWdleWVhciI6MH0sImFkZHJlc3NEYXRhIjp7ImFkZHJlc3NMaW5lMSI6IiIsImFkZHJlc3NMaW5lMiI6IiIsImNpdHkiOiIiLCJzdGF0ZWNvZGUiOjAsInN0YXRlTmFtZSI6IiIsInBpbmNvZGUiOiIifX0sImlhdCI6MTYyOTI2NjQ1OSwiZXhwIjoxNjI5MzUyODU5fQ.vKgzYBZDhKWh5vJtcNhVJIAo8cmu87PSlCEuNkvuJU8",
+                        "mobileNbr": "7548898685",
+                        "patientCode": 4
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/patMgmt/mastersjwt" : {
+            "post" : {
+              "tags":["Patient Management"],
+                "summary" : "getPatientData",
+                "description": "getPatientData",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{
+                        "userCode": 4
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/patMgmt/masters" : {
+            "post" : {
+              "tags":["Patient Management"],
+                "summary" : "getPatientData",
+                "description": "getPatientData",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{
+                        "jwtToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7InN0YXRlTGlzdCI6W3sic3RhdGVDb2RlIjoxLCJzdGF0ZU5hbWUiOiJBbmRocmEgUHJhZGVzaCJ9LHsic3RhdGVDb2RlIjoyLCJzdGF0ZU5hbWUiOiJBcnVuYWNoYWwgUHJhZGVzaCJ9LHsic3RhdGVDb2RlIjozLCJzdGF0ZU5hbWUiOiJBc3NhbSJ9LHsic3RhdGVDb2RlIjo0LCJzdGF0ZU5hbWUiOiJCaWhhciJ9LHsic3RhdGVDb2RlIjo1LCJzdGF0ZU5hbWUiOiJHb2EifSx7InN0YXRlQ29kZSI6Niwic3RhdGVOYW1lIjoiR3VqYXJhdCJ9LHsic3RhdGVDb2RlIjo3LCJzdGF0ZU5hbWUiOiJIYXJ5YW5hIn0seyJzdGF0ZUNvZGUiOjgsInN0YXRlTmFtZSI6IkhpbWFjaGFsIFByYWRlc2gifSx7InN0YXRlQ29kZSI6OSwic3RhdGVOYW1lIjoiSmFtbXUgJiBLYXNobWlyIn0seyJzdGF0ZUNvZGUiOjEwLCJzdGF0ZU5hbWUiOiJLYXJuYXRha2EifSx7InN0YXRlQ29kZSI6MTEsInN0YXRlTmFtZSI6IktlcmFsYSJ9LHsic3RhdGVDb2RlIjoxMiwic3RhdGVOYW1lIjoiTWFkaHlhIFByYWRlc2gifSx7InN0YXRlQ29kZSI6MTMsInN0YXRlTmFtZSI6Ik1haGFyYXNodHJhIn0seyJzdGF0ZUNvZGUiOjE0LCJzdGF0ZU5hbWUiOiJNYW5pcHVyIn0seyJzdGF0ZUNvZGUiOjE1LCJzdGF0ZU5hbWUiOiJNZWdoYWxheWEifSx7InN0YXRlQ29kZSI6MTYsInN0YXRlTmFtZSI6Ik1pem9yYW0ifSx7InN0YXRlQ29kZSI6MTcsInN0YXRlTmFtZSI6Ik5hZ2FsYW5kIn0seyJzdGF0ZUNvZGUiOjE4LCJzdGF0ZU5hbWUiOiJPcmlzc2EifSx7InN0YXRlQ29kZSI6MTksInN0YXRlTmFtZSI6IlB1bmphYiJ9LHsic3RhdGVDb2RlIjoyMCwic3RhdGVOYW1lIjoiUmFqYXN0aGFuIn0seyJzdGF0ZUNvZGUiOjIxLCJzdGF0ZU5hbWUiOiJTaWtraW0ifSx7InN0YXRlQ29kZSI6MjMsInN0YXRlTmFtZSI6IlRyaXB1cmEifSx7InN0YXRlQ29kZSI6MjQsInN0YXRlTmFtZSI6IlV0dGFyIFByYWRlc2gifSx7InN0YXRlQ29kZSI6MjUsInN0YXRlTmFtZSI6Ildlc3QgQmVuZ2FsIn0seyJzdGF0ZUNvZGUiOjI2LCJzdGF0ZU5hbWUiOiJDaGhhdHRpc2dhcmgifSx7InN0YXRlQ29kZSI6MjcsInN0YXRlTmFtZSI6IlV0dGFyYWtoYW5kIn0seyJzdGF0ZUNvZGUiOjI4LCJzdGF0ZU5hbWUiOiJKaGFya2hhbmQifSx7InN0YXRlQ29kZSI6MjksInN0YXRlTmFtZSI6IlRlbGFuZ2FuYSJ9LHsic3RhdGVDb2RlIjoyMiwic3RhdGVOYW1lIjoiVGFtaWwgTmFkdSJ9XX0sImlhdCI6MTYyOTI2NjQ1OCwiZXhwIjoxNjI5MzUyODU4fQ.7Ez6u8_XLpC6Sr17ptn6r3vcViS6rLSXZr4A4u1ytWI",
+                        "userCode": 4
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/patMgmt/saveProfileJwt" : {
+            "post" : {
+              "tags":["Patient Management"],
+                "summary" : "getPatientData",
+                "description": "getPatientData",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{
+                        "addressLine1": "160C,Pandian Nagar",
+                        "addressLine2": "Address2",
+                        "ageday": 0,
+                        "agemonth": 0,
+                        "ageyear": 0,
+                        "city": "Chennai",
+                        "dateOfBirth": "1900-01-01",
+                        "email": "priya@gmail.com",
+                        "fName": "Shanmuga",
+                        "gender": 2,
+                        "lName": "Priya",
+                        "mobileNbr": "7548898685",
+                        "patientCode": 4,
+                        "pincode": "626130",
+                        "state": 22
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/patMgmt/saveProfile" : {
+            "post" : {
+              "tags":["Patient Management"],
+                "summary" : "getPatientData",
+                "description": "getPatientData",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{
+                        "addressLine1": "160C,Pandian Nagar",
+                        "addressLine2": "Address2",
+                        "ageday": 0,
+                        "agemonth": 0,
+                        "ageyear": 0,
+                        "city": "Chennai",
+                        "dateOfBirth": "1900-01-01",
+                        "email": "priya@gmail.com",
+                        "fName": "Shanmuga",
+                        "gender": 2,
+                        "jwtToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7InBhdGllbnRDb2RlIjo0LCJmTmFtZSI6IlNoYW5tdWdhIiwibE5hbWUiOiJQcml5YSIsImVtYWlsIjoicHJpeWFAZ21haWwuY29tIiwibW9iaWxlTmJyIjoiNzU0ODg5ODY4NSIsImRhdGVPZkJpcnRoIjoiMTkwMC0wMS0wMSIsImdlbmRlciI6MiwiYWdlZGF5IjowLCJhZ2Vtb250aCI6MCwiYWdleWVhciI6MCwiYWRkcmVzc0xpbmUxIjoiMTYwQyxQYW5kaWFuIE5hZ2FyIiwiYWRkcmVzc0xpbmUyIjoiQWRkcmVzczIiLCJjaXR5IjoiQ2hlbm5haSIsInN0YXRlIjoyMiwicGluY29kZSI6IjYyNjEzMCJ9LCJpYXQiOjE2MjkyNjc1NTcsImV4cCI6MTYyOTM1Mzk1N30.u7ycJC8unepP5NNnfygJcXcuT67r1D-cgVMuaungFRw",
+                        "lName": "Priya",
+                        "mobileNbr": "7548898685",
+                        "patientCode": 4,
+                        "pincode": "626130",
+                        "state": 22
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/patMgmt/getOtpPatient" : {
+            "post" : {
+              "tags":["Patient Management"],
+                "summary" : "getOtpPatient",
+                "description": "getOtpPatient",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{
+                        "mobileno": "7868869641"
+                      }                      
+                  }
+                ],
+                "responses": {
+                  
+                }
+            }
+          },
+          "/patMgmt/getForgotPasswordOtpPatient" : {
+            "post" : {
+              "tags":["Patient Management"],
+                "summary" : "getPatientData",
+                "description": "getPatientData",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{
+                        "mobileno": "7548898685"
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/patMgmt/forgetpaswdjwt" : {
+            "post" : {
+              "tags":["Patient Management"],
+                "summary" : "forgetpaswdjwt",
+                "description": "forgetpaswdjwt",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{
+                        "mobileNbr": "7548898685",
+                        "newpaswd": "Shiva$1234",
+                        "otp": "62345"
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/patMgmt/forgetpaswd" : {
+            "post" : {
+              "tags":["Patient Management"],
+                "summary" : "forgetpaswd",
+                "description": "forgetpaswd",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{
+                        "mobileNbr": "7548898685",
+                        "newpaswd": "Shiva$1234",
+                        "otp": "62345",
+                        "jwtToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7InBhdGllbnRDb2RlIjo0LCJmTmFtZSI6IlNoYW5tdWdhIiwibE5hbWUiOiJQcml5YSIsImVtYWlsIjoicHJpeWFAZ21haWwuY29tIiwibW9iaWxlTmJyIjoiNzU0ODg5ODY4NSIsImRhdGVPZkJpcnRoIjoiMTkwMC0wMS0wMSIsImdlbmRlciI6MiwiYWdlZGF5IjowLCJhZ2Vtb250aCI6MCwiYWdleWVhciI6MCwiYWRkcmVzc0xpbmUxIjoiMTYwQyxQYW5kaWFuIE5hZ2FyIiwiYWRkcmVzc0xpbmUyIjoiQWRkcmVzczIiLCJjaXR5IjoiQ2hlbm5haSIsInN0YXRlIjoyMiwicGluY29kZSI6IjYyNjEzMCJ9LCJpYXQiOjE2MjkyNjc1NTcsImV4cCI6MTYyOTM1Mzk1N30.u7ycJC8unepP5NNnfygJcXcuT67r1D-cgVMuaungFRw"
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/patMgmt/getPatientsjwt" : {
+            "post" : {
+              "tags":["Patient Management"],
+                "summary" : "getPatientsjwt",
+                "description": "getPatientsjwt",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{
+                        "userCode": 4,
+                        "userId": "admin@gmail.com"
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/patMgmt/getPatients" : {
+            "post" : {
+              "tags":["Patient Management"],
+                "summary" : "getPatients",
+                "description": "getPatients",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{
+                        "jwtToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjpbeyJmTmFtZSI6IlRlc3QiLCJsTmFtZSI6IkxuYW1lIiwibW9iaWxlTm8iOiI5ODk4OTk5OTk4OSIsImVtYWlsIjoidGVzdEBnbWFpbC5jb20ifSx7ImZOYW1lIjoiTWFuZ2FsIiwibE5hbWUiOiJQIiwibW9iaWxlTm8iOiIiLCJlbWFpbCI6IiJ9LHsiZk5hbWUiOiJNYW5nYWwiLCJsTmFtZSI6IlAiLCJtb2JpbGVObyI6Ijk0ODY1MzQ4MTYiLCJlbWFpbCI6IiJ9LHsiZk5hbWUiOiJWaWRoeWEiLCJsTmFtZSI6IkgiLCJtb2JpbGVObyI6Ijk4MjM0MzI1MzQiLCJlbWFpbCI6IiJ9LHsiZk5hbWUiOiJUZXN0IiwibE5hbWUiOiIiLCJtb2JpbGVObyI6IjkwNDc3ODg2ODUiLCJlbWFpbCI6IiJ9LHsiZk5hbWUiOiJEZnNkZiIsImxOYW1lIjoiU2ZzZGYiLCJtb2JpbGVObyI6IjM0NTM0NTM0NTMiLCJlbWFpbCI6IiJ9LHsiZk5hbWUiOiJIYXJpIiwibE5hbWUiOiJSYWoiLCJtb2JpbGVObyI6Ijc4Njg4Njk2NDEiLCJlbWFpbCI6bnVsbH0seyJmTmFtZSI6IlRlc3QiLCJsTmFtZSI6Ik9uZSIsIm1vYmlsZU5vIjoiOTg5NDc0MjEyOCIsImVtYWlsIjoiIn0seyJmTmFtZSI6IlZhbmkiLCJsTmFtZSI6IlAiLCJtb2JpbGVObyI6Ijk0NDIyNjg0MTYiLCJlbWFpbCI6IiJ9LHsiZk5hbWUiOiJNYW5nYWwiLCJsTmFtZSI6IlAiLCJtb2JpbGVObyI6Ijk3MTUxNDg2OTciLCJlbWFpbCI6Im1hbmdhbEBnbWFpbC5jb20ifV0sImlhdCI6MTYyOTI3MDI0NSwiZXhwIjoxNjI5MzU2NjQ1fQ.g_zjl8haQ5AaEe1FHO5N7fyRWXgs98GG9jrQjVYtKh4",
+                        "userCode": 4,
+                        "userId": "admin@gmail.com"
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/patMgmt/getPrescriptionPatientsjwt" : {
+            "post" : {
+              "tags":["Patient Management"],
+                "summary" : "getPatients",
+                "description": "getPatients",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{
+                        "userCode": 4,
+                        "userId": "admin@gmail.com"
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/patMgmt/getPrescriptionPatients" : {
+            "post" : {
+              "tags":["Patient Management"],
+                "summary" : "getPatients",
+                "description": "getPatients",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{
+                        "jwtToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjpb",
+                        "userCode": 4,
+                        "userId": "admin@gmail.com"
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/patientDtls/create" : {
+            "post" : {
+              "tags":["Patient Management"],
+                "summary" : "Create Patient",
+                "description": "Create Patient",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{
+                        "lName": "Padma",
+                        "pincode": "626301",
+                        "gender": 2,
+                        "city": "Virudhunagar",     
+                        "mobileNbr":"923748234234",
+                        "fName":"K", 
+                        "addressLine1": "Address1",
+                        "addressLine2":"Address2",
+                        "addressLine3":"Address3",
+                        "state": 0,
+                        "age": 24,
+                        "email": "prabha@gmail.com",
+                        "relation": "self",
+                        "event":true,
+                        "notify":false,
+                        "lang":1                        
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/patientDtls/updatejwt" : {
+            "post" : {
+              "tags":["Patient Management"],
+                "summary" : "updatejwt",
+                "description": "updatejwt",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{
+                        "fName": "John",
+                        "lName": "Patel",
+                        "dob": "22-09-1997",
+                        "age": 24,
+                        "ageday":0,
+                        "agemonth":0,
+                        "ageyear":0,
+                        "gender": 1,
+                        "mobileNbr": "7868865423",
+                        "email": "",
+                        "addressLine1": "",
+                        "addressLine2": "",
+                        "city": "Chennai",
+                        "pincode": "626130",
+                        "state":0,
+                        "userId": "admin@gmail.com",
+                        "userCode": 4,
+                        "patId": "78688654231",
+                        "relation": "self"
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/patientDtls/update" : {
+            "post" : {
+              "tags":["Patient Management"],
+                "summary" : "update",
+                "description": "update",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{
+                        "fName": "John",
+                        "lName": "Patel",
+                        "dob": "22-09-1997",
+                        "age": 24,
+                        "ageday":0,
+                        "agemonth":0,
+                        "ageyear":0,
+                        "gender": 1,
+                        "mobileNbr": "7868865423",
+                        "email": "",
+                        "addressLine1": "",
+                        "addressLine2": "",
+                        "city": "Chennai",
+                        "pincode": "626130",
+                        "state":0,
+                        "userId": "admin@gmail.com",
+                        "userCode": 4,
+                        "patId": "78688654231",
+                        "relation": "self",
+                        "jwtToken":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7ImFkZHJlc3NMaW5lMSI6IiIsImFkZHJlc3NMaW5lMiI6IiIsImFnZSI6MCwiY2l0eSI6IiIsImRvYiI6Im51bGwiLCJlbWFpbCI6ImRldmFAZ21haWwuY29tIiwiZk5hbWUiOiJEZXZhIiwiZ2VuZGVyIjoxLCJsTmFtZSI6InJhaiIsIm1vYmlsZU5iciI6IjU2Nzg5MDEyMzMiLCJwYXRJZCI6IjU2Nzg5MDEyMzMxNSIsInBpbmNvZGUiOiIiLCJyZWxhdGlvbiI6IkVuZ2xpc2giLCJzdGF0ZSI6MCwidXNlcklkIjoibDFvcGVyYXRvckBndWRtZWQuY29tIiwidXNlckNvZGUiOjR9LCJpYXQiOjE2MjkyNzMwMjMsImV4cCI6MTYyOTM1OTQyM30.Emsazi4P_h01dl3Pj4rkyZ8LZK8IzEl2g_AwTIZ6rGQ"
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/patientDtls/getpatientjwt" : {
+            "post" : {
+              "tags":["Patient Management"],
+                "summary" : "update",
+                "description": "update",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{                        
+                        "patId": "91786886964151",
+                        "userCode": 4,
+                        "userId": "admin@gmail.com"
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/patientDtls/getpatient" : {
+            "post" : {
+              "tags":["Patient Management"],
+                "summary" : "update",
+                "description": "update",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{                        
+                        "jwtToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7InVzZXJJZCI6ImFkbWluQGdtYWlsLmNvbSIsInVzZXJDb2RlIjo0LCJwYXRJZCI6IjkxNzg2ODg2OTY0MTUxIn0sImlhdCI6MTYyOTI3NTA2NSwiZXhwIjoxNjI5MzYxNDY1fQ.LQG1VPf0-ipAdB6iPIIwI1NB_VdTbW6XZygOHHVNmxs",
+                        "patId": "91786886964151",
+                        "userCode": 4,
+                        "userId": "admin@gmail.com"
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/docMgmt/loginjwt" : {
+            "post" : {
+              "tags":["Doctor Management"],
+                "summary" : "loginjwt",
+                "description": "loginjwt",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{                        
+                        "mobileNbr": "7868869641",
+                        "paswd": "Shiva$123"
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          } ,
+          "/docMgmt/login" : {
+            "post" : {
+              "tags":["Doctor Management"],
+                "summary" : "login",
+                "description": "login",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{                        
+                        "jwtToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7Im1vYmlsZU5iciI6Ijc4Njg4Njk2NDEiLCJwYXN3ZCI6IlNoaXZhJDEyMyJ9LCJpYXQiOjE2MjkyODA5MjMsImV4cCI6MTYyOTM2NzMyM30.f8e05Vqv7IeSmNPLFzcP7v8HmtYIYB3SKodBs1slg3U",
+                        "mobileNbr": "7868869641",
+                        "paswd": "Shiva$123"
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/docMgmt/signupjwt" : {
+            "post" : {
+              "tags":["Doctor Management"],
+                "summary" : "signupjwt",
+                "description": "signupjwt",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{                        
+                        "email": "",
+                        "fName": "Aruna ",
+                        "lName": "Thangapandi",
+                        "mobileNo": "7868869641",
+                        "otp": "332855",
+                        "paswd": "Shiva$123",
+                        "regno": "78688696411"
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          } ,
+          "/docMgmt/signup" : {
+            "post" : {
+              "tags":["Doctor Management"],
+                "summary" : "signup",
+                "description": "signup",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{                        
+                        "jwtToken": "eyJkYXRhIjp7Im1vYmlsZU5iciI6Ijc4Njg4Njk2NDEiLCJwYXN3ZCI6IlNoaXZhJDEyMyJ9LCJpYXQiOjE2MjkyODA5MjMsImV4cCI6MTYyOTM2NzMyM30.f8e05Vqv7IeSmNPLFzcP7v8HmtYIYB3SKodBs1slg3U",
+                        "email": "",
+                        "fName": "Aruna ",
+                        "lName": "Thangapandi",
+                        "mobileNo": "7868869641",
+                        "otp": "332855",
+                        "paswd": "Shiva$123",
+                        "regno": "78688696411"
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/doctorMasters/getDoctorsjwt" : {
+            "post" : {
+              "tags":["Doctor Management"],
+                "summary" : "signup",
+                "description": "signup",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{                        
+                        "status": "6",
+                        "userCode": 4,
+                        "userId": "admin@gmail.com"
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/doctorMasters/getDoctors" : {
+            "post" : {
+              "tags":["Doctor Management"],
+                "summary" : "signup",
+                "description": "signup",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{                        
+                        "jwtToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjpbeyJmTmFtZSI6IkFydW5hICIsImxOYW1lIjoiVGhhbmdhcGFuZGkiLCJyZWdObyI6Ijc4Njg4Njk2NDExIiwibW9iaWxlTm8iOiI3ODY4ODY5NjQxIiwiZW1haWwiOiIiLCJkb2N0b3JDb2RlIjo3Miwic3RhdHVzY29kZSI6NiwiU3RhdHVzTmFtZSI6IlBlbmRpbmciLCJub3RlcyI6IiIsInJlZ2lzdGVyZGF0ZSI6IjE4LTA4LTIwMjEiLCJyZWdpc3RlcmZvcm1hdGRhdGUiOiIyMDIxLTA4LTE4IiwiYXBwcm92ZWRkYXRlIjoiIiwiYXBwcm92ZWRmb3JtYXRkYXRlIjoiIiwidXBkYXRlZGRhdGUiOiIifV0sImlhdCI6MTYyOTI4MTcxNywiZXhwIjoxNjI5MzY4MTE3fQ.vy62N41D1Vg46rFBZRJWMOec87wAq4jGHhupuWiiysY",
+                        "status": "6",
+                        "userCode": 4,
+                        "userId": "admin@gmail.com"
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/doctorMasters/getPrescriptionDoctorsjwt" : {
+            "post" : {
+              "tags":["Doctor Management"],
+                "summary" : "getOtpDoctor",
+                "description": "getOtpDoctor",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{                        
+                        "userCode": 4,
+                        "userId": "admin@gmail.com"
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/doctorMasters/getPrescriptionDoctors" : {
+            "post" : {
+              "tags":["Doctor Management"],
+                "summary" : "getOtpDoctor",
+                "description": "getOtpDoctor",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{                        
+                        "jwtToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjpb",
+                        "userCode": 4,
+                        "userId": "admin@gmail.com"
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/doctorMasters/editDoctorjwt" : {
+            "post" : {
+              "tags":["Doctor Management"],
+                "summary" : "editDoctorjwt",
+                "description": "editDoctorjwt",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{                        
+                        "doctorcode": "72",
+                        "doctorstatus": "7",
+                        "notes": "",
+                        "userCode": 4
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/docMgmt/editDoctor" : {
+            "post" : {
+              "tags":["Doctor Management"],
+                "summary" : "editDoctor",
+                "description": "editDoctor",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{                        
+                        "doctorcode": "72",
+                        "doctorstatus": "7",
+                        "jwtToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7Im5vdGVzIjoiIiwidXNlckNvZGUiOjQsImRvY3RvcmNvZGUiOiI3MiIsImRvY3RvcnN0YXR1cyI6IjcifSwiaWF0IjoxNjI5MjgyMTc5LCJleHAiOjE2MjkzNjg1Nzl9.g8DDIjrkhIHVEyyXqtptVNcUUtSHmSks5kG_ys-PMjg",
+                        "notes": "",
+                        "userCode": 4
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/docMgmt/getOtpDoctor" : {
+            "post" : {
+              "tags":["Doctor Management"],
+                "summary" : "getOtpDoctor",
+                "description": "getOtpDoctor",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{                        
+                        "mobileno": "7868869641"
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },          
+          "/docMgmt/patientCompletedListjwt" : {
+            "post" : {
+              "tags":["Doctor Management"],
+                "summary" : "editDoctor",
+                "description": "editDoctor",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{                        
+                        "limit": 10,
+                        "mobileNbr": "7868869641",
+                        "offset": 0,
+                        "pName": ""
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/docMgmt/patientCompletedList" : {
+            "post" : {
+              "tags":["Doctor Management"],
+                "summary" : "editDoctor",
+                "description": "editDoctor",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{                        
+                        "jwtToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7Im1vYmlsZU5iciI6Ijc4Njg4Njk2NDEiLCJwTmFtZSI6IiIsImxpbWl0IjoxMCwib2Zmc2V0IjowfSwiaWF0IjoxNjI5MjgzNTk0LCJleHAiOjE2MjkzNjk5OTR9.u09T5sC6LAoqlUWvs6W8L4oM19enNe1IsFmucP2CUEk",
+                        "limit": 10,
+                        "mobileNbr": "7868869641",
+                        "offset": 0,
+                        "pName": ""
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/doctorMasters/getDoctorDataJwt" : {
+            "post" : {
+              "tags":["Doctor Management"],
+                "summary" : "editDoctor",
+                "description": "editDoctor",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{                        
+                        "doctorCode": 12,
+                        "mobileNbr": "7548898685"
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/doctorMasters/getDoctorData" : {
+            "post" : {
+              "tags":["Doctor Management"],
+                "summary" : "editDoctor",
+                "description": "editDoctor",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{                        
+                        "doctorCode": 12,
+                        "jwtToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7ImRvY3RvckNvZGUiOjEyLCJob3NwaXRhbElkIjpudWxsLCJmTmFtZSI6Ik1hbmdhbGVzd2FyaSIsImxOYW1lIjoiUCIsIm1vYmlsZU5vIjoiNzU0ODg5ODY4NSIsInJlZ05vIjoiMTIzNDU2IiwiZW1haWwiOiJtYW5nYWxAZ21haWwuY29tIiwicXVhbGlmaWNhdGlvbiI6IiIsInF1YWxpZmljYXRpb25OYW1lIjoiIiwidGVsZXBob25lTm8xIjoiIiwidGVsZXBob25lTm8yIjoiIiwidGVsZXBob25lTm8zIjoiIiwic3BlY2lhbGl6YXRpb25JZCI6IjEiLCJzcGVjaWFsaXphdGlvbk5hbWUiOiJEZXJtYXRvbG9neSIsInN1YlNwZWNpYWxpemF0aW9uSWQiOiIxIiwic3ViU3BlY2lhbGl6YXRpb24iOiJNb2hzIGFuZCBEZXJtYXRvbG9naWMgU3VyZ2VyeSAiLCJjb25zdWx0aW5nVGltZSI6W119LCJpYXQiOjE2MjkyODM4MTMsImV4cCI6MTYyOTM3MDIxM30.P2cvLdXw0umPfFE4hrkWQN43pxv3ymGjABiOmqjpsgg",
+                        "mobileNbr": "7548898685"
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/doctorMasters/mastersjwt" : {
+            "post" : {
+              "tags":["Doctor Management"],
+                "summary" : "mastersjwt",
+                "description": "mastersjwt",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true                                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/doctorMasters/masters" : {
+            "post" : {
+              "tags":["Doctor Management"],
+                "summary" : "masters",
+                "description": "masters",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{                        
+                        "jwtToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7ImRvY3RvckNvZGUiOjEyLCJob3NwaXRhbElkIjpudWxsLCJmTmFtZSI6Ik1hbmdhbGVzd2FyaSIsImxOYW1lIjoiUCIsIm1vYmlsZU5vIjoiNzU0ODg5ODY4NSIsInJlZ05vIjoiMTIzNDU2IiwiZW1haWwiOiJtYW5nYWxAZ21haWwuY29tIiwicXVhbGlmaWNhdGlvbiI6IiIsInF1YWxpZmljYXRpb25OYW1lIjoiIiwidGVsZXBob25lTm8xIjoiIiwidGVsZXBob25lTm8yIjoiIiwidGVsZXBob25lTm8zIjoiIiwic3BlY2lhbGl6YXRpb25JZCI6IjEiLCJzcGVjaWFsaXphdGlvbk5hbWUiOiJEZXJtYXRvbG9neSIsInN1YlNwZWNpYWxpemF0aW9uSWQiOiIxIiwic3ViU3BlY2lhbGl6YXRpb24iOiJNb2hzIGFuZCBEZXJtYXRvbG9naWMgU3VyZ2VyeSAiLCJjb25zdWx0aW5nVGltZSI6W119LCJpYXQiOjE2MjkyODM4MTMsImV4cCI6MTYyOTM3MDIxM30.P2cvLdXw0umPfFE4hrkWQN43pxv3ymGjABiOmqjpsgg"
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/doctorMasters/createjwt" : {
+            "post" : {
+              "tags":["Doctor Management"],
+                "summary" : "createjwt",
+                "description": "createjwt",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{                        
+                        "addressLine1": "Address1",
+                        "addressLine2": "Address2",
+                        "city": "Chennai",
+                        "consultingTime": [],
+                        "doctorCode": 12,
+                        "email": "mangal@gmail.com",
+                        "firstName": "Mangaleswari",
+                        "lastName": "P",
+                        "mobileNbr": "7548898685",
+                        "pinCode": "623712",
+                        "qualification": "",
+                        "registerno": "123456",
+                        "specialization": [{"specializationId": 1, "specialization": "Dermatology"}],
+                        "stateCode": 22,
+                        "subSpecialization": [{"subspecializationId": 1, "specializationId": 1, "subSpecialization": "Mohs and Dermatologic Surgery↵"}],
+                        "telephoneNo1": "",
+                        "telephoneNo2": "",
+                        "telephoneNo3": ""
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/doctorMasters/create" : {
+            "post" : {
+              "tags":["Doctor Management"],
+                "summary" : "create",
+                "description": "create",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{                        
+                        "addressLine1": "Address1",
+                        "addressLine2": "Address2",
+                        "city": "Chennai",
+                        "consultingTime": [],
+                        "doctorCode": 12,
+                        "email": "mangal@gmail.com",
+                        "firstName": "Mangaleswari",
+                        "lastName": "P",
+                        "mobileNbr": "7548898685",
+                        "pinCode": "623712",
+                        "qualification": "",
+                        "registerno": "123456",
+                        "specialization": [{"specializationId": 1, "specialization": "Dermatology"}],
+                        "stateCode": 22,
+                        "subSpecialization": [{"subspecializationId": 1, "specializationId": 1, "subSpecialization": "Mohs and Dermatologic Surgery↵"}],
+                        "telephoneNo1": "",
+                        "telephoneNo2": "",
+                        "telephoneNo3": "",
+                        "jwtToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7ImZpcnN0TmFtZSI6Ik1hbmdhbGVzd2FyaSIsImxhc3ROYW1lIjoiUCIsInJlZ2lzdGVybm8iOiIxMjM0NTYiLCJxdWFsaWZpY2F0aW9uIjoiIiwic3BlY2lhbGl6YXRpb24iOlt7InNwZWNpYWxpemF0aW9uSWQiOjEsInNwZWNpYWxpemF0aW9uIjoiRGVybWF0b2xvZ3kifV0sInN1YlNwZWNpYWxpemF0aW9uIjpbeyJzdWJzcGVjaWFsaXphdGlvbklkIjoxLCJzcGVjaWFsaXphdGlvbklkIjoxLCJzdWJTcGVjaWFsaXphdGlvbiI6Ik1vaHMgYW5kIERlcm1hdG9sb2dpYyBTdXJnZXJ5XG4ifV0sIm1vYmlsZU5iciI6Ijc1NDg4OTg2ODUiLCJlbWFpbCI6Im1hbmdhbEBnbWFpbC5jb20iLCJhZGRyZXNzTGluZTEiOiJBZGRyZXNzMSIsImFkZHJlc3NMaW5lMiI6IkFkZHJlc3MyIiwiY2l0eSI6IkNoZW5uYWkiLCJwaW5Db2RlIjoiNjIzNzEyIiwic3RhdGVDb2RlIjoyMiwidGVsZXBob25lTm8xIjoiIiwidGVsZXBob25lTm8yIjoiIiwidGVsZXBob25lTm8zIjoiIiwiZG9jdG9yQ29kZSI6MTIsImNvbnN1bHRpbmdUaW1lIjpbXX0sImlhdCI6MTYyOTI4NDE4OSwiZXhwIjoxNjI5MzcwNTg5fQ.-4xoZs0gav3HchjjgaMFUB_SGYrdz4CSaN5zZGU4WJQ"
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/docMgmt/changepaswdjwt" : {
+            "post" : {
+              "tags":["Doctor Management"],
+                "summary" : "changepaswdjwt",
+                "description": "changepaswdjwt",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{                        
+                        "doctorCode": 12,
+                        "mobileNbr": "7548898685",
+                        "newpaswd": "Shiva$1234",
+                        "oldpaswd": "Shiva$123"                      
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/docMgmt/changepaswd" : {
+            "post" : {
+              "tags":["Doctor Management"],
+                "summary" : "changepaswd",
+                "description": "changepaswd",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{                        
+                        "doctorCode": 12,
+                        "jwtToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7Im9sZHBhc3dkIjoiU2hpdmEkMTIzIiwibmV3cGFzd2QiOiJTaGl2YSQxMjM0IiwibW9iaWxlTmJyIjoiNzU0ODg5ODY4NSIsImRvY3RvckNvZGUiOjEyfSwiaWF0IjoxNjI5Mjg1MjI4LCJleHAiOjE2MjkzNzE2Mjh9.hge6j-UdIqYb0g9cNxWgBs_F66lBwv0i2PzLsJpmVXU",
+                        "mobileNbr": "7548898685",
+                        "newpaswd": "Shiva$1234",
+                        "oldpaswd": "Shiva$123"                      
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/docMgmt/forgetpaswdjwt" : {
+            "post" : {
+              "tags":["Doctor Management"],
+                "summary" : "forgetpaswdjwt",
+                "description": "forgetpaswdjwt",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{                        
+                        "mobileNbr": "7548898685",
+                        "newpaswd": "Shiva$1234",
+                        "otp": "987654"                     
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/docMgmt/forgetpaswd" : {
+            "post" : {
+              "tags":["Doctor Management"],
+                "summary" : "forgetpaswd",
+                "description": "forgetpaswd",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{                        
+                        "jwtToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7Im9sZHBhc3dkIjoiU2hpdmEkMTIzIiwibmV3cGFzd2QiOiJTaGl2YSQxMjM0IiwibW9iaWxlTmJyIjoiNzU0ODg5ODY4NSIsImRvY3RvckNvZGUiOjEyfSwiaWF0IjoxNjI5Mjg1MjI4LCJleHAiOjE2MjkzNzE2Mjh9.hge6j-UdIqYb0g9cNxWgBs_F66lBwv0i2PzLsJpmVXU",
+                        "mobileNbr": "7548898685",
+                        "newpaswd": "Shiva$1234",
+                        "otp": "987654"                     
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/docMgmt/getForgotPasswordOtpDoctor" : {
+            "post" : {
+              "tags":["Doctor Management"],
+                "summary" : "getForgotPasswordOtpDoctor",
+                "description": "getForgotPasswordOtpDoctor",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{                        
+                        "jwtToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7Im9sZHBhc3dkIjoiU2hpdmEkMTIzIiwibmV3cGFzd2QiOiJTaGl2YSQxMjM0IiwibW9iaWxlTmJyIjoiNzU0ODg5ODY4NSIsImRvY3RvckNvZGUiOjEyfSwiaWF0IjoxNjI5Mjg1MjI4LCJleHAiOjE2MjkzNzE2Mjh9.hge6j-UdIqYb0g9cNxWgBs_F66lBwv0i2PzLsJpmVXU",
+                        "mobileNbr": "7548898685",
+                        "newpaswd": "Shiva$1234",
+                        "otp": "987654"                     
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/doctorDtls/specializationjwt" : {
+            "post" : {
+              "tags":["Doctor Management"],
+                "summary" : "specializationjwt",
+                "description": "specializationjwt",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{                        
+                        "userCode": 4,
+                        "userId": "admin@gmail.com"                   
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/doctorDtls/specialization" : {
+            "post" : {
+              "tags":["Doctor Management"],
+                "summary" : "specialization",
+                "description": "specialization",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{                        
+                        "jwtToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7InVzZXJJZCI6ImFkbWluQGdtYWlsLmNvbSIsInVzZXJDb2RlIjo0fSwiaWF0IjoxNjI5Mjg5NDQwLCJleHAiOjE2MjkzNzU4NDB9.ndqmv481riQQG0oIIYoZlyG2vduTfZk_ne2PlepXCBw",
+                        "userCode": 4,
+                        "userId": "admin@gmail.com"                  
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/doctorDtls/searchDoctorRegisterJwt" : {
+            "post" : {
+              "tags":["Doctor Management"],
+                "summary" : "searchDoctorRegisterJwt",
+                "description": "searchDoctorRegisterJwt",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{                        
+                        "searchText": "sang",
+                        "userCode": 4,
+                        "userId": "admin@gmail.com"                 
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/doctorDtls/searchDoctorRegister" : {
+            "post" : {
+              "tags":["Doctor Management"],
+                "summary" : "searchDoctorRegister",
+                "description": "searchDoctorRegister",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{                        
+                        "jwtToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjpbeyJkb2N0b3JJZCI6NDMsInNlYXJjaFRleHQiOiJERkZHIiwibW9iaWxlTm8iOiIiLCJyZWdpc3Rlcm5vIjoiREZGRyIsInNlYXJjaG5hbWUiOiJTYW50ICJ9LHsiZG9jdG9ySWQiOjY1LCJzZWFyY2hUZXh0IjoiOTg3NjU0MzIxIiwibW9iaWxlTm8iOiIiLCJyZWdpc3Rlcm5vIjoiOTg3NjU0MzIxIiwic2VhcmNobmFtZSI6IlNhbmdlZXRoYSBTIn0seyJkb2N0b3JJZCI6NjYsInNlYXJjaFRleHQiOiI5ODc2NDU2Nzg5MCIsIm1vYmlsZU5vIjoiIiwicmVnaXN0ZXJubyI6Ijk4NzY0NTY3ODkwIiwic2VhcmNobmFtZSI6IlNhbmdlZXRoIFMifV0sImlhdCI6MTYyOTI4OTYzMSwiZXhwIjoxNjI5Mzc2MDMxfQ.n939Gn1ZPukKoWEa9EOcPRPBkA1292WaUfTUzGcX7W8",
+                        "searchText": "san",
+                        "userCode": 4,
+                        "userId": "admin@gmail.com"                 
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+
+          "/doctorDtls/searchHospitalNameJwt" : {
+            "post" : {
+              "tags":["Doctor Management"],
+                "summary" : "searchHospitalNameJwt",
+                "description": "searchHospitalNameJwt",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{                        
+                        "searchHospital": "addr",
+                        "userCode": 4,
+                        "userId": "admin@gmail.com"                 
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/doctorDtls/searchHospitalName" : {
+            "post" : {
+              "tags":["Doctor Management"],
+                "summary" : "searchHospitalName",
+                "description": "searchHospitalName",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{                        
+                        "jwtToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjpbXSwiaWF0IjoxNjI5Mjg5ODA1LCJleHAiOjE2MjkzNzYyMDV9.i3R3k0nCrMhkhfQ8zjjZbsn14Qb-_Xr1tOzr9f9OXkY",
+                        "searchHospital": "addr",
+                        "userCode": 4,
+                        "userId": "admin@gmail.com"                
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/doctorDtls/createjwt" : {
+            "post" : {
+              "tags":["Doctor Management"],
+                "summary" : "createjwt",
+                "description": "createjwt",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{                        
+                        "addressLine1": "",
+                        "addressLine2": "",
+                        "city": "",
+                        "consultingTime": [],
+                        "departmentId": "",
+                        "email": "",
+                        "erxId": "eRx_28213",
+                        "firstName": "Sangeetha",
+                        "hospitalName": "",
+                        "lastName": "s",
+                        "mobileNo": "7898765432",
+                        "pinCode": "",
+                        "qualification": "1",
+                        "registerno": "98723543221",
+                        "specialization": [],
+                        "stateCode": 0,
+                        "subSpecialization": [],
+                        "telephoneNo1": "",
+                        "telephoneNo2": "",
+                        "telephoneNo3": "",
+                        "userCode": 4,
+                        "userId": "admin@gmail.com"               
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/doctorDtls/create" : {
+            "post" : {
+              "tags":["Doctor Management"],
+                "summary" : "create",
+                "description": "create",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{                        
+                        "addressLine1": "",
+                        "addressLine2": "",
+                        "city": "",
+                        "consultingTime": [],
+                        "departmentId": "",
+                        "email": "",
+                        "erxId": "eRx_28213",
+                        "firstName": "Sangeetha",
+                        "hospitalName": "",
+                        "jwtToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7ImZpcnN0TmFtZSI6IlNhbmdlZXRoYSIsImxhc3ROYW1lIjoicyIsInJlZ2lzdGVybm8iOiI5ODcyMzU0MzIyMSIsInF1YWxpZmljYXRpb24iOiIxIiwiZGVwYXJ0bWVudElkIjoiIiwic3BlY2lhbGl6YXRpb24iOltdLCJzdWJTcGVjaWFsaXphdGlvbiI6W10sIm1vYmlsZU5vIjoiNzg5ODc2NTQzMiIsImVtYWlsIjoiIiwiaG9zcGl0YWxOYW1lIjoiIiwiYWRkcmVzc0xpbmUxIjoiIiwiYWRkcmVzc0xpbmUyIjoiIiwiY2l0eSI6IiIsInBpbkNvZGUiOiIiLCJzdGF0ZUNvZGUiOjAsInRlbGVwaG9uZU5vMSI6IiIsInRlbGVwaG9uZU5vMiI6IiIsInRlbGVwaG9uZU5vMyI6IiIsInVzZXJJZCI6ImFkbWluQGdtYWlsLmNvbSIsInVzZXJDb2RlIjo0LCJlcnhJZCI6ImVSeF8yODIxMyIsImNvbnN1bHRpbmdUaW1lIjpbXX0sImlhdCI6MTYyOTI4OTk3MCwiZXhwIjoxNjI5Mzc2MzcwfQ.A3KStZFeFBLzlwMqvxGWJOzvUmtymdGLhODbTcGr9ZM",
+                        "lastName": "s",
+                        "mobileNo": "7898765432",
+                        "pinCode": "",
+                        "qualification": "1",
+                        "registerno": "98723543221",
+                        "specialization": [],
+                        "stateCode": 0,
+                        "subSpecialization": [],
+                        "telephoneNo1": "",
+                        "telephoneNo2": "",
+                        "telephoneNo3": "",
+                        "userCode": 4,
+                        "userId": "admin@gmail.com"               
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/doctorDtls/getDoctorJwt" : {
+            "post" : {
+              "tags":["Doctor Management"],
+                "summary" : "getDoctorJwt",
+                "description": "getDoctorJwt",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{                        
+                        "erxId": "eRx_28213",
+                        "userCode": 4,
+                        "userId": "admin@gmail.com"             
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/doctorDtls/getDoctor" : {
+            "post" : {
+              "tags":["Doctor Management"],
+                "summary" : "getDoctor",
+                "description": "getDoctor",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{                        
+                        "erxId": "eRx_28213",
+                        "jwtToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7ImRvY3RvcklkIjo3MywiZmlyc3ROYW1lIjoiU2FuZ2VldGhhIiwibGFzdE5hbWUiOiJTIiwibW9iaWxlTm8iOiI3ODk4NzY1NDMyIiwicmVnaXN0ZXJubyI6Ijk4NzIzNTQzMjIxIiwiZW1haWwiOiIiLCJxdWFsaWZpY2F0aW9uIjoiMSIsInF1YWxpZmljYXRpb25OYW1lIjoiTUJCUyIsImRlcGFydG1lbnRJZCI6IiIsInRlbGVwaG9uZU5vMSI6IiIsInRlbGVwaG9uZU5vMiI6IiIsInRlbGVwaG9uZU5vMyI6IiIsInNwZWNpYWxpemF0aW9uSWQiOiIiLCJzcGVjaWFsaXphdGlvbk5hbWUiOm51bGwsInN1YlNwZWNpYWxpemF0aW9uSWQiOiIiLCJob3NwaXRhbElkIjoxNywiaG9zcGl0YWxOYW1lIjoiIiwiYWRkcmVzc0xpbmUxIjoiIiwiYWRkcmVzc0xpbmUyIjoiIiwiYWRkcmVzc0xpbmUzIjpudWxsLCJjaXR5IjoiIiwicGluQ29kZSI6IiIsInN0YXRlQ29kZSI6MCwic3RhdGVOYW1lIjoiIiwiY29uc3VsdGluZ1RpbWUiOltdfSwiaWF0IjoxNjI5MjkwMjU2LCJleHAiOjE2MjkzNzY2NTZ9.v981kidiaUU8FospcPlwfCW_0wwJPvr9-3tfvtwwtTE",
+                        "userCode": 4,
+                        "userId": "admin@gmail.com"             
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/pateRxMgmt/geteRxListjwt" : {
+            "post" : {
+              "tags":["eRx Management"],
+                "summary" : "geteRxListjwt",
+                "description": "geteRxListjwt",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{                        
+                        "filterMedia": "",
+                        "filterService": [],
+                        "filtercheckInEndDate": "08-08-2021",
+                        "filtercheckInStartDate": "04-08-2021",
+                        "filterfullfillmentEndDate": "",
+                        "filterfullfillmentStartDate": "",
+                        "filterpatName": "",
+                        "limit": 10,
+                        "offset": 0,
+                        "status": "2",
+                        "userCode": 4,
+                        "userId": "admin@gmail.com"            
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/pateRxMgmt/geteRxList" : {
+            "post" : {
+              "tags":["eRx Management"],
+                "summary" : "geteRxList",
+                "description": "geteRxList",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{                        
+                        "filterMedia": "",
+                        "filterService": [],
+                        "filtercheckInEndDate": "08-08-2021",
+                        "filtercheckInStartDate": "04-08-2021",
+                        "filterfullfillmentEndDate": "",
+                        "filterfullfillmentStartDate": "",
+                        "filterpatName": "",
+                        "limit": 10,
+                        "offset": 0,
+                        "status": "2",
+                        "userCode": 4,
+                        "userId": "admin@gmail.com",
+                        "jwtToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7InRvdGFsQ291bnQiOjEsInJlc3VsdERhdGEiOlt7InBhdElkIjoiNzg2NTQzMjEwOTM0IiwiZXJ4dXJsIjoiaHR0cHM6Ly9kZXZlbG9wbWVudC1ndWRtZWQuczMuYXAtc291dGgtMS5hbWF6b25hd3MuY29tLzc4NjU0MzIxMDkvZ3VkbWVkMTYyODI1NzE2MzA4M182NzI3MiIsImRvY3RvcmlkIjo1Miwib2NyaWQiOjAsIm1lZGlhSWQiOjEsImhvc3BpdGFsaWQiOjE0LCJlcnhVcGxvYWRlZEF0IjoiMjAyMS0wOC0wNFQxMzo0NjoxMi43OThaIiwiZXJ4UmVxSWQiOiJlUnhfMjgyMTEzIiwiYWdlIjowLCJnZW5kZXIiOjIsImV2ZW50Ijp0cnVlLCJub3RpZnkiOnRydWUsInBhdGZOYW1lIjoiQXJ1bmEiLCJwYXRsTmFtZSI6IkEiLCJlbmREYXRlIjoiMjAyMS0wOC0wOVQxMTo1MTozMS4yMzZaIiwiZW1haWwiOiJhYWhhc2FuZ2VldGhhQGdtYWlsLmNvbSIsInJlbGF0aW9uIjoic2VsZiIsImxhbmciOjEsInJlamVjdFJlYXNvbiI6IkRvY3RvciBuYW1lIGlzIG1pc3NpbmcgaW4gdGhlIHByZXNjcmlwdGlvbiIsInJlamVjdGVkQnkiOiJBTzQwOTAifV19LCJpYXQiOjE2Mjg1MTc4MTAsImV4cCI6MTYyODYwNDIxMH0.mYD7aHNknFxXs8PJmUghDKFl8vC1OlPKxczARA66IiA"            
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/pateRxMgmt/geteRxPendingListjwt" : {
+            "post" : {
+              "tags":["eRx Management"],
+                "summary" : "geteRxPendingListjwt",
+                "description": "geteRxPendingListjwt",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{                        
+                        "filterMedia": "",
+                        "filterService": [],
+                        "filtercheckInEndDate": "08-08-2021",
+                        "filtercheckInStartDate": "04-08-2021",
+                        "filterfullfillmentEndDate": "",
+                        "filterfullfillmentStartDate": "",
+                        "filterpatName": "",
+                        "limit": 10,
+                        "offset": 0,
+                        "status": "2",
+                        "userCode": 4,
+                        "userId": "admin@gmail.com"          
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/pateRxMgmt/geteRxPendingList" : {
+            "post" : {
+              "tags":["eRx Management"],
+                "summary" : "geteRxPendingList",
+                "description": "geteRxPendingList",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{                        
+                        "filterMedia": "",
+                        "filterService": [],
+                        "filtercheckInEndDate": "08-08-2021",
+                        "filtercheckInStartDate": "04-08-2021",
+                        "filterfullfillmentEndDate": "",
+                        "filterfullfillmentStartDate": "",
+                        "filterpatName": "",
+                        "limit": 10,
+                        "offset": 0,
+                        "status": "2",
+                        "userCode": 4,
+                        "userId": "admin@gmail.com",
+                        "jwtToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7InRvdGFsQ291bnQiOjAsInJlc3VsdERhdGEiOltdfSwiaWF0IjoxNjI5MjkxMzAyLCJleHAiOjE2MjkzNzc3MDJ9.6p6u8DWk78BxI3buAfyo8qf7e0bsWCab-VdywvIbULQ"
+            
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/pateRxMgmt/checkAlreadytakeneRx" : {
+            "post" : {
+              "tags":["eRx Management"],
+                "summary" : "checkAlreadytakeneRx",
+                "description": "checkAlreadytakeneRx",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{                        
+                        "erxId": "eRx_262123",
+                        "userCode": 4,
+                        "userId": "admin@gmail.com"            
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/pateRxMgmt/insertAssignData" : {
+            "post" : {
+              "tags":["eRx Management"],
+                "summary" : "insertAssignData",
+                "description": "insertAssignData",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{                        
+                        "erxReqId": "eRx_28213",
+                        "userCode": 4,
+                        "userId": "admin@gmail.com"          
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/pateRxMgmt/mastersjwt" : {
+            "post" : {
+              "tags":["eRx Management"],
+                "summary" : "mastersjwt",
+                "description": "mastersjwt",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{                        
+                          "userCode": 4,
+                          "userId": "admin@gmail.com"            
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/pateRxMgmt/masters" : {
+            "post" : {
+              "tags":["eRx Management"],
+                "summary" : "masters",
+                "description": "masters",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{                        
+                          "jwtToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7InN0YXRlTGlzdCI6W3sic3RhdGVDb2RlIjoxLCJzdGF0ZU5hbWUiOiJBbmRocmEgUHJhZGVzaCJ9LHsic3RhdGVDb2RlIjoyLCJzdGF0ZU5hbWUiOiJBcnVuYWNoYWwgUHJhZGVzaCJ9LHsic3RhdGVDb2RlIjozLCJzdGF0ZU5hbWUiOiJBc3NhbSJ9LHsic3RhdGVDb2RlIjo0LCJzdGF0ZU5hbWUiOiJCaWhhciJ9LHsic3RhdGVDb2RlIjo1LCJzdGF0ZU5hbWUiOiJHb2EifSx7InN0YXRlQ29kZSI6Niwic3RhdGVOYW1lIjoiR3VqYXJhdCJ9LHsic3RhdGVDb2RlIjo3LCJzdGF0ZU5hbWUiOiJIYXJ5YW5hIn0seyJzdGF0ZUNvZGUiOjgsInN0YXRlTmFtZSI6IkhpbWFjaGFsIFByYWRlc2gifSx7InN0YXRlQ29kZSI6OSwic3RhdGVOYW1lIjoiSmFtbXUgJiBLYXNobWlyIn0seyJzdGF0ZUNvZGUiOjEwLCJzdGF0ZU5hbWUiOiJLYXJuYXRha2EifSx7InN0YXRlQ29kZSI6MTEsInN0YXRlTmFtZSI6IktlcmFsYSJ9LHsic3RhdGVDb2RlIjoxMiwic3RhdGVOYW1lIjoiTWFkaHlhIFByYWRlc2gifSx7InN0YXRlQ29kZSI6MTMsInN0YXRlTmFtZSI6Ik1haGFyYXNodHJhIn0seyJzdGF0ZUNvZGUiOjE0LCJzdGF0ZU5hbWUiOiJNYW5pcHVyIn0seyJzdGF0ZUNvZGUiOjE1LCJzdGF0ZU5hbWUiOiJNZWdoYWxheWEifSx7InN0YXRlQ29kZSI6MTYsInN0YXRlTmFtZSI6Ik1pem9yYW0ifSx7InN0YXRlQ29kZSI6MTcsInN0YXRlTmFtZSI6Ik5hZ2FsYW5kIn0seyJzdGF0ZUNvZGUiOjE4LCJzdGF0ZU5hbWUiOiJPcmlzc2EifSx7InN0YXRlQ29kZSI6MTksInN0YXRlTmFtZSI6IlB1bmphYiJ9LHsic3RhdGVDb2RlIjoyMCwic3RhdGVOYW1lIjoiUmFqYXN0aGFuIn0seyJzdGF0ZUNvZGUiOjIxLCJzdGF0ZU5hbWUiOiJTaWtraW0ifSx7InN0YXRlQ29kZSI6MjMsInN0YXRlTmFtZSI6IlRyaXB1cmEifSx7InN0YXRlQ29kZSI6MjQsInN0YXRlTmFtZSI6IlV0dGFyIFByYWRlc2gifSx7InN0YXRlQ29kZSI6MjUsInN0YXRlTmFtZSI6Ildlc3QgQmVuZ2FsIn0seyJzdGF0ZUNvZGUiOjI2LCJzdGF0ZU5hbWUiOiJDaGhhdHRpc2dhcmgifSx7InN0YXRlQ29kZSI6MjcsInN0YXRlTmFtZSI6IlV0dGFyYWtoYW5kIn0seyJzdGF0ZUNvZGUiOjI4LCJzdGF0ZU5hbWUiOiJKaGFya2hhbmQifSx7InN0YXRlQ29kZSI6MjksInN0YXRlTmFtZSI6IlRlbGFuZ2FuYSJ9LHsic3RhdGVDb2RlIjoyMiwic3RhdGVOYW1lIjoiVGFtaWwgTmFkdSJ9XSwiZGVwdExpc3QiOlt7ImRlcHRDb2RlIjoxLCJkZXB0TmFtZSI6Ik1CQlMifV0sInF1YUxpc3QiOlt7InF1YUlkIjoxLCJxdWFOYW1lIjoiTUJCUyJ9LHsicXVhSWQiOjIsInF1YU5hbWUiOiJNQkJTY2gifV0sInNldHRpbmdMaXN0IjpbeyJ0eXBlIjoidGVybXNDb25kaXRpb25zIiwiZGVzY3JpcHRpb24iOiJUZXJtcyBvZiBzZXJ2aWNlIGFyZSB0aGUgbGVnYWwgYWdyZWVtZW50cyBiZXR3ZWVuIGEgc2VydmljZSBwcm92aWRlciBhbmQgYSBwZXJzb24gd2hvIHdhbnRzIHRvIHVzZSB0aGF0IHNlcnZpY2UuIFRoZSBwZXJzb24gbXVzdCBhZ3JlZSB0byBhYmlkZSBieSB0aGUgdGVybXMgb2Ygc2VydmljZSBpbiBvcmRlciB0byB1c2UgdGhlIG9mZmVyZWQgc2VydmljZS4gVGVybXMgb2Ygc2VydmljZSBjYW4gYWxzbyBiZSBtZXJlbHkgYSBkaXNjbGFpbWVyLCBlc3BlY2lhbGx5IHJlZ2FyZGluZyB0aGUgdXNlIG9mIHdlYnNpdGVzVGVybXMgb2Ygc2VydmljZSBhcmUgdGhlIGxlZ2FsIGFncmVlbWVudHMgYmV0d2VlbiBhIHNlcnZpY2UgcHJvdmlkZXIgYW5kIGEgcGVyc29uIHdobyB3YW50cyB0byB1c2UgdGhhdCBzZXJ2aWNlLiBUaGUgcGVyc29uIG11c3QgYWdyZWUgdG8gYWJpZGUgYnkgdGhlIHRlcm1zIG9mIHNlcnZpY2UgaW4gb3JkZXIgdG8gdXNlIHRoZSBvZmZlcmVkIHNlcnZpY2UuIFRlcm1zIG9mIHNlcnZpY2UgY2FuIGFsc28gYmUgbWVyZWx5IGEgZGlzY2xhaW1lciwgZXNwZWNpYWxseSByZWdhcmRpbmcgdGhlIHVzZSBvZiB3ZWJzaXRlc1Rlcm1zIG9mIHNlcnZpY2UgYXJlIHRoZSBsZWdhbCBhZ3JlZW1lbnRzIGJldHdlZW4gYSBzZXJ2aWNlIHByb3ZpZGVyIGFuZCBhIHBlcnNvbiB3aG8gd2FudHMgdG8gdXNlIHRoYXQgc2VydmljZS4gVGhlIHBlcnNvbiBtdXN0IGFncmVlIHRvIGFiaWRlIGJ5IHRoZSB0ZXJtcyBvZiBzZXJ2aWNlIGluIG9yZGVyIHRvIHVzZSB0aGUgb2ZmZXJlZCBzZXJ2aWNlLiBUZXJtcyBvZiBzZXJ2aWNlIGNhbiBhbHNvIGJlIG1lcmVseSBhIGRpc2NsYWltZXIsIGVzcGVjaWFsbHkgcmVnYXJkaW5nIHRoZSB1c2Ugb2Ygd2Vic2l0ZXMifSx7InR5cGUiOiJzbm9vemUiLCJkZXNjcmlwdGlvbiI6IjE1In0seyJ0eXBlIjoicHJlc2NyaXB0aW9uVmFsaWREYXlzIiwiZGVzY3JpcHRpb24iOiI5MCJ9XSwicHVsc2VMaXN0IjpbeyJ1aWQiOjEsInZpdGFsbmFtZSI6InB1bHNlIiwiZ2VuZGVyIjoiZ2VuZXJpYyIsImFnZWZyb20iOm51bGwsImFnZXRvIjpudWxsLCJyYW5nZWZyb20iOiI2MCIsInJhbmdldG8iOiIxMDAiLCJ2aXRhbElkIjoxfSx7InVpZCI6Miwidml0YWxuYW1lIjoicHVsc2UiLCJnZW5kZXIiOiJnZW5lcmljIiwiYWdlZnJvbSI6MCwiYWdldG8iOjAuMDAzLCJyYW5nZWZyb20iOiIxMjAiLCJyYW5nZXRvIjoiMTYwIiwidml0YWxJZCI6MX0seyJ1aWQiOjMsInZpdGFsbmFtZSI6InB1bHNlIiwiZ2VuZGVyIjoiZ2VuZXJpYyIsImFnZWZyb20iOjAuMDEsImFnZXRvIjowLjEyLCJyYW5nZWZyb20iOiI4MCIsInJhbmdldG8iOiIxNDAiLCJ2aXRhbElkIjoxfSx7InVpZCI6NCwidml0YWxuYW1lIjoicHVsc2UiLCJnZW5kZXIiOiJnZW5lcmljIiwiYWdlZnJvbSI6MSwiYWdldG8iOjMsInJhbmdlZnJvbSI6IjgwIiwicmFuZ2V0byI6IjEzMCIsInZpdGFsSWQiOjF9LHsidWlkIjo1LCJ2aXRhbG5hbWUiOiJwdWxzZSIsImdlbmRlciI6ImdlbmVyaWMiLCJhZ2Vmcm9tIjo0LCJhZ2V0byI6NSwicmFuZ2Vmcm9tIjoiODAiLCJyYW5nZXRvIjoiMTIwIiwidml0YWxJZCI6MX0seyJ1aWQiOjYsInZpdGFsbmFtZSI6InB1bHNlIiwiZ2VuZGVyIjoiZ2VuZXJpYyIsImFnZWZyb20iOjYsImFnZXRvIjoxMiwicmFuZ2Vmcm9tIjoiNzAiLCJyYW5nZXRvIjoiMTEwIiwidml0YWxJZCI6MX0seyJ1aWQiOjcsInZpdGFsbmFtZSI6InB1bHNlIiwiZ2VuZGVyIjoiZ2VuZXJpYyIsImFnZWZyb20iOjEzLCJhZ2V0byI6bnVsbCwicmFuZ2Vmcm9tIjoiNTUiLCJyYW5nZXRvIjoiMTA1Iiwidml0YWxJZCI6MX1dLCJicExpc3QiOlt7InVpZCI6OCwidml0YWxuYW1lIjoiYnAiLCJnZW5kZXIiOiJnZW5lcmljIiwiYWdlZnJvbSI6bnVsbCwiYWdldG8iOm51bGwsInJhbmdlZnJvbSI6IjkwLzYwIiwicmFuZ2V0byI6IjEyMC84MCIsInZpdGFsSWQiOjJ9XSwidGVtcExpc3QiOlt7InVpZCI6OSwidml0YWxuYW1lIjoidGVtcGFyYXR1cmVfZiIsImdlbmRlciI6ImdlbmVyaWMiLCJhZ2Vmcm9tIjpudWxsLCJhZ2V0byI6bnVsbCwicmFuZ2Vmcm9tIjoiOTcuOCIsInJhbmdldG8iOiI5OS4xIiwidml0YWxJZCI6MywiZl9jIjoiNDEuNiJ9LHsidWlkIjoxMCwidml0YWxuYW1lIjoidGVtcGFyYXR1cmVfYyIsImdlbmRlciI6ImdlbmVyaWMiLCJhZ2Vmcm9tIjpudWxsLCJhZ2V0byI6bnVsbCwicmFuZ2Vmcm9tIjoiMzYuNSIsInJhbmdldG8iOiIzNy4zIiwidml0YWxJZCI6MywiZl9jIjoiNDEuNiJ9XSwic3BvMkxpc3QiOlt7InVpZCI6MTEsInZpdGFsbmFtZSI6InNwbzIiLCJnZW5kZXIiOiJnZW5lcmljIiwiYWdlZnJvbSI6bnVsbCwiYWdldG8iOm51bGwsInJhbmdlZnJvbSI6Ijk1IiwicmFuZ2V0byI6IjEwMCIsInZpdGFsSWQiOjR9XSwiaGVtb2dsb2Jpbkxpc3QiOlt7InVpZCI6MTIsInZpdGFsbmFtZSI6ImhlbW9nbG9iaW4iLCJnZW5kZXIiOiJtYWxlIiwiYWdlZnJvbSI6bnVsbCwiYWdldG8iOm51bGwsInJhbmdlZnJvbSI6IjE0IiwicmFuZ2V0byI6IjE3Iiwidml0YWxJZCI6NX0seyJ1aWQiOjEzLCJ2aXRhbG5hbWUiOiJoZW1vZ2xvYmluIiwiZ2VuZGVyIjoiZmVtYWxlIiwiYWdlZnJvbSI6bnVsbCwiYWdldG8iOm51bGwsInJhbmdlZnJvbSI6IjEyIiwicmFuZ2V0byI6IjE1Iiwidml0YWxJZCI6NX1dLCJzZXJ1bUxpc3QiOlt7InVpZCI6MTQsInZpdGFsbmFtZSI6InNlcnVtX2NyZWF0aW5lIiwiZ2VuZGVyIjoiZ2VuZXJpYyIsImFnZWZyb20iOm51bGwsImFnZXRvIjpudWxsLCJyYW5nZWZyb20iOiIwLjciLCJyYW5nZXRvIjoiMS4yIiwidml0YWxJZCI6Nn1dLCJibG9vZHVyZWFMaXN0IjpbeyJ1aWQiOjE1LCJ2aXRhbG5hbWUiOiJibG9vZF91cmVhIiwiZ2VuZGVyIjoiZ2VuZXJpYyIsImFnZWZyb20iOm51bGwsImFnZXRvIjpudWxsLCJyYW5nZWZyb20iOiI3IiwicmFuZ2V0byI6IjIwIiwidml0YWxJZCI6N31dLCJ0bGNvdW50IjpbeyJ1aWQiOjE2LCJ2aXRhbG5hbWUiOiJ0bF9jb3VudCIsImdlbmRlciI6ImdlbmVyaWMiLCJhZ2Vmcm9tIjpudWxsLCJhZ2V0byI6bnVsbCwicmFuZ2Vmcm9tIjoiNzAiLCJyYW5nZXRvIjoiOTkiLCJ2aXRhbElkIjo4fV0sImJsb29kc3VnYXJMaXN0IjpbeyJ1aWQiOjE3LCJ2aXRhbG5hbWUiOiJibG9vZF9zdWdhcl9wcmUiLCJnZW5kZXIiOm51bGwsImFnZWZyb20iOm51bGwsImFnZXRvIjpudWxsLCJyYW5nZWZyb20iOiI3NyIsInJhbmdldG8iOiI5OSIsInZpdGFsSWQiOjl9LHsidWlkIjoxOCwidml0YWxuYW1lIjoiYmxvb2Rfc3VnYXJfcG9zdCIsImdlbmRlciI6bnVsbCwiYWdlZnJvbSI6bnVsbCwiYWdldG8iOm51bGwsInJhbmdlZnJvbSI6IjgwIiwicmFuZ2V0byI6IjE0MCIsInZpdGFsSWQiOjl9XSwidXNlclBlcm1pc3Npb25zIjpbeyJwZXJtaXNzaW9uIjp7InBlcm1pc3Npb24iOlsxLG51bGwsMyw0XX19XSwibWVkaWFMaXN0IjpbeyJtZWRpYUlkIjoxLCJtZWRpYU5hbWUiOiJXaGF0c2FwcCJ9LHsibWVkaWFJZCI6MiwibWVkaWFOYW1lIjoiRmFjZWJvb2sifSx7Im1lZGlhSWQiOjMsIm1lZGlhTmFtZSI6IldlYiBjaGF0In1dfSwiaWF0IjoxNjI5MjkxNzY2LCJleHAiOjE2MjkzNzgxNjZ9.zJkWeB5YzSU6AAAp25ZUHs5OP8xd78GT0OvCyLA-yxc",
+                          "userCode": 4,
+                          "userId": "admin@gmail.com"            
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/pateRxMgmt/getMargUomjwt" : {
+            "post" : {
+              "tags":["eRx Management"],
+                "summary" : "getMargUomjwt",
+                "description": "getMargUomjwt",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{                        
+                        "userCode": 4,
+                        "userId": "admin@gmail.com"           
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/pateRxMgmt/getMargUom" : {
+            "post" : {
+              "tags":["eRx Management"],
+                "summary" : "getMargUom",
+                "description": "getMargUom",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{                        
+                        "jwtToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7InVzZXJJZCI6ImFkbWluQGdtYWlsLmNvbSIsInVzZXJDb2RlIjo0fSwiaWF0IjoxNjI5MjkxNzY0LCJleHAiOjE2MjkzNzgxNjR9.lb31D-n_jMEEGw_ONQFTXz-3pL3_rEb8ykLoD63Jc7o",
+                        "userCode": 4,
+                        "userId": "admin@gmail.com"           
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/pateRxMgmt/searchRoutejwt" : {
+            "post" : {
+              "tags":["eRx Management"],
+                "summary" : "searchRoutejwt",
+                "description": "searchRoutejwt",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{                        
+                        "userCode": 4,
+                        "userId": "admin@gmail.com"           
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/pateRxMgmt/searchRoute" : {
+            "post" : {
+              "tags":["eRx Management"],
+                "summary" : "searchRoute",
+                "description": "searchRoute",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{                        
+                        "jwtToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7InVzZXJJZCI6ImFkbWluQGdtYWlsLmNvbSIsInVzZXJDb2RlIjo0fSwiaWF0IjoxNjI5MjkxNzY0LCJleHAiOjE2MjkzNzgxNjR9.lb31D-n_jMEEGw_ONQFTXz-3pL3_rEb8ykLoD63Jc7o",
+                        "userCode": 4,
+                        "userId": "admin@gmail.com"       
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/pateRxMgmt/geteRxDtlsJwt" : {
+            "post" : {
+              "tags":["eRx Management"],
+                "summary" : "geteRxDtlsJwt",
+                "description": "geteRxDtlsJwt",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{                        
+                        "erxReqId": "eRx_28213",
+                        "userCode": 4,
+                        "userId": "admin@gmail.com"     
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/pateRxMgmt/geteRxDtls" : {
+            "post" : {
+              "tags":["eRx Management"],
+                "summary" : "geteRxDtls",
+                "description": "geteRxDtls",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{                        
+                        "erxReqId": "eRx_28213",
+                        "jwtToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7InVzZXJJZCI6ImFkbWluQGdtYWlsLmNvbSIsImVyeFJlcUlkIjoiZVJ4XzI4MjEzIiwidXNlckNvZGUiOjR9LCJpYXQiOjE2MjkyOTE3NjQsImV4cCI6MTYyOTM3ODE2NH0.BLjsv7YWhNzL2NleYLF6xnM--Q0o1lXXsdfNqxXimPo",
+                        "userCode": 4,
+                        "userId": "admin@gmail.com"      
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/pateRxMgmt/insertOperatorNotes" : {
+            "post" : {
+              "tags":["eRx Management"],
+                "summary" : "insertOperatorNotes",
+                "description": "insertOperatorNotes",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{                        
+                        "erxReqId": "eRx_112128",
+                        "operatornotes": "Check notes",
+                        "userCode": 4,
+                        "userId": "admin@gmail.com"  
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/pateRxMgmt/getOperatorNotesjwt" : {
+            "post" : {
+              "tags":["eRx Management"],
+                "summary" : "getOperatorNotesjwt",
+                "description": "getOperatorNotesjwt",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{                        
+                        "erxId": "eRx_28213",
+                        "userCode": 4    
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/pateRxMgmt/getOperatorNotes" : {
+            "post" : {
+              "tags":["eRx Management"],
+                "summary" : "getOperatorNotes",
+                "description": "getOperatorNotes",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{                        
+                        "erxId": "eRx_28213",
+                        "jwtToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7InVzZXJDb2RlIjo0LCJlcnhJZCI6ImVSeF8yODIxMyJ9LCJpYXQiOjE2MjkyOTE3NjQsImV4cCI6MTYyOTM3ODE2NH0.jLVDkVD4I7tzgHG8vcHeA4unABMmFJo55NkfV42ZpeA",
+                        "userCode": 4      
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/pateRxMgmt/inserteRxDetails" : {
+            "post" : {
+              "tags":["eRx Management"],
+                "summary" : "inserteRxDetails",
+                "description": "inserteRxDetails",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{                        
+                        "erxUrl":"https://i.stack.imgur.com/33DPC.jpg",
+                        "mediaId":3,"presFileType":"image/png",
+                        "chatObj":{"lang":2,"relation":"wife","mobileNbr":"9876543210",
+                          "fName":"Aruna","lName":"Devi","email":"aahasangeetha@gmail.com","event":true,"notify":false},
+                          "chatLogs":[],"presFileName":"gudmed1628573433564_98625" 
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/pateRxMgmt/updateeRxDtlsjwt" : {
+            "post" : {
+              "tags":["eRx Management"],
+                "summary" : "updateeRxDtlsjwt",
+                "description": "updateeRxDtlsjwt",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{                        
+                        "bloodsugarFasting": 4000,
+                        "bloodsugarPast": 342,
+                        "bloodsugarPre": 344,
+                        "bloodurea": "45",
+                        "bp": "12/100",
+                        "diabetes": "notknown",
+                        "diagnosis": {"diag": {"title": "Cholera due to Vibrio cholerae 01, biovar cholerae", "id": "A00.0"}},
+                        "docId": 73,
+                        "doctorNotes": "test",
+                        "erxDate": "2021-06-20",
+                        "erxReqId": "eRx_28213",
+                        "hemoglobin": "15",
+                        "hypertension": "notknown",
+                        "investigation": {"inves": []},
+                        "operatornotes": "",
+                        "patId": "91786886964124",
+                        "procedure": {"pro": [{"title": "ACL reconstruction", "id": 4}]},
+                        "pulse": "34",
+                        "serumcreatine": "23",
+                        "spo2": "56",
+                        "status": 1,
+                        "symptoms": {"sym": [{"title": "Absence of a pulse", "id": 4}]},
+                        "temperature": 98,
+                        "userCode": 4,
+                        "userId": "admin@gmail.com",
+                        "weight": 56     
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/pateRxMgmt/updateeRxDtls" : {
+            "post" : {
+              "tags":["eRx Management"],
+                "summary" : "updateeRxDtls",
+                "description": "updateeRxDtls",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{                        
+                        "bloodsugarFasting": 4000,
+                        "bloodsugarPast": 342,
+                        "bloodsugarPre": 344,
+                        "bloodurea": "45",
+                        "bp": "12/100",
+                        "diabetes": "notknown",
+                        "diagnosis": {"diag": {"title": "Cholera due to Vibrio cholerae 01, biovar cholerae", "id": "A00.0"}},
+                        "docId": 73,
+                        "doctorNotes": "test",
+                        "erxDate": "2021-06-20",
+                        "erxReqId": "eRx_28213",
+                        "hemoglobin": "15",
+                        "hypertension": "notknown",
+                        "investigation": {"inves": []},
+                        "operatornotes": "",
+                        "patId": "91786886964124",
+                        "procedure": {"pro": [{"title": "ACL reconstruction", "id": 4}]},
+                        "pulse": "34",
+                        "serumcreatine": "23",
+                        "spo2": "56",
+                        "status": 1,
+                        "symptoms": {"sym": [{"title": "Absence of a pulse", "id": 4}]},
+                        "temperature": 98,
+                        "userCode": 4,
+                        "userId": "admin@gmail.com",
+                        "weight": 56 ,
+                        "jwtToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7InRlbXBlcmF0dXJlIjo5OCwicGF0SWQiOiI5MTc4Njg4Njk2NDEyNCIsInVzZXJDb2RlIjo0LCJkb2NJZCI6NzMsInVzZXJJZCI6ImFkbWluQGdtYWlsLmNvbSIsIndlaWdodCI6NTYsImJwIjoiMTIvMTAwIiwic3BvMiI6IjU2IiwicHVsc2UiOiIzNCIsImVyeFJlcUlkIjoiZVJ4XzI4MjEzIiwiaHlwZXJ0ZW5zaW9uIjoibm90a25vd24iLCJkaWFiZXRlcyI6Im5vdGtub3duIiwic2VydW1jcmVhdGluZSI6IjIzIiwiYmxvb2R1cmVhIjoiNDUiLCJoZW1vZ2xvYmluIjoiMTUiLCJibG9vZHN1Z2FyUHJlIjozNDQsImJsb29kc3VnYXJQYXN0IjozNDIsImJsb29kc3VnYXJGYXN0aW5nIjo0MDAwLCJpbnZlc3RpZ2F0aW9uIjp7ImludmVzIjpbXX0sInN5bXB0b21zIjp7InN5bSI6W3sidGl0bGUiOiJBYnNlbmNlIG9mIGEgcHVsc2UiLCJpZCI6NH1dfSwiZGlhZ25vc2lzIjp7ImRpYWciOnsidGl0bGUiOiJDaG9sZXJhIGR1ZSB0byBWaWJyaW8gY2hvbGVyYWUgMDEsIGJpb3ZhciBjaG9sZXJhZSIsImlkIjoiQTAwLjAifX0sInByb2NlZHVyZSI6eyJwcm8iOlt7InRpdGxlIjoiQUNMIHJlY29uc3RydWN0aW9uIiwiaWQiOjR9XX0sImRvY3Rvck5vdGVzIjoidGVzdCIsInN0YXR1cyI6MSwiZXJ4RGF0ZSI6IjIwMjEtMDYtMjAiLCJvcGVyYXRvcm5vdGVzIjoiIn0sImlhdCI6MTYyOTI5NDQxMiwiZXhwIjoxNjI5MzgwODEyfQ.OKphMz6i86pLiGPkBOZGaC5RY2mLQmXha-_3iYgK2IE"
+     
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/pateRxMgmt/insertMedicineData" : {
+            "post" : {
+              "tags":["eRx Management"],
+                "summary" : "insertMedicineData",
+                "description": "insertMedicineData",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{                        
+                        "advice": "",
+                        "an": true,
+                        "dosage": "1",
+                        "duration": "1",
+                        "en": false,
+                        "erxReqId": "eRx_28213",
+                        "frequency": "0-1-0-0",
+                        "medicineName": "DOLO-650 TABS 650MG 10",
+                        "mn": false,
+                        "nt": false,
+                        "qty": "1",
+                        "referral": "Before Food",
+                        "route": "Oral",
+                        "saltName": null,
+                        "size": "",
+                        "status": "0",
+                        "takemethod": "",
+                        "txnNo": 2,
+                        "uomId": "TAB",
+                        "userCode": 4,
+                        "userId": "admin@gmail.com"
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/pateRxMgmt/generatePDF" : {
+            "post" : {
+              "tags":["eRx Management"],
+                "summary" : "generatePDF",
+                "description": "generatePDF",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{                        
+                        "erxId": "eRx_28213",
+                        "userCode": 4
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/pateRxMgmt/sendToReviewjwt" : {
+            "post" : {
+              "tags":["eRx Management"],
+                "summary" : "sendToReviewjwt",
+                "description": "sendToReviewjwt",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{                        
+                        "erxId": "eRx_28213",
+                        "userCode": 4,                     
+                        "userId": "admin@gmail.com",
+                        "status": 4,
+                        "roleId": 1
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/pateRxMgmt/sendToReview" : {
+            "post" : {
+              "tags":["eRx Management"],
+                "summary" : "sendToReview",
+                "description": "sendToReview",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{                        
+                        "erxId": "eRx_28213",
+                        "userCode": 4,                     
+                        "userId": "admin@gmail.com",
+                        "status": 4,
+                        "roleId": 1,
+                        "jwtToken":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7Im1vYmlsZU5iciI6Ijc4Njg4Njk2NDEiLCJwTmFtZSI6IiIsImxpbWl0IjoxMCwib2Zmc2V0IjowfSwiaWF0IjoxNjI5MjgzNTk0LCJleHAiOjE2MjkzNjk5OTR9.u09T5sC6LAoqlUWvs6W8L4oM19enNe1IsFmucP2CUEk"
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/pateRxMgmt/searchmedicineNamejwt" : {
+            "post" : {
+              "tags":["eRx Management"],
+                "summary" : "searchmedicineNamejwt",
+                "description": "searchmedicineNamejwt",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{                        
+                        "medicineName": "dol",
+                        "saltName": "",
+                        "userCode": 4,
+                        "userId": "admin@gmail.com"                       
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/pateRxMgmt/searchmedicineName" : {
+            "post" : {
+              "tags":["eRx Management"],
+                "summary" : "searchmedicineName",
+                "description": "searchmedicineName",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{                        
+                        "jwtToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7InVzZXJJZCI6ImFkbWluQGdtYWlsLmNvbSIsInVzZXJDb2RlIjo0LCJtZWRpY2luZU5hbWUiOiJkb2wiLCJzYWx0TmFtZSI6IiJ9LCJpYXQiOjE2MjkyOTU3ODgsImV4cCI6MTYyOTM4MjE4OH0.fNBsaQn9HdUvlUdqxWx6FNgS23H83-yJ8PN5X2zjEUM",
+                        "medicineName": "med",
+                        "userCode": 4,
+                        "userId": "admin@gmail.com"                      
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/pateRxMgmt/searchsaltNamejwt" : {
+            "post" : {
+              "tags":["eRx Management"],
+                "summary" : "searchsaltNamejwt",
+                "description": "searchsaltNamejwt",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{                        
+                        "saltName": "par",
+                        "userCode": 4,
+                        "userId": "admin@gmail.com"                     
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/pateRxMgmt/searchsaltName" : {
+            "post" : {
+              "tags":["eRx Management"],
+                "summary" : "searchsaltName",
+                "description": "searchsaltName",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{                        
+                        "jwtToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7InVzZXJJZCI6ImFkbWluQGdtYWlsLmNvbSIsInVzZXJDb2RlIjo0LCJzYWx0TmFtZSI6InBhciJ9LCJpYXQiOjE2MjkyOTU5MjIsImV4cCI6MTYyOTM4MjMyMn0.UyMbt1nSOZNptCMHdTj5Zxpm2UOvNG7KdEpg66IT4ZY",
+                        "saltName": "salt",
+                        "userCode": 4,
+                        "userId": "admin@gmail.com"                     
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/pateRxMgmt/searchSymptomsjwt" : {
+            "post" : {
+              "tags":["eRx Management"],
+                "summary" : "searchSymptomsjwt",
+                "description": "searchSymptomsjwt",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{                        
+                        "symName": "fev",
+                        "userCode": 4,
+                        "userId": "admin@gmail.com"                 
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/pateRxMgmt/searchSymptoms" : {
+            "post" : {
+              "tags":["eRx Management"],
+                "summary" : "searchsaltName",
+                "description": "searchsaltName",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{                        
+                        "jwtToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7InVzZXJJZCI6ImFkbWluQGdtYWlsLmNvbSIsInVzZXJDb2RlIjo0LCJzeW1OYW1lIjoiZmV2In0sImlhdCI6MTYyOTM0Njc5MywiZXhwIjoxNjI5NDMzMTkzfQ.dvz75tQ4YyFzKHQAJQ9YaWtZG1BKLdHIkL9oij2oDKQ",
+                        "symName": "sym",
+                        "userCode": 4,
+                        "userId": "admin@gmail.com"                    
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/pateRxMgmt/searchDiagnosisjwt" : {
+            "post" : {
+              "tags":["eRx Management"],
+                "summary" : "searchDiagnosisjwt",
+                "description": "searchDiagnosisjwt",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{                        
+                        "digName": "dia",
+                        "userCode": 4,
+                        "userId": "admin@gmail.com"                  
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/pateRxMgmt/searchDiagnosis" : {
+            "post" : {
+              "tags":["eRx Management"],
+                "summary" : "searchsaltName",
+                "description": "searchsaltName",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{                        
+                        "digName": "sym",
+                        "jwtToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7InVzZXJJZCI6ImFkbWluQGdtYWlsLmNvbSIsInVzZXJDb2RlIjo0LCJkaWdOYW1lIjoiZGlhIn0sImlhdCI6MTYyOTM0NjkxMCwiZXhwIjoxNjI5NDMzMzEwfQ.Z0WWgBvT7M46OGoJenQjp2eHPtZXNJYV0G-5PnDlPU4",
+                        "userCode": 4,
+                        "userId": "admin@gmail.com"              
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/pateRxMgmt/searchProcedurejwt" : {
+            "post" : {
+              "tags":["eRx Management"],
+                "summary" : "searchProcedurejwt",
+                "description": "searchProcedurejwt",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{                        
+                        "proName": "pro",
+                        "userCode": 4,
+                        "userId": "admin@gmail.com"              
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/pateRxMgmt/searchProcedure" : {
+            "post" : {
+              "tags":["eRx Management"],
+                "summary" : "searchProcedure",
+                "description": "searchProcedure",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{                        
+                        "jwtToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7InVzZXJJZCI6ImFkbWluQGdtYWlsLmNvbSIsInVzZXJDb2RlIjo0LCJwcm9OYW1lIjoicHJvIn0sImlhdCI6MTYyOTM0NzAxMiwiZXhwIjoxNjI5NDMzNDEyfQ.GN63Qj6fmT7GynzQwaqcmThCfzLRdshqDV_TCRxFaQY",
+                        "proName": "pro",
+                        "userCode": 4,
+                        "userId": "admin@gmail.com"              
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/pateRxMgmt/searchInvestigationjwt" : {
+            "post" : {
+              "tags":["eRx Management"],
+                "summary" : "searchInvestigationjwt",
+                "description": "searchInvestigationjwt",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{                        
+                        "invesName": "inc",
+                        "userCode": 4,
+                        "userId": "admin@gmail.com"           
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/pateRxMgmt/searchInvestigation" : {
+            "post" : {
+              "tags":["eRx Management"],
+                "summary" : "searchInvestigation",
+                "description": "searchInvestigation",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{                        
+                        "invesName": "inves",
+                        "jwtToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7InVzZXJJZCI6ImFkbWluQGdtYWlsLmNvbSIsInVzZXJDb2RlIjo0LCJpbnZlc05hbWUiOiJpbmMifSwiaWF0IjoxNjI5MzQ3MDk3LCJleHAiOjE2Mjk0MzM0OTd9.NP3cIXi1UtxV-tfvHq93tn0_S1u1wbNe-93YtfYBYOg",
+                        "userCode": 4,
+                        "userId": "admin@gmail.com"          
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/pateRxMgmt/searchAllergyNamejwt" : {
+            "post" : {
+              "tags":["eRx Management"],
+                "summary" : "searchAllergyNamejwt",
+                "description": "searchAllergyNamejwt",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{                        
+                        "allergyName": "all",
+                        "userCode": 4,
+                        "userId": "admin@gmail.com"          
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          },
+          "/pateRxMgmt/searchAllergyName" : {
+            "post" : {
+              "tags":["eRx Management"],
+                "summary" : "searchAllergyName",
+                "description": "searchAllergyName",
+                "parameters": [
+                  {
+                      "in": "body",
+                      "name": "body",
+                      "description": "Parameters",
+                      "required": true,
+                      "example":{                        
+                        "allergyName": "all",
+                        "jwtToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjp7InVzZXJJZCI6ImFkbWluQGdtYWlsLmNvbSIsInVzZXJDb2RlIjo0LCJpbnZlc05hbWUiOiJpbmMifSwiaWF0IjoxNjI5MzQ3MDk3LCJleHAiOjE2Mjk0MzM0OTd9.NP3cIXi1UtxV-tfvHq93tn0_S1u1wbNe-93YtfYBYOg",
+                        "userCode": 4,
+                        "userId": "admin@gmail.com"          
+                      }                      
+                  }
+                ],
+                "responses": {                  
+                }
+            }
+          }
+
+    }    
+}
+
