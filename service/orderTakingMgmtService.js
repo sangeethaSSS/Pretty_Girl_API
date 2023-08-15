@@ -555,7 +555,7 @@ module.exports.printOrderSlip = async (req) => {
         b.qty,e.total_set,(b.qty::INTEGER*e.total_set::INTEGER) as total_piece
         from tbl_order_taking  as a inner join tbl_order_taking_items as b 
         on a.order_no = b.order_no inner join tbl_def_item as c on b.item_code = c.item_id 
-        inner join tbl_color as d on b.color_id = d.color_id inner join tbl_item_sizes as 
+        left join tbl_color as d on b.color_id = d.color_id inner join tbl_item_sizes as 
         e on b.size_id = e.size_id where lower(a.order_no) = lower('`+ order_no + `') order by b.item_code asc) as dev group by order_no,item_code,item_name order by item_code asc`);
 
         const Customer_Result = await client.query(`select a.order_no,b.customer_code,b.street,b.area,b.transport_name,b.gstin_no,b.transport_contact_no,b.transport_contact_person,b.transport_location,b.customer_name,b.city,b.contact_person,b.mobile_no,b.gstin_no,b.alternative_mobile_no,b.agent_code,c.agent_name  from tbl_order_taking as a inner join tbl_customer as b on a.customer_code = b.customer_code inner join tbl_agent as c on b.agent_code = c.agent_code where lower(a.order_no) = lower('` + order_no + `')`);
