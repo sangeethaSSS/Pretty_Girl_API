@@ -536,6 +536,7 @@ module.exports.insertOrderTaking = async (req) => {
   await client.connect();
   try {
     if (req.jwtToken) {
+      console.log("service")
       const decoded = await commonService.jwtVerify(req.jwtToken); 
       const { device_id } = decoded.data;
       let { jsonOrder,jsonOrderItems } = req; 
@@ -577,12 +578,14 @@ module.exports.insertOrderTaking = async (req) => {
           
           for (var i = 0; i < ListsItems.length; i++) {
             // const exeUserQuery = await client.query(`select count(1) as total from tbl_order_taking_items  where order_no=$1 and item_code =$2 and design_code=$3 and size_id=$4 and color_id=$5  and device_code=$6`, [ListsItems[i].order_no,ListsItems[i].item_code,ListsItems[i].design_code,ListsItems[i].size_id,ListsItems[i].color,ListsItems[i].device_code]);
-           
+           if (ListsItems[i].color == "" || ListsItems[i].color == "null" || ListsItems[i].color == undefined
+           || ListsItems[i].color == null){
+            ListsItems[i].color = 0
+           }
                  var makerid = await commonService.insertLogs(ListsItems[i].device_code, "Insert Order Taking Items Via Mobile - " + ListsItems[i].device_code+" - "+ListsItems[i].order_no);
                 //Insert User Log
               const exeUserQuerys = await client.query(`INSERT INTO tbl_order_taking_items(order_no, item_code, design_code, color_id, item_size, qty, created_date,device_code,status_code,sync_date,maker_id,size_id) values ($1, $2, $3, $4, $5, $6, $7, $8,$9,now(),$10,$11) RETURNING order_no`, [ListsItems[i].order_no, ListsItems[i].item_code, ListsItems[i].design_code, ListsItems[i].color, ListsItems[i].item_size, ListsItems[i].qty, ListsItems[i].created_date, ListsItems[i].device_code, ListsItems[i].status_code, makerid,ListsItems[i].size_id]);
-              response1.push(exeUserQuerys.rows[0].order_no);   
-            
+              response1.push(exeUserQuerys.rows[0].order_no);
           
             // if (Number(totalcount) == 0) {
             //     //Insert User Log
