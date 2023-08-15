@@ -29,6 +29,11 @@ module.exports.syncDeleteSchema = Joi.object().keys({
   device_id: Joi.string().required(),   
   jwtToken: Joi.string().allow(''), 
 }); 
+module.exports.OrderTakingCheck = Joi.object().keys({
+  device_id: Joi.string().required(),   
+  order_no: Joi.string().required(), 
+});
+
 
 
 //Check input schema

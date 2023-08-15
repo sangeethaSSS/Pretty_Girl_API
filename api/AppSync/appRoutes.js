@@ -131,5 +131,10 @@ router.post('/checkStockDetails',
 joiSchemaValidation.validateBody(loginSchema.checkStock),
 appController.checkStockDetails
 )
+router.post('/OrderTakingCheck',
+joiSchemaValidation.validateBody(loginSchema.OrderTakingCheck),
+appController.OrderTakingCheck
+)
+
 
 module.exports = router;

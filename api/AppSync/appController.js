@@ -195,6 +195,20 @@ module.exports.stockTransactionList = async (req, res) => {
   }
   return res.send(response);
 }
+module.exports.OrderTakingCheck = async (req, res) => {
+  let response = {};
+  try {   
+    const responseFromService = await appService.OrderTakingCheck(req.body); 
+    if(!responseFromService.token) {
+      response.status = 200;
+    }    
+    response.body = responseFromService;
+  } catch (error) {
+    response.message = error.message;
+  }
+  return res.send(response);
+}
+
   
 
     

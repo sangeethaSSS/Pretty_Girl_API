@@ -524,6 +524,7 @@ module.exports.syncDeleteDetails = async (req) => {
 
 
 //Insert Order Taking
+//Insert Order Taking
 module.exports.insertOrderTaking = async (req) => {
   const client = new Client({
     user: connectionString.user,
@@ -539,12 +540,23 @@ module.exports.insertOrderTaking = async (req) => {
       const { device_id } = decoded.data;
       let { jsonOrder,jsonOrderItems } = req; 
       var response = [],response1 = [];
+      let totalOrderItemCount = 0
       if (device_id) {
         let Lists = jsonOrder.JSonObject;
         if (Lists && Lists.length > 0) {
           for (var i = 0; i < Lists.length; i++) {
             const exeUserQuery = await client.query(`select count(1) as total from tbl_order_taking  where ref_no=$1 and order_no =$2 and device_code=$3`, [Lists[i].ref_no,Lists[i].order_no,Lists[i].device_code]);
             let totalcount = exeUserQuery?.rows?.[0].total;
+            const exeUserOrderQuery = await client.query(`select count(1) as total from tbl_order_taking_items  where order_no=$1 and device_code=$2`, [Lists[i].order_no,Lists[i].device_code]);
+            totalOrderItemCount = exeUserOrderQuery?.rows?.[0].total;
+            if (Number(totalOrderItemCount) > 0) {
+              await client.query(`DELETE FROM tbl_order_taking_items where order_no=$1 and device_code=$2`, [Lists[i].order_no,Lists[i].device_code]);
+            }
+            const exeStockQuery = await client.query(`select count(1) as total from tbl_stock_transaction  where trans_no =$1 and  user_id=$2`, [Lists[i].order_no,Lists[i].device_code ]);
+            let totalstockcount = exeStockQuery?.rows?.[0].total;
+            if (Number(totalstockcount) > 0) {
+              await client.query(`DELETE FROM tbl_stock_transaction where trans_no=$1 and user_id=$2`, [Lists[i].order_no,Lists[i].device_code]);
+            }
             if (Number(totalcount) == 0) {
                 //Insert User Log
               var makerid = await commonService.insertLogs(Lists[i].device_code, "Insert Order Taking Via Mobile - " + Lists[i].device_code+" - "+Lists[i].order_no);
@@ -562,39 +574,54 @@ module.exports.insertOrderTaking = async (req) => {
         //Order Taking Items insert
         let ListsItems = jsonOrderItems.JSonObject;
         if (ListsItems && ListsItems.length > 0) {
+          
           for (var i = 0; i < ListsItems.length; i++) {
-            const exeUserQuery = await client.query(`select count(1) as total from tbl_order_taking_items  where order_no=$1 and item_code =$2 and design_code=$3 and size_id=$4 and color_id=$5  and device_code=$6`, [ListsItems[i].order_no,ListsItems[i].item_code,ListsItems[i].design_code,ListsItems[i].size_id,ListsItems[i].color,ListsItems[i].device_code]);
-            let totalcount = exeUserQuery?.rows?.[0].total;
-            if (Number(totalcount) == 0) {
+            // const exeUserQuery = await client.query(`select count(1) as total from tbl_order_taking_items  where order_no=$1 and item_code =$2 and design_code=$3 and size_id=$4 and color_id=$5  and device_code=$6`, [ListsItems[i].order_no,ListsItems[i].item_code,ListsItems[i].design_code,ListsItems[i].size_id,ListsItems[i].color,ListsItems[i].device_code]);
+           
+                 var makerid = await commonService.insertLogs(ListsItems[i].device_code, "Insert Order Taking Items Via Mobile - " + ListsItems[i].device_code+" - "+ListsItems[i].order_no);
                 //Insert User Log
-              var makerid = await commonService.insertLogs(ListsItems[i].device_code, "Insert Order Taking Items Via Mobile - " + ListsItems[i].device_code+" - "+ListsItems[i].order_no);
-              
               const exeUserQuerys = await client.query(`INSERT INTO tbl_order_taking_items(order_no, item_code, design_code, color_id, item_size, qty, created_date,device_code,status_code,sync_date,maker_id,size_id) values ($1, $2, $3, $4, $5, $6, $7, $8,$9,now(),$10,$11) RETURNING order_no`, [ListsItems[i].order_no, ListsItems[i].item_code, ListsItems[i].design_code, ListsItems[i].color, ListsItems[i].item_size, ListsItems[i].qty, ListsItems[i].created_date, ListsItems[i].device_code, ListsItems[i].status_code, makerid,ListsItems[i].size_id]);
-              response1.push(exeUserQuerys.rows[0].order_no);
-            } else {
-                //Update User Log
-                var makerid = await commonService.insertLogs(ListsItems[i].device_code, "Update Order Taking Items Via Mobile - " + ListsItems[i].device_code+" - "+ListsItems[i].order_no);
+              response1.push(exeUserQuerys.rows[0].order_no);   
+            
+          
+            // if (Number(totalcount) == 0) {
+            //     //Insert User Log
+            //   var makerid = await commonService.insertLogs(ListsItems[i].device_code, "Insert Order Taking Items Via Mobile - " + ListsItems[i].device_code+" - "+ListsItems[i].order_no);
               
-                const exeUserQuerys = await client.query(`Update tbl_order_taking_items set  qty=$1 ,maker_id=$2, status_code=$3,sync_date=now() where order_no=$4 and item_code =$5 and design_code=$6 and size_id=$7 and color_id=$8  and device_code=$9 RETURNING order_no`, [ListsItems[i].qty,makerid,ListsItems[i].status_code,ListsItems[i].order_no,ListsItems[i].item_code,ListsItems[i].design_code,ListsItems[i].size_id,ListsItems[i].color,ListsItems[i].device_code]);
-                response1.push(exeUserQuerys.rows[0].order_no);
-            }
+            //   const exeUserQuerys = await client.query(`INSERT INTO tbl_order_taking_items(order_no, item_code, design_code, color_id, item_size, qty, created_date,device_code,status_code,sync_date,maker_id,size_id) values ($1, $2, $3, $4, $5, $6, $7, $8,$9,now(),$10,$11) RETURNING order_no`, [ListsItems[i].order_no, ListsItems[i].item_code, ListsItems[i].design_code, ListsItems[i].color, ListsItems[i].item_size, ListsItems[i].qty, ListsItems[i].created_date, ListsItems[i].device_code, ListsItems[i].status_code, makerid,ListsItems[i].size_id]);
+            //   response1.push(exeUserQuerys.rows[0].order_no);
+            // } else {
+            //     //Update User Log
+            //     var makerid = await commonService.insertLogs(ListsItems[i].device_code, "Update Order Taking Items Via Mobile - " + ListsItems[i].device_code+" - "+ListsItems[i].order_no);
+              
+            //     const exeUserQuerys = await client.query(`Update tbl_order_taking_items set  qty=$1 ,maker_id=$2, status_code=$3,sync_date=now() where order_no=$4 and item_code =$5 and design_code=$6 and size_id=$7 and color_id=$8  and device_code=$9 RETURNING order_no`, [ListsItems[i].qty,makerid,ListsItems[i].status_code,ListsItems[i].order_no,ListsItems[i].item_code,ListsItems[i].design_code,ListsItems[i].size_id,ListsItems[i].color,ListsItems[i].device_code]);
+            //     response1.push(exeUserQuerys.rows[0].order_no);
+            // }
 
             //Order taking stock transaction
-            const exeStockQuery = await client.query(`select count(1) as total from tbl_stock_transaction  where size_id=$1 and trans_no =$2 and  user_id=$3`, [ListsItems[i].size_id,ListsItems[i].order_no,ListsItems[i].device_code ]);
-            let totalstockcount = exeStockQuery?.rows?.[0].total;
-            if (Number(totalstockcount) == 0) {
+
                 //Insert User Log
               var makerid = await commonService.insertLogs(ListsItems[i].device_code, "Insert Stock Order Taking Items Via Mobile - " + ListsItems[i].device_code+" - "+ListsItems[i].order_no);
               
                await client.query(`INSERT INTO tbl_stock_transaction(stock_date, size_id, trans_no, inward, outward, user_id, created_date, sync_date, maker_id) values ($1, $2, $3, $4, $5, $6, $7, now(),$8 ) RETURNING size_id`, [ListsItems[i].created_date, ListsItems[i].size_id, ListsItems[i].order_no,'0', ListsItems[i].qty, ListsItems[i].device_code, ListsItems[i].created_date ,makerid ]);
+
               
-            } else {
-                //Update User Log
-                var makerid = await commonService.insertLogs(ListsItems[i].device_code, "Update Stock Order Taking Items Via Mobile - " + ListsItems[i].device_code+" - "+ListsItems[i].order_no);
+           
+            // const exeStockQuery = await client.query(`select count(1) as total from tbl_stock_transaction  where size_id=$1 and trans_no =$2 and  user_id=$3`, [ListsItems[i].size_id,ListsItems[i].order_no,ListsItems[i].device_code ]);
+            // let totalstockcount = exeStockQuery?.rows?.[0].total;
+            // if (Number(totalstockcount) == 0) {
+            //     //Insert User Log
+            //   var makerid = await commonService.insertLogs(ListsItems[i].device_code, "Insert Stock Order Taking Items Via Mobile - " + ListsItems[i].device_code+" - "+ListsItems[i].order_no);
               
-                 await client.query(`Update tbl_stock_transaction set  outward=$1 ,maker_id=$2, sync_date=now() where size_id=$3 and trans_no =$4 and  user_id=$5 `, [ListsItems[i].qty,makerid,ListsItems[i].size_id,ListsItems[i].order_no,ListsItems[i].device_code ]);
+            //    await client.query(`INSERT INTO tbl_stock_transaction(stock_date, size_id, trans_no, inward, outward, user_id, created_date, sync_date, maker_id) values ($1, $2, $3, $4, $5, $6, $7, now(),$8 ) RETURNING size_id`, [ListsItems[i].created_date, ListsItems[i].size_id, ListsItems[i].order_no,'0', ListsItems[i].qty, ListsItems[i].device_code, ListsItems[i].created_date ,makerid ]);
+              
+            // } else {
+            //     //Update User Log
+            //     var makerid = await commonService.insertLogs(ListsItems[i].device_code, "Update Stock Order Taking Items Via Mobile - " + ListsItems[i].device_code+" - "+ListsItems[i].order_no);
+              
+            //      await client.query(`Update tbl_stock_transaction set  outward=$1 ,maker_id=$2, sync_date=now() where size_id=$3 and trans_no =$4 and  user_id=$5 `, [ListsItems[i].qty,makerid,ListsItems[i].size_id,ListsItems[i].order_no,ListsItems[i].device_code ]);
                  
-            }
+            // }
                         
           }
         }
@@ -614,7 +641,7 @@ module.exports.insertOrderTaking = async (req) => {
               let order_id = exeQuery1?.rows[0]?.order_no || '';
 
               const exeQuery2= await client.query(
-                `select ROW_NUMBER () OVER (ORDER BY a.order_no) as sno,a.order_no,b.item_code,c.item_name,b.design_code,b.item_size,b.qty,b.color_id,b.size_id,d.color_name,e.total_set,a.order_date,e.total_set::INTEGER*b.qty as total_pcs from tbl_order_taking  as a inner join tbl_order_taking_items as b on a.order_no = b.order_no inner join tbl_def_item as c on b.item_code = c.item_id left join tbl_color as d on b.color_id = d.color_id inner join tbl_item_sizes as e on b.size_id = e.size_id where a.ref_no=$1 and a.order_no =$2 and a.device_code=$3 order by b.item_code asc`, [Lists[k].ref_no, Lists[k].order_no, Lists[k].device_code] 
+                `select ROW_NUMBER () OVER (ORDER BY a.order_no) as sno,a.order_no,b.item_code,c.item_name,b.design_code,b.item_size,b.qty,b.color_id,b.size_id,d.color_name,e.total_set,a.order_date,e.total_set::INTEGER*b.qty as total_pcs from tbl_order_taking  as a inner join tbl_order_taking_items as b on a.order_no = b.order_no inner join tbl_def_item as c on b.item_code = c.item_id inner join tbl_color as d on b.color_id = d.color_id inner join tbl_item_sizes as e on b.size_id = e.size_id where a.ref_no=$1 and a.order_no =$2 and a.device_code=$3 order by b.item_code asc`, [Lists[k].ref_no, Lists[k].order_no, Lists[k].device_code] 
               );
               let order_item_details = exeQuery2?.rows || []; 
               const exeQuery3= await client.query(
@@ -624,7 +651,7 @@ module.exports.insertOrderTaking = async (req) => {
               let responseData = {
                 "OrderSlip": order_item_details, "CustomerArray": order_customer_details, "CompanyArray": Company_Array ,"order_id":order_id, "user_mobile_no":user_mobileno
               } 
-              await generateOrderPDF(responseData,req, Lists[k]);
+              // await generateOrderPDF(responseData,req, Lists[k]);
             }
           }
          
@@ -967,7 +994,7 @@ module.exports.stockTransactionList = async (req) => {
       var response = {};
       if (device_id) {
         const exeQuery = await client.query(
-          "select to_char(CURRENT_DATE,'YYYY-MM-DD') as stock_date ,row_number() over(order by b.size_id) as stock_code,  sum(coalesce(inward,0))+coalesce(b.current_stock,0)  as inward,sum(coalesce(outward,0)) as outward,b.size_id from tbl_stock_transaction as a right join  tbl_item_sizes as b on a.size_id=b.size_id group by b.size_id " 
+          "select to_char(CURRENT_DATE,'YYYY-MM-DD') as stock_date ,row_number() over(order by b.size_id) as stock_code,  sum(coalesce(inward,0))+coalesce(b.current_stock,0)  as inward,sum(coalesce(outward,0)) as outward,b.size_id,coalesce(((select sum(coalesce(no_of_set,0)) from tbl_fg_items where size_id=b.size_id) +coalesce(b.current_stock,0)) - (select coalesce(sum(coalesce(dispatch_set,0)),0) from tbl_dispatch_details where status_flag = 1 and  size_id=b.size_id ),0) as current_stock  from tbl_stock_transaction as a right join  tbl_item_sizes as b on a.size_id=b.size_id group by b.size_id " 
         );
         const exeQuery_Order = await client.query(
           "select to_char(CURRENT_DATE,'YYYY-MM-DD') as order_date,sum(qty) as qty, size_id from tbl_order_taking_items as a inner join tbl_order_taking as b on a.order_no=b.order_no where b.order_date=CURRENT_DATE and b.status_code=1 group by size_id " );
@@ -1024,25 +1051,28 @@ module.exports.checkStockDetails = async (req) => {
       if (device_id && process == 'Single') {
         if (qty != '' || qty != null || qty != 0) {
           let getqty = Number(qty);
-          const exeInwardQuery = await client.query(
-            "select coalesce(current_stock,0)  as sumqty  from tbl_item_sizes  where size_id='" + size_id + "'  ");
-          let getstock = exeInwardQuery?.rows?.length > 0 ? exeInwardQuery.rows[0].sumqty : []; 
-          if (Number(getstock) > 0) { 
-            const exeQuery = await client.query(
-              `select count(1) as totalcount from (select (sum(coalesce(inward,0))+coalesce(b.current_stock,0)-sum(coalesce(outward,0)))  as sumqty  from tbl_stock_transaction as  a right join  tbl_item_sizes as b on a.size_id=b.size_id where b.size_id='` + size_id + `' group by b.size_id) as dev where dev.sumqty >= ` + getqty + ` `);
+          // const exeInwardQuery = await client.query(
+          //   "select coalesce(current_stock,0)  as sumqty  from tbl_item_sizes  where size_id='" + size_id + "'  ");
+          // let getstock = exeInwardQuery?.rows?.length > 0 ? exeInwardQuery.rows[0].sumqty : []; 
+          // if (Number(getstock) > 0) { 
+           
+            // const exeQuery = await client.query(
+            //   `select count(1) as totalcount from (select (sum(coalesce(inward,0))+coalesce(b.current_stock,0)-sum(coalesce(outward,0)))  as sumqty  from tbl_stock_transaction as  a right join  tbl_item_sizes as b on a.size_id=b.size_id where b.size_id='` + size_id + `' group by b.size_id) as dev where dev.sumqty >= ` + getqty + ` `);
+              const exeQuery = await client.query(
+                `select count(1) as totalcount from (select (sum(a.no_of_set) - coalesce((SELECT sum(dispatch_set) from tbl_dispatch_details where status_flag = 1 and size_id = b.size_id ),0))  as sumqty  from tbl_fg_items as  a  right join  tbl_item_sizes as b on a.size_id=b.size_id where b.size_id='` + size_id + `' group by b.size_id) as dev where dev.sumqty >= ` + getqty + ` `);
             let stockcount = exeQuery?.rows?.length > 0 ? exeQuery.rows[0].totalcount : 0;
             response = { stockList: stockcount };
             if (client) {
               client.end();
             }
             return response;
-          } else {
-            response = { stockList: "1" };
-            if (client) {
-              client.end();
-            }
-            return response;
-          }
+          // } else {
+          //   response = { stockList: "1" };
+          //   if (client) {
+          //     client.end();
+          //   }
+          //   return response;
+          // }
         } else {
           return response;
         } 
@@ -1054,24 +1084,26 @@ module.exports.checkStockDetails = async (req) => {
           for (var i = 0; i < Lists.length; i++) {
             let getqty = Number(Lists[i].qty);
             
-            const exeInwardQuery = await client.query(
-              "select coalesce(current_stock,0)  as sumqty  from tbl_item_sizes  where size_id='" + size_id + "'   ");
-            let getstock = exeInwardQuery?.rows?.length > 0 ? exeInwardQuery.rows[0].sumqty : []; 
-            if (Number(getstock) > 0) { 
+            // const exeInwardQuery = await client.query(
+            //   "select coalesce(current_stock,0)  as sumqty  from tbl_item_sizes  where size_id='" + Lists[i].size_id + "'   ");
+            // let getstock = exeInwardQuery?.rows?.length > 0 ? exeInwardQuery.rows[0].sumqty : []; 
+            // if (Number(getstock) > 0) { 
               const exeQuery = await client.query(
-                "select count(1) as totalcount from (select (sum(coalesce(inward,0))+coalesce(b.current_stock,0)-sum(coalesce(outward,0)))  as sumqty  from tbl_stock_transaction as  a right join  tbl_item_sizes as b on a.size_id=b.size_id where b.size_id='" + Lists[i].size_id + "' group by b.size_id) as dev where dev.sumqty >= '" + getqty + "' ");
+                `select count(1) as totalcount from (select (sum(a.no_of_set) - coalesce((SELECT sum(dispatch_set) from tbl_dispatch_details where status_flag = 1 and size_id = b.size_id ),0))  as sumqty  from tbl_fg_items as  a  right join  tbl_item_sizes as b on a.size_id=b.size_id where b.size_id='` + Lists[i].size_id + `' group by b.size_id) as dev where dev.sumqty >= ` + getqty + ` `);
+              // const exeQuery = await client.query(
+              //   "select count(1) as totalcount from (select (sum(coalesce(inward,0))+coalesce(b.current_stock,0)-sum(coalesce(outward,0)))  as sumqty  from tbl_stock_transaction as  a right join  tbl_item_sizes as b on a.size_id=b.size_id where b.size_id='" + Lists[i].size_id + "' group by b.size_id) as dev where dev.sumqty >= '" + getqty + "' ");
                   stockcount = exeQuery?.rows?.length > 0 ? exeQuery.rows[0].totalcount : [];
                 if (stockcount == 0) {
                   response = { stockList: stockcount, itemname: Lists[i].itemName };
                   return response;
                 }
-            } else {
-              response = { stockList: "1" , itemname: "" };
-              if (client) {
-                client.end();
-              }
-              return response;
-            }
+            // } else {
+            //   response = { stockList: "1" , itemname: "" };
+            //   if (client) {
+            //     client.end();
+            //   }
+            //   return response;
+            // }
           }
         
           response = { stockList: "1", itemname: ""};
@@ -1091,6 +1123,45 @@ module.exports.checkStockDetails = async (req) => {
       }
       throw new Error(constants.userMessage.TOKEN_MISSING);
     }
+  } catch (error) {
+    if (client) {
+      client.end();
+    }
+    throw new Error(error);
+  } finally {
+    if (client) {
+      client.end();
+    } // always close the resource
+  }
+};
+
+//Insert Order Taking
+module.exports.OrderTakingCheck = async (req) => {
+  const client = new Client({
+    user: connectionString.user,
+    host: connectionString.host,
+    database: connectionString.database,
+    password: connectionString.password,
+    port: connectionString.port,
+  });
+  await client.connect();
+  try {
+      let { device_id,order_no } = req; 
+      var response = [],response1 = [];
+      if (device_id) {
+        const exeUserQuery = await client.query(`SELECT count(order_no) as count FROM tbl_dispatch_details where order_no = $1`,[order_no]);
+        let totalcount = exeUserQuery?.rows?.[0].count;       
+
+        if (client) {
+          client.end();
+        } 
+        return {totalcount: totalcount};
+      } else {
+        if (client) {
+          client.end();
+        }
+        return {totalcount: ''};
+      }
   } catch (error) {
     if (client) {
       client.end();
