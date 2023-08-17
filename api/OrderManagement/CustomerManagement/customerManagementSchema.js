@@ -6,6 +6,7 @@ module.exports.getCustomersJwt = Joi.object().keys({
     state: Joi.number().allow(''), 
     agent_id: Joi.number().allow(''), 
     customer_name: Joi.string().allow(''),
+    customer_code: Joi.string().allow(''),
   });
   module.exports.getCustomers = Joi.object().keys({
     jwtToken: Joi.string().required(), 

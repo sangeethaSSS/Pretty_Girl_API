@@ -149,6 +149,9 @@ module.exports.insertCustomer = async (req) => {
           for (var i = 0; i < Lists.length; i++) {
             const exeUserQuery = await client.query(`select count(customer_code) as total from tbl_customer  where device_code=$1 and type =$2 and customer_code=$3`, [Lists[i].device_code,Lists[i].type,Lists[i].customer_code]);
             let totalcount = exeUserQuery?.rows?.[0].total;
+            if(Lists[i].updated_date == "null" || Lists[i].updated_date == "" || Lists[i].updated_date == undefined){
+              Lists[i].updated_date = null
+            }
             if (Number(totalcount) == 0) {
                 //Insert User Log
               var makerid = await commonService.insertLogs(Lists[i].device_code, "Insert Customer Via Mobile - " + Lists[i].device_code);

@@ -35,8 +35,8 @@ module.exports.getCustomers = async (req) => {
     try {
         if (req.jwtToken) {
             const decoded = await commonService.jwtVerify(req.jwtToken);
-            const { state, customer_name, user_id, status_id, agent_id } = decoded.data;
-            let customerName = '1=1', statevalue = `1=1`, status = '1=1', agentid = '1=1';
+            const { state, customer_name, user_id, status_id, agent_id, customer_code } = decoded.data;
+            let customerName = '1=1', statevalue = `1=1`, status = '1=1', agentid = '1=1',customercode='1=1';
             if (customer_name) {
                 customerName = 'Lower("customer_name") like '.concat("'%", customer_name.replace(/'/g, "''").toLowerCase(), "%'");
             }
@@ -49,6 +49,9 @@ module.exports.getCustomers = async (req) => {
             if(agent_id) {
                 agentid =  'agent_code = ' + agent_id
             }
+            if(customer_code) {
+                customercode = 'customer_code =' + '\'' + customer_code + '\''
+            }
             
             const exeQuery = await client.query(`select customer_name, contact_person, mobile_no, alternative_mobile_no,
             door_no, street, area, city, state, country, pincode, email_id, gstin_no, status_code, 
@@ -60,7 +63,7 @@ module.exports.getCustomers = async (req) => {
             where autonum = maker_id limit 1) as createddate,
             (select status_name from "tbl_def_status" where "status_id" = "status_code") as status_name,
             (select state_name from "tbl_def_state" where "state_id" = "state") as "state_name", coalesce((select agent_name from tbl_agent where agent_code = a.agent_code),'') as agent_name
-            from "tbl_customer" as a where ` + statevalue + ` and ` + customerName + ` and ` + status + `
+            from "tbl_customer" as a where ` +customercode+ ` and ` + statevalue + ` and ` + customerName + ` and ` + status + `
             and ` + agentid + ` order by created_date desc`);
 
             const company_Result = await client.query(`SELECT * from tbl_print_setting`);
