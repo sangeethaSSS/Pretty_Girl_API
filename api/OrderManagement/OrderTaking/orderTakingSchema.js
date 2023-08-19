@@ -54,7 +54,14 @@ module.exports.orderTakingListjwt = Joi.object().keys({
   module.exports.orderTakingList = Joi.object().keys({
     jwtToken: Joi.string().required(), 
   });
-
+  module.exports.orderToWhatsappListjwt = Joi.object().keys({
+    user_id: Joi.number().required(),
+    date:Joi.string().required(),
+    ordertype: Joi.string().required().allow(''),
+  });
+  module.exports.orderToWhatsappList = Joi.object().keys({
+    jwtToken: Joi.string().required(), 
+  });
   module.exports.customerListjwt = Joi.object().keys({
     user_id: Joi.number().required(),
     customer_id:Joi.string().required(),
@@ -103,5 +110,13 @@ module.exports.onChangeQtyjwt = Joi.object().keys({
 });
 
 module.exports.onChangeQty = Joi.object().keys({
+  jwtToken: Joi.string().required(), 
+});
+
+module.exports.sendOrderToWhatsappJwt = Joi.object().keys({
+  user_id: Joi.number().required(),  
+  order_details: Joi.array().required().allow([]),   
+});
+module.exports.sendOrderToWhatsapp = Joi.object().keys({ 
   jwtToken: Joi.string().required(), 
 });

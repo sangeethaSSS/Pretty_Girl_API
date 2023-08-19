@@ -338,3 +338,64 @@ module.exports.onChangeQty = async (req, res) => {
   }
   return res.send(response);
 }
+
+//Create Order Taking JWt Module
+module.exports.orderToWhatsappListjwt = async (req, res) => {
+  let response = {};
+  try {
+    const responseFromService = await orderTakingMgmtService.orderToWhatsappListjwt(req.body);
+    if (!responseFromService.token) {
+      response.status = 200;
+    }
+    response.body = responseFromService;
+  } catch (error) {
+    response.message = error.message;
+  }
+  return res.send(response);
+}
+
+//Order Taking List Module
+module.exports.orderToWhatsappList = async (req, res) => {
+  let response = {};
+  try {
+    const responseFromService = await orderTakingMgmtService.orderToWhatsappList(req.body);
+    if (!responseFromService.token) {
+      response.status = 200;
+      response.message = constants.success_message.LISTED_SUCCESS;
+    }
+    response.body = responseFromService;
+  } catch (error) {
+    response.message = error.message;
+  }
+  return res.send(response);
+}
+//Create Order Taking JWt Module
+module.exports.sendOrderToWhatsappJwt = async (req, res) => {
+  let response = {};
+  try {
+    const responseFromService = await orderTakingMgmtService.sendOrderToWhatsappJwt(req.body);
+    if (!responseFromService.token) {
+      response.status = 200;
+    }
+    response.body = responseFromService;
+  } catch (error) {
+    response.message = error.message;
+  }
+  return res.send(response);
+}
+
+//Order Taking List Module
+module.exports.sendOrderToWhatsapp = async (req, res) => {
+  let response = {};
+  try {
+    const responseFromService = await orderTakingMgmtService.sendOrderToWhatsapp(req.body);
+    if (!responseFromService.token) {
+      response.status = 200;
+      response.message = constants.success_message.LISTED_SUCCESS;
+    }
+    response.body = responseFromService;
+  } catch (error) {
+    response.message = error.message;
+  }
+  return res.send(response);
+}

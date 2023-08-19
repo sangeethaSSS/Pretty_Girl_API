@@ -3,7 +3,14 @@ const constants = require('../constants');
 const connectionString = require('../database/connection');
 //Connect Postgres
 const { Client } = require('pg');
-
+//Require dependecies for pdf generation
+const fs = require('fs') // file read and write permission
+const path = require('path') // for get the html path
+const utils = require('util') // for file checking
+const puppeteer = require('puppeteer') //using headless mode
+const hb = require('handlebars') //Compiing the template with handlebars
+const https = require('https') //https 
+const readFile = utils.promisify(fs.readFile)
 //Bind Company Name
 module.exports.ChangeAutoCompanyNamejwt = async (req) => {
   try {
@@ -333,6 +340,69 @@ module.exports.orderTakingList = async (req) => {
   }
 }
 
+//create Order Taking List jwt 
+module.exports.orderToWhatsappListjwt = async (req) => {
+  try {
+    const token = await commonService.jwtCreate(req);
+    return { token };
+
+  } catch (error) {
+    throw new Error(error);
+  }
+}
+//create Order Taking LIST
+module.exports.orderToWhatsappList = async (req) => {
+  const client = new Client({
+    user: connectionString.user,
+    host: connectionString.host,
+    database: connectionString.database,
+    password: connectionString.password,
+    port: connectionString.port,
+  });
+  await client.connect();
+  try {
+    if (req.jwtToken) {
+      const decoded = await commonService.jwtVerify(req.jwtToken);
+      const { date, ordertype } = decoded.data;
+      if (decoded) {
+        let order_type = '1=1'
+        if (date) {
+          datediff = `to_char(a.order_date,'YYYY-MM-DD') :: date = to_date('` + date + `','YYYY-MM-DD')`;
+        }
+        if (ordertype && ordertype != 'All'){
+          order_type = ' a.type =' + '\'' + ordertype + '\''          
+        }
+        const order_Result = await client.query(`select a.ref_no,a.order_no,b.customer_code,b.customer_name,b.city,b.contact_person,b.mobile_no,b.gstin_no,b.alternative_mobile_no,(select coalesce(sum(qty),0) from tbl_order_taking_items where order_no= a.order_no) as totalset,a.order_date as order_date,(select user_name from tbl_user where user_id = (select user_id from tbl_userlog  where autonum = a.maker_id limit 1)) as employeename,(select coalesce(to_char(log_date,'DD-MM-YYYY HH12:MI PM'),'') from tbl_userlog where autonum = a.maker_id limit 1) as createddate,'yes' as enableagent,'yes' as enablecompany,'yes' as enableAll,CASE WHEN a.user_id is not null then a.user_id else a.device_code end as user_id from tbl_order_taking as a inner join tbl_customer as b on a.customer_code = b.customer_code where coalesce(a.pdf_sent_status,'')!='sent' and a.status_code = 1 and `+order_type+` and ` + datediff + ` order by a.created_date desc`);
+
+        let Lists = order_Result && order_Result.rows ? order_Result.rows : [];
+
+        if (client) {
+          client.end();
+        }
+        responseData = { "OrderTakinglist": Lists }
+        if (responseData) {
+          return responseData;
+        }
+        else {
+          return '';
+        }
+      }
+      else {
+        if (client) { client.end(); }
+      }
+    } else {
+      if (client) { client.end(); }
+      throw new Error(constants.userMessage.TOKEN_MISSING);
+    }
+  } catch (error) {
+    if (client) { client.end(); }
+    throw new Error(error);
+  }
+
+  finally {
+    if (client) { client.end(); }// always close the resource
+  }
+}
 //Delete Order Taking jwt 
 module.exports.deleteOrderTakingjwt = async (req) => {
   try {
@@ -629,9 +699,10 @@ module.exports.ChangeAutoDesignName = async (req) => {
       if (decoded != null) {
         const { searchvalue } = decoded.data
         if (searchvalue !== "") {
-          const DesignList = await client.query(`select distinct b.size_id as value, b.qr_code as label,coalesce(((select sum(coalesce(no_of_set,0)) from tbl_fg_items where size_id=b.size_id) +coalesce(b.current_stock,0))
-          - (select coalesce(sum(coalesce(dispatch_set,0)),0) from tbl_dispatch_details where status_flag = 1 and  size_id=b.size_id ),0) as current_stock , (select coalesce(sum(a.qty),0) as qty from tbl_order_taking_items as a inner join tbl_order_taking as d on a.order_no = d.order_no where d.order_date=CURRENT_DATE and size_id = b.size_id 
-          and d.status_code = 1) as order_qty from tbl_item_sizes  as b where  Lower(b.qr_code) like '%'||$1||'%'  `, [searchvalue])
+          // const DesignList = await client.query(`select distinct b.size_id as value, b.qr_code as label,coalesce(((select sum(coalesce(no_of_set,0)) from tbl_fg_items where size_id=b.size_id) +coalesce(b.current_stock,0))
+          // - (select coalesce(sum(coalesce(dispatch_set,0)),0) from tbl_dispatch_details where status_flag = 1 and  size_id=b.size_id ),0) as current_stock , (select coalesce(sum(a.qty),0) as qty from tbl_order_taking_items as a inner join tbl_order_taking as d on a.order_no = d.order_no where d.order_date=CURRENT_DATE and size_id = b.size_id 
+          // and d.status_code = 1) as order_qty from tbl_item_sizes  as b where  Lower(b.qr_code) like '%'||$1||'%' limit 50 `, [searchvalue])
+          const DesignList = await client.query(`select distinct b.size_id as value, b.qr_code as label,0 as current_stock , 0 as order_qty from tbl_item_sizes  as b where  Lower(b.qr_code) like '%'||$1||'%'`, [searchvalue])
           if (client) { client.end(); }
           let List_Array = DesignList && DesignList.rows ? DesignList.rows : [];
           var response = {}
@@ -784,3 +855,308 @@ module.exports.ChangeAutoItemName = async (req) => {
     if (client) { client.end(); }
   }
 }
+//Bind Item Name
+module.exports.sendOrderToWhatsappJwt = async (req) => {
+  try {
+    const token = await commonService.jwtCreate(req);
+    return { token };
+
+  } catch (error) {
+    throw new Error(error);
+  }
+}
+
+module.exports.sendOrderToWhatsapp = async (req) => {
+  const client = new Client({
+    user: connectionString.user,
+    host: connectionString.host,
+    database: connectionString.database,
+    password: connectionString.password,
+    port: connectionString.port,
+  });
+  await client.connect();
+  try {
+    if (req.jwtToken) {
+      const decoded = await commonService.jwtVerify(req.jwtToken);
+      if (decoded != null) {
+        const { order_details } = decoded.data
+
+        if (order_details && order_details.length > 0) {
+        
+          const company_Result = await client.query(`SELECT print_id, company_name, addressline1, addressline2, area, city, gstin, mobile_number, telephone_number, status_id, footer_name from tbl_print_setting`);
+          let Company_Array = company_Result && company_Result.rows ? company_Result.rows?.[0] || {} : {};
+          for (let k = 0; k < order_details.length; k++){  
+            const exeUserQuery = await client.query(`select count(1) as total from tbl_order_taking  where ref_no=$1 and order_no =$2 and (device_code=$3 or user_id=$3)and coalesce(pdf_sent_status,'')!='sent'`, [order_details[k].ref_no,order_details[k].order_no,order_details[k].user_id]);
+            let totalcount = exeUserQuery?.rows?.[0].total; 
+            if (totalcount > 0) {
+              const exeQuery1 = await client.query(
+                `select order_no,to_char(order_date, 'dd-MM-YYYY') as orderdate,a.customer_code,UPPER(b.customer_name) as customer_name,b.contact_person,b.mobile_no,coalesce(b.alternative_mobile_no,'') as alternative_mobile_no,coalesce(b.street,'') as street,coalesce(b.area,'') as area,coalesce(b.city,'') as city,coalesce(b.pincode,'') as pincode,coalesce(b.email_id,'') as email_id,coalesce(b.gstin_no,'') as gstin_no,b.country,coalesce(b.transport_name,'') as transport_name,coalesce(b.transport_contact_no,'') as transport_contact_no,coalesce(b.transport_location,'') as transport_location,coalesce(b.transport_contact_person,'') as transport_contact_person,coalesce(b.agent_code,0) as agent_code, (select agent_name from tbl_agent where agent_code=b.agent_code) as agent_name from tbl_order_taking  as a inner join tbl_customer as b on a.customer_code=b.customer_code where ref_no=$1 and order_no =$2 and (a.device_code=$3 or a.user_id=$3) `, [order_details[k].ref_no, order_details[k].order_no, order_details[k].user_id] 
+              );
+              let order_customer_details = exeQuery1?.rows[0] || {};
+              let order_id = exeQuery1?.rows[0]?.order_no || '';
+
+              const exeQuery2= await client.query(
+                `select ROW_NUMBER () OVER (ORDER BY a.order_no) as sno,a.order_no,b.item_code,c.item_name,b.design_code,b.item_size,b.qty,b.color_id,b.size_id,d.color_name,e.total_set,a.order_date,e.total_set::INTEGER*b.qty as total_pcs from tbl_order_taking  as a inner join tbl_order_taking_items as b on a.order_no = b.order_no inner join tbl_def_item as c on b.item_code = c.item_id left join tbl_color as d on b.color_id = d.color_id inner join tbl_item_sizes as e on b.size_id = e.size_id where a.ref_no=$1 and a.order_no =$2 and (a.device_code=$3 or a.user_id=$3) order by b.item_code asc`, [order_details[k].ref_no, order_details[k].order_no, order_details[k].user_id] 
+              );
+              let order_item_details = exeQuery2?.rows || []; 
+              const exeQuery3= await client.query(
+                `select coalesce(mobile_no,'') as mobile_no from tbl_user where user_id=$1`, [order_details[k].user_id] 
+              );
+              let user_mobileno = exeQuery3?.rows ? exeQuery3?.rows[0].mobile_no: '' || ''; 
+              let responseData = {
+                "OrderSlip": order_item_details, "CustomerArray": order_customer_details, "CompanyArray": Company_Array ,"order_id":order_id, "user_mobile_no":user_mobileno
+              } 
+              await generateOrderPDF(responseData,req, order_details[k]);
+            }
+          }
+         
+        }
+        if (client) {
+          client.end();
+            // return response = { "Message": "" }
+
+            return response = { "message": "Sent successfully", "statusFlag": 1 }; 
+
+        }
+      } else {
+        if (client) { client.end(); }
+        throw new Error(constants.userMessage.USER_NOT_FOUND);
+      }
+    } else {
+      if (client) { client.end(); }
+      throw new Error(constants.token.INVALID_TOKEN);
+    }
+  } catch (error) {
+    if (client) { client.end(); }
+    throw new Error(error);
+  } finally {
+    if (client) { client.end(); }
+  }
+}
+//Upload PDF File in S3 Bucket
+module.exports.uploadFile = async (fileName, req) => { 
+  const client = new Client({
+    user: connectionString.user,
+    host: connectionString.host,
+    database: connectionString.database,
+    password: connectionString.password,
+    port: connectionString.port,
+  });
+  await client.connect();
+  try {
+    var aws = require('aws-sdk');
+    var s3path = '';
+    var foldername = fileName.indexOf('./') >= 0 ? fileName.split('./')[1] : ''
+    const exeQuery = await client.query(`SELECT  bucketname, secretkey, accesskey
+  from tbl_credentials  where credential_type='aws'`);
+    let bucket_name = exeQuery?.rows?.[0]?.bucketname || '';
+    let access_key = exeQuery?.rows?.[0]?.accesskey || '';
+    let secret_key = exeQuery?.rows?.[0]?.secretkey || '';
+  
+    if (bucket_name) {
+      // Read content from the file
+      const fileContent = fs.readFileSync(fileName);
+      // Setting up S3 upload parameters
+      const params = {
+        Bucket: bucket_name,
+        Key: foldername, // File name you want to save as in S3
+        Body: fileContent,
+        isBase64Encoded: true,
+        ContentType: 'application/pdf;charset=utf-8',
+      };
+
+      //S3 Access and Secret Key
+      const s3pdf = new aws.S3({
+        accessKeyId: access_key,
+        secretAccessKey: secret_key
+      });
+      const uploads3 = await s3pdf.upload(params, function (err, data) {
+        if (err) {
+          console.log(err, 'err')
+          throw err;
+        }
+
+        s3path = data.Location;
+
+      }).promise();
+      if (client) {
+        client.end();
+      }
+      return uploads3.Location;
+    } else {
+      if (client) {
+        client.end();
+      }
+      return '';
+    }
+  } catch (error) {  
+    if (client) {
+      client.end();
+    } 
+    throw new Error(error);
+  }
+};
+module.exports.getTemplateHtml = async () => {
+  try {
+    const invoicePath = path.resolve('./orderpdf.html');
+    return await readFile(invoicePath, 'utf8');
+  } catch (err) { 
+    console.log(err, 'err')
+    return Promise.reject("Could not load html template");
+  }
+}
+const generateOrderPDF = async (responseData, req, List) => {  
+  const client = new Client({
+    user: connectionString.user,
+    host: connectionString.host,
+    database: connectionString.database,
+    password: connectionString.password,
+    port: connectionString.port,
+  });
+  try {  
+    if (responseData.order_id) {
+      let addr = '';
+      const space1 = ",";
+      if (responseData?.CustomerArray.street && responseData?.CustomerArray.area && responseData?.CustomerArray.city) {
+        addr = responseData?.CustomerArray.street + space1 + responseData?.CustomerArray.area + space1 + responseData?.CustomerArray.city
+      } else if (responseData?.CustomerArray.street && responseData?.CustomerArray.area) {
+        addr = responseData?.CustomerArray.street + space1 + responseData?.CustomerArray.area
+      } else if (responseData?.CustomerArray.street && responseData?.CustomerArray.city) {
+        addr = responseData?.CustomerArray.street + space1 + responseData?.CustomerArray.city
+      } else if (responseData?.CustomerArray.area && responseData?.CustomerArray.city) {
+        addr = responseData?.CustomerArray.area + space1 + responseData?.CustomerArray.city
+      } else if (responseData?.CustomerArray.street) {
+        addr = responseData?.CustomerArray.street
+      } else if (responseData?.CustomerArray.area) {
+        addr = responseData?.CustomerArray.area
+      } else if (responseData?.CustomerArray.city) {
+        addr = responseData?.CustomerArray.city
+      }
+      responseData.CustomerArray['address'] = addr;
+
+      let total_pcs_value = 0, short_frock_set = 0, short_frock_pcs = 0, long_frock_set = 0, long_frock_pcs = 0, total_set_value = 0
+      let row = responseData.OrderSlip || []
+      for (let i = 0; i < row.length; i++) {
+        total_set_value += row[i].qty
+        let total_pcs = 0
+        total_pcs = row[i].total_set * row[i].qty
+        total_pcs_value += total_pcs
+        if (row[i].item_code === 1) {
+          short_frock_set += row[i].qty
+          short_frock_pcs += row[i].total_set * row[i].qty
+        }
+        if (row[i].item_code === 2) {
+          long_frock_set += row[i].qty
+          long_frock_pcs += row[i].total_set * row[i].qty
+        }
+      }
+      let checkshortfrock = '' , checklongfrock = ''
+      if (short_frock_set > 0 ) {
+        checkshortfrock = 'true';
+      }
+      if (short_frock_set == 0) {
+        checklongfrock = 'true';
+      }
+      responseData = {
+        ...responseData, total_pcs_value: total_pcs_value, short_frock_set: short_frock_set, short_frock_pcs: short_frock_pcs, long_frock_set: long_frock_set, long_frock_pcs: long_frock_pcs, total_set_value: total_set_value, checkshortfrock:checkshortfrock, checklongfrock: checklongfrock
+      }
+      
+      // launch a new chrome instance 
+      const browser = await puppeteer.launch({
+        headless: true, args: ['--font-render-hinting=none'],
+      });
+    
+      // create a new page
+      const page = await browser.newPage()
+      var res = await this.getTemplateHtml();
+      const template = hb.compile(res, { strict: true });
+      // we have compile our code with handlebars
+      const resultTemplate = template(responseData);
+      // We can use this to add dyamic data to our handlebas template at run time from database or API as per need. you can read the official doc to learn more https://handlebarsjs.com/
+      const html = resultTemplate;
+      // await page.setViewport({ width: 0, height: 1000}); 
+      await page.setContent(html);
+      //Generate PDF
+      await page.pdf({
+        format: 'A4',
+        path: './PDFFiles/Order_Form_' + responseData.order_id + '.pdf',
+        displayHeaderFooter: true,
+        printBackground: true,
+        preferCSSPageSize: true,
+        footerTemplate: `<div style="width:100%;padding: 0 20px;"></div>`,
+      });
+      // close the browser
+      await browser.close();
+      //Get PDF and push into bucket
+      let pdfLink = './PDFFiles/Order_Form_' + responseData.order_id + '.pdf';
+      let pdf_url = await this.uploadFile(pdfLink, req);
+      if (pdf_url && responseData?.CustomerArray.mobile_no) {
+        setTimeout(() => {
+          if (fs.existsSync(pdfLink)) {
+            fs.unlink(pdfLink, function (err) {
+              if (err) {
+                throw err
+              } else {
+                console.log("Successfully deleted the eRxMedicine file.")
+              }
+            })
+          }
+        }, 20000);
+        let mobileno = responseData?.CustomerArray.mobile_no;
+        const axios = require("axios");
+        await client.connect();
+        const exeQuery_aws = await client.query(`SELECT whatsappurl from tbl_credentials  where credential_type='whatsapp'`);
+        let get_whatsappurl = exeQuery_aws?.rows?.[0]?.whatsappurl || '';
+        let get_whatsappdata = get_whatsappurl ;
+        get_whatsappurl = get_whatsappurl.replace("mobile_no", '91'+mobileno);
+        let whatsappurl = get_whatsappurl.replace("pdf_url", pdf_url);
+        let usermobile_no = responseData?.user_mobile_no || ''
+        if(List.enablecompany == "yes"){  
+          var configURL = {
+            method: 'get',
+            url: whatsappurl,
+            headers: {
+              'Content-Type': 'application/json'
+            },
+          };        
+          await axios(configURL).then(function (response) {
+            //  console.log(response,'response SMS SUCCDD')   
+             client.query(`UPDATE tbl_order_taking set pdf_sent_status = 'sent',whatsappurl=$1 where ref_no=$2 and order_no =$3 and (device_code=$4 or user_id=$4) and coalesce(pdf_sent_status,'')!='sent'`, [whatsappurl,List.ref_no,List.order_no,List.user_id]);
+          }).catch(function (error) {
+            console.log(error, "error")
+          });
+        }   
+        if(List.enableagent == "yes") {
+          if(usermobile_no && usermobile_no.length == 10) {
+            get_whatsappdata = get_whatsappdata.replace("mobile_no", '91'+usermobile_no);
+            get_whatsappdata = get_whatsappdata.replace("pdf_url", pdf_url);
+            var configURL = {
+              method: 'get',
+              url: get_whatsappdata,
+              headers: {
+                'Content-Type': 'application/json'
+              },
+            };        
+            await axios(configURL).then(function (response) {
+                console.log(usermobile_no,'response SMS SUCCDD')   
+            }).catch(function (error) {
+              console.log(error, "error")
+            });
+          }
+        }    
+        
+      }
+      if (client) {
+        client.end();
+      } 
+      return true;
+    } else {
+      return false;
+    }
+  } catch (error) {  
+    if (client) {
+      client.end();
+    } 
+    throw new Error(error);
+  }
+} 

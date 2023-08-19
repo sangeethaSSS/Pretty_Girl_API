@@ -50,6 +50,15 @@ joiSchemaValidation.validateBody(orderTakingSchema.orderTakingList),
 orderTakingController.orderTakingList
 )
 
+router.post('/orderToWhatsappListjwt',
+joiSchemaValidation.validateBody(orderTakingSchema.orderToWhatsappListjwt),
+orderTakingController.orderToWhatsappListjwt
+)
+router.post('/orderToWhatsappList',
+joiSchemaValidation.validateBody(orderTakingSchema.orderToWhatsappList),
+orderTakingController.orderToWhatsappList
+)
+
 router.post('/deleteOrderTakingjwt',
 joiSchemaValidation.validateBody(orderTakingSchema.deleteOrderTakingjwt),
 orderTakingController.deleteOrderTakingjwt
@@ -103,5 +112,15 @@ router.post('/onChangeQty',
 joiSchemaValidation.validateBody(orderTakingSchema.onChangeQty),
 orderTakingController.onChangeQty
 )
+router.post('/sendOrderToWhatsappJwt',
+joiSchemaValidation.validateBody(orderTakingSchema.sendOrderToWhatsappJwt),
+orderTakingController.sendOrderToWhatsappJwt
+)
+router.post('/sendOrderToWhatsapp',
+joiSchemaValidation.validateBody(orderTakingSchema.sendOrderToWhatsapp),
+orderTakingController.sendOrderToWhatsapp
+)
+
+
 
 module.exports = router;

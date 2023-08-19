@@ -657,7 +657,7 @@ module.exports.insertOrderTaking = async (req) => {
               let responseData = {
                 "OrderSlip": order_item_details, "CustomerArray": order_customer_details, "CompanyArray": Company_Array ,"order_id":order_id, "user_mobile_no":user_mobileno
               } 
-              // await generateOrderPDF(responseData,req, Lists[k]);
+              await generateOrderPDF(responseData,req, Lists[k]);
             }
           }
          
