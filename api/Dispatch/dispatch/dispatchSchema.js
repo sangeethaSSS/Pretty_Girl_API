@@ -13,14 +13,14 @@ module.exports.itemCustomerWiseListJwt = Joi.object().keys({
   }); 
   module.exports.saveItemWiseDispatchJwt = Joi.object().keys({
     user_id: Joi.number().required(),  
-    item_details: Joi.object().required().allow({}),   
+    item_details: Joi.array().required().allow([]),   
     order_details: Joi.array().required().allow([]),  
     dispatch_date: Joi.string().required(),
     jwtToken: Joi.string().allow(''), 
   });   
   module.exports.saveCustomerWiseDispatchJwt = Joi.object().keys({
     user_id: Joi.number().required(),  
-    customer_details: Joi.object().required().allow({}),   
+    customer_details: Joi.array().required().allow([]),   
     order_details: Joi.array().required().allow([]),  
     dispatch_date: Joi.string().required(),
     jwtToken: Joi.string().allow(''), 

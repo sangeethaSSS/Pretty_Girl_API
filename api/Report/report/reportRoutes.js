@@ -52,4 +52,22 @@ router.post('/pendingList',
 joiSchemaValidation.validateBody(reportSchema.pendingList),
 reportController.pendingList
 )
+
+router.post('/pendingOrderReportListjwt',
+joiSchemaValidation.validateBody(reportSchema.pendingOrderReportListjwt),
+reportController.pendingOrderReportListjwt
+)
+router.post('/pendingOrderReportList',
+joiSchemaValidation.validateBody(reportSchema.pendingOrderReportList),
+reportController.pendingOrderReportList
+)
+router.post('/pendingOrderDropdownjwt',
+joiSchemaValidation.validateBody(reportSchema.pendingOrderDropdownjwt),
+reportController.pendingOrderDropdownjwt
+)
+router.post('/pendingOrderDropdown',
+joiSchemaValidation.validateBody(reportSchema.pendingOrderDropdown),
+reportController.pendingOrderDropdown
+)
+
 module.exports = router;

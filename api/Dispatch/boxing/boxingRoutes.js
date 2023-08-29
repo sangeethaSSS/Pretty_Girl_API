@@ -47,4 +47,22 @@ router.post('/moveToFG',
     joiSchemaValidation.validateBody(boxingSchema.moveToFGjwt),
     boxingController.moveToFG
 )
+router.post('/checkFGItemDispatchJwt',
+    joiSchemaValidation.validateBody(boxingSchema.checkFGItemDispatchJwt),
+    boxingController.checkFGItemDispatchJwt
+)
+router.post('/checkFGItemDispatch',
+    joiSchemaValidation.validateBody(boxingSchema.checkFGItemDispatchJwt),
+    boxingController.checkFGItemDispatch
+) 
+router.post('/DeleteFGItemJwt',
+    joiSchemaValidation.validateBody(boxingSchema.DeleteFGItemJwt),
+    boxingController.DeleteFGItemJwt
+)
+router.post('/DeleteFGItem',
+    joiSchemaValidation.validateBody(boxingSchema.DeleteFGItemJwt),
+    boxingController.DeleteFGItem
+) 
+
+
 module.exports = router;

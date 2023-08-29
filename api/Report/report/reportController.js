@@ -188,3 +188,65 @@ try {
 }
 return res.send(response);
 }
+
+//Create JWt Module
+module.exports.pendingOrderReportListjwt = async (req, res) => {
+  let response = {};
+  try {
+    const responseFromService = await reportMgmtServices.pendingOrderReportListjwt(req.body); 
+    if(!responseFromService.token) {
+      response.status = 200;
+    }    
+    response.body = responseFromService;
+  } catch (error) {
+    response.message = error.message;
+  }
+  return res.send(response);
+}
+
+//Pending Order Report List Module
+module.exports.pendingOrderReportList = async (req, res) => {
+let response = {};
+try {   
+  const responseFromService = await reportMgmtServices.pendingOrderReportList(req.body); 
+  if(!responseFromService.token) {
+    response.status = 200;
+    response.message = constants.success_message.LISTED_SUCCESS;
+  }    
+  response.body = responseFromService;
+} catch (error) {
+  response.message = error.message;
+}
+return res.send(response);
+}
+
+//Create JWt Module
+module.exports.pendingOrderDropdownjwt = async (req, res) => {
+  let response = {};
+  try {
+    const responseFromService = await reportMgmtServices.pendingOrderDropdownjwt(req.body); 
+    if(!responseFromService.token) {
+      response.status = 200;
+    }    
+    response.body = responseFromService;
+  } catch (error) {
+    response.message = error.message;
+  }
+  return res.send(response);
+}
+
+//Pending Order Report Dropdown Module
+module.exports.pendingOrderDropdown = async (req, res) => {
+let response = {};
+try {   
+  const responseFromService = await reportMgmtServices.pendingOrderDropdown(req.body); 
+  if(!responseFromService.token) {
+    response.status = 200;
+    response.message = constants.success_message.LISTED_SUCCESS;
+  }    
+  response.body = responseFromService;
+} catch (error) {
+  response.message = error.message;
+}
+return res.send(response);
+}

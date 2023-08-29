@@ -52,3 +52,25 @@ module.exports.pendingJobReportListjwt = Joi.object().keys({
   module.exports.pendingList = Joi.object().keys({
     jwtToken: Joi.string().required(), 
   });
+  module.exports.pendingOrderReportListjwt = Joi.object().keys({
+    size_id: Joi.string().allow(''), 
+    customer_code: Joi.string().allow(''),  
+    user_id: Joi.number().required(),   
+    from_date:Joi.string().required(),
+    to_date:Joi.string().required(),
+    limit:Joi.number().required(),   
+    offset:Joi.number().required(),
+    process: Joi.string().required().allow(''),
+    agent_code: Joi.string().required().allow(''),
+  });
+  module.exports.pendingOrderReportList = Joi.object().keys({
+    jwtToken: Joi.string().required(), 
+  });
+
+  module.exports.pendingOrderDropdownjwt = Joi.object().keys({
+    user_id: Joi.number().required(),
+  });
+  module.exports.pendingOrderDropdown = Joi.object().keys({
+    jwtToken: Joi.string().required(), 
+  });
+  

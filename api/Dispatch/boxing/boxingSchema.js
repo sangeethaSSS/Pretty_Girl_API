@@ -10,7 +10,9 @@ module.exports.moveToFGjwt = Joi.object().keys({
     user_id: Joi.number().required(), 
     box_array: Joi.array().required().allow([]), 
     fg_job_array: Joi.array().required().allow([]), 
-    jwtToken: Joi.string().allow(''), 
+    fg_id: Joi.number().required(), 
+    process: Joi.string().required(),
+    jwtToken: Joi.string().allow('')
 });  
 module.exports.getFGJobIdListjwt = Joi.object().keys({
   user_id: Joi.number().required(), 
@@ -36,5 +38,17 @@ module.exports.getCurrentStockJwt = Joi.object().keys({
   offset:Joi.number().required(),   
   process: Joi.string().required().allow(''),
   color_id: Joi.string().allow(''),
+  jwtToken: Joi.string().allow(''), 
+});
+module.exports.checkFGItemDispatchJwt = Joi.object().keys({
+  user_id: Joi.number().required(),  
+  size_id: Joi.string().required(),
+  fg_qty: Joi.number().required(),    
+  process: Joi.string().required(),
+  jwtToken: Joi.string().allow(''), 
+});
+module.exports.DeleteFGItemJwt = Joi.object().keys({
+  user_id: Joi.number().required(),  
+  fg_id: Joi.number().required(),
   jwtToken: Joi.string().allow(''), 
 });

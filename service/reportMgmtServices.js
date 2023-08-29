@@ -322,7 +322,7 @@ module.exports.specificEmployeeList = async (req) => {
         else {
             item = ` e.item_id = ` + item_id
         } 
-        const Specific_Employee_Result = await client.query(`select distinct a.employee_id,a.completed_date,b.employee_name,b.employee_code,a.machine_id,d.machine_no,a.design_id,f.qr_code as design_no,a.item_id,c.item_name,a.color_id,h.color_name,a.number_set,a.total_pieces,a.rate,a.total_amount,a.job_id,a.job_date from tbl_job_details as a inner join tbl_employee_details as b on a.employee_id = b.employee_id inner join tbl_def_item as c on a.item_id = c.item_id  inner join tbl_machine as d on a.machine_id = d.machine_id left join tbl_item_sizes as f on f.size_id = a.design_id left  join tbl_color as h on a.color_id =  h.color_id where a.employee_id = ` + employee_id + ` and ` + item + ` and ` + datediff + ` and a.salary_status_id = 2`);
+        const Specific_Employee_Result = await client.query(`select distinct a.employee_id,a.completed_date,b.employee_name,b.employee_code,a.machine_id,d.machine_no,a.design_id,f.qr_code as design_no,a.item_id,c.item_name,a.color_id,h.color_name,a.number_set,a.total_pieces,a.rate,a.total_amount,a.job_id,a.job_date from tbl_job_details as a inner join tbl_employee_details as b on a.employee_id = b.employee_id inner join tbl_def_item as c on a.item_id = c.item_id  inner join tbl_machine as d on a.machine_id = d.machine_id left join tbl_item_sizes as f on f.size_id = a.design_id left join tbl_color as h on a.color_id =  h.color_id where a.employee_id = ` + employee_id + ` and ` + item + ` and ` + datediff + ` and a.salary_status_id = 2`);
         
         let Specific_Employee_Array = Specific_Employee_Result && Specific_Employee_Result.rows ? Specific_Employee_Result.rows : [];
 
@@ -381,6 +381,181 @@ module.exports.pendingList = async (req) => {
           var Pending_Array = Pending_List && Pending_List.rows ? Pending_List.rows : []
          
           responseData = { "PendingJobList" : Pending_Array }
+        if (responseData) {
+          return responseData;
+        }
+        else {
+          return '';
+        }
+      }
+      else {
+        if (client) { client.end(); }
+      }
+    } else {
+      if (client) { client.end(); }
+      throw new Error(constants.userMessage.TOKEN_MISSING);
+    }
+  } catch (error) {
+    if (client) { client.end(); }
+    throw new Error(error);
+  }
+
+  finally {
+    if (client) { client.end(); }// always close the resource
+  }
+}
+
+
+//create Pending List jwt 
+module.exports.pendingOrderReportListjwt = async (req) => {
+  try {
+    const token = await commonService.jwtCreate(req);
+    return { token };
+z  } catch (error) {
+    throw new Error(error);
+  }
+}
+//create Pending List
+module.exports.pendingOrderReportList = async (req) => {
+  const client = new Client({
+    user: connectionString.user,
+    host: connectionString.host,
+    database: connectionString.database,
+    password: connectionString.password,
+    port: connectionString.port,
+  });
+  await client.connect();
+  try {
+    if (req.jwtToken) {
+      var responseData = {}
+      const decoded = await commonService.jwtVerify(req.jwtToken);
+      const {user_id, size_id, customer_code, from_date, to_date, limit, offset, process, agent_code} = decoded.data;
+      if (decoded) {
+        let datediff = '1=1';
+        let order_datediff = '1=1';
+        let get_limit = '';
+        if (from_date && to_date) {
+          datediff = `to_char(a.order_date,'YYYY-MM-DD') :: date BETWEEN `
+              .concat(`to_date('` + from_date + `','YYYY-MM-DD') AND to_date('` + to_date + `','YYYY-MM-DD')`);
+          order_datediff = `to_char(d.order_date,'YYYY-MM-DD') :: date BETWEEN `
+          .concat(`to_date('` + from_date + `','YYYY-MM-DD') AND to_date('` + to_date + `','YYYY-MM-DD')`);
+          }
+          let sizeid_val = '1=1';
+          let dis_sizeid_val = '1=1';
+          let agentcode = '1=1'
+          if(size_id  && size_id != "" && size_id != "0"){
+            const size_id_val = size_id ? '\'' + size_id.split(',').join('\',\'') + '\'' : '' 
+            sizeid_val = ` b.size_id in (${size_id_val})`
+            dis_sizeid_val = ` size_id in (${size_id_val})`
+          }
+          let customercode_val = '1=1';
+          let dis_customercode_val = '1=1';
+          if(customer_code && customer_code != "" && customer_code != "0"){
+            const customer_code_val = customer_code ? '\'' + customer_code.split(',').join('\',\'') + '\'' : ''
+            // customercode_val = `  lower(a.customer_code) = lower(${customer_code_val})`
+            customercode_val = `  a.customer_code in (${customer_code_val})`
+            dis_customercode_val = `  customer_code in (${customer_code_val})`
+          }
+          if(agent_code && agent_code != "" && agent_code != "0"){
+            const agent_code_val = Number(agent_code)
+            agentcode = `e.agent_code = ` + agent_code_val + ` `
+          }
+          const overallTotal = await client.query(`SELECT SUM(dispatch_set) as dispatch_set, sum(dispatch_piece) as dispatch_piece FROM ( select c.item_code, a.size_id, SUM(a.dispatch_set) as dispatch_set,SUM((a.dispatch_set :: INTEGER * b.total_set :: INTEGER)) as dispatch_piece from tbl_dispatch_details as a inner join tbl_item_sizes as b on b.size_id=a.size_id                 inner join tbl_item_management as c on b.trans_no=c.trans_no inner join tbl_customer as e on e.customer_code =a.customer_code inner join tbl_order_taking as d on d.order_no = a.order_no where ${order_datediff} and ${customercode_val} and ${sizeid_val} and ${agentcode} group by c.item_code,a.size_id, a.dispatch_set,b.total_set order by c.item_code ) as dev inner join tbl_def_item as e on dev.item_code = e.item_id`);
+          var overallTotal_sets = overallTotal && overallTotal.rows[0].dispatch_set ? overallTotal.rows[0].dispatch_set : 0
+          var overallTotal_Pieces = overallTotal && overallTotal.rows[0].dispatch_piece ? overallTotal.rows[0].dispatch_piece : 0
+          const dispatchWidget  = await client.query(`SELECT item_name,item_id,SUM(dispatch_set) as dispatch_set, sum(dispatch_piece) as dispatch_piece FROM ( select c.item_code, a.size_id, SUM(a.dispatch_set) as dispatch_set,SUM((a.dispatch_set :: INTEGER * b.total_set :: INTEGER)) as dispatch_piece  from tbl_dispatch_details as a inner join tbl_item_sizes as b on b.size_id=a.size_id  inner join tbl_item_management as c on b.trans_no=c.trans_no inner join tbl_customer as e on e.customer_code =a.customer_code inner join tbl_order_taking as d on d.order_no = a.order_no
+           where ${order_datediff} and ${customercode_val} and ${sizeid_val} and ${agentcode}
+           group by c.item_code,a.size_id, a.dispatch_set,b.total_set order by c.item_code ) as dev inner join 
+          tbl_def_item as e on dev.item_code = e.item_id group by item_name,item_id order by item_id`)
+          var dispatch_Widget = dispatchWidget && dispatchWidget.rows ? dispatchWidget.rows : []
+          if(process != 'print'){
+            get_limit =`LIMIT ${limit} OFFSET ${offset}`;
+          }
+          if(process == 'print') { 
+            const Pending_List = await client.query(`SELECT order_no,to_char(order_date,'DD-MM-YYYY') as order_date,customer_code,size_id,qr_code,dispatchset,order_qty,(order_qty -  dispatchset) as pending_set,customer_name,mobile_no,city FROM (SELECT a.order_no,a.order_date,a.customer_code,b.size_id,c.qr_code,coalesce(f.dispatchset, 0 ) as dispatchset,sum(qty) as order_qty,e.customer_name,e.mobile_no, coalesce(e.city,'')||' - '|| coalesce(e.pincode,'') as city from tbl_order_taking as a  inner join tbl_order_taking_items as b on a.order_no = b.order_no inner join tbl_item_sizes as c ON c.size_id = b.size_id inner join  tbl_item_management as d on d.trans_no=c.trans_no inner join tbl_customer as e ON e.customer_code = a.customer_code left join (SELECT customer_code,size_id,order_no,sum(dispatch_set) as dispatchset from tbl_dispatch_details where status_flag = 1 and  ${dis_customercode_val} and ${dis_sizeid_val} group by order_no,size_id,customer_code order by order_no) as f on f.order_no = a.order_no and f.customer_code = a.customer_code and f.size_id = b.size_id where ${datediff} and ${customercode_val} and ${sizeid_val} and ${agentcode} group by a.order_no,a.order_date,a.customer_code,b.size_id,c.qr_code,f.dispatchset,e.customer_name,e.mobile_no,e.city,e.pincode order by a.order_date ) as dev where (order_qty -  dispatchset) > 0 ` ); 
+            let Pending_Array = Pending_List && Pending_List.rows ? Pending_List.rows : []; 
+            const company_Result = await client.query(`SELECT * from tbl_print_setting`);
+            let Company_Array = company_Result && company_Result.rows ? company_Result.rows : []; 
+            responseData = { "PendingOrderList": Pending_Array, "Company_Array":Company_Array , "overallTotal_sets" : overallTotal_sets, "overallTotal_Pieces" : overallTotal_Pieces, "dispatchWidget": dispatch_Widget }
+          }else {
+            const total_pending_order = await client.query(`SELECT order_no,to_char(order_date,'DD-MM-YYYY') as order_date,customer_code,size_id,qr_code,dispatchset,order_qty,(order_qty -  dispatchset) as pending_set,customer_name,mobile_no,city FROM (SELECT a.order_no,a.order_date,a.customer_code,b.size_id,c.qr_code,coalesce(f.dispatchset, 0 ) as dispatchset,sum(qty) as order_qty,e.customer_name,e.mobile_no, coalesce(e.city,'')||' - '|| coalesce(e.pincode,'') as city from tbl_order_taking as a  inner join tbl_order_taking_items as b on a.order_no = b.order_no inner join tbl_item_sizes as c ON c.size_id = b.size_id inner join  tbl_item_management as d on d.trans_no=c.trans_no inner join tbl_customer as e ON e.customer_code = a.customer_code left join (SELECT customer_code,size_id,order_no,sum(dispatch_set) as dispatchset from tbl_dispatch_details where status_flag = 1 and  ${dis_customercode_val} and ${dis_sizeid_val} group by order_no,size_id,customer_code order by order_no) as f on f.order_no = a.order_no and f.customer_code = a.customer_code and f.size_id = b.size_id where ${datediff} and ${customercode_val} and ${sizeid_val} and ${agentcode} group by a.order_no,a.order_date,a.customer_code,b.size_id,c.qr_code,f.dispatchset,e.customer_name,e.mobile_no,e.city,e.pincode order by a.order_date ) as dev where (order_qty -  dispatchset) > 0`);
+            var total_count = total_pending_order && total_pending_order.rowCount ? total_pending_order.rowCount : 0
+            const Pending_List = await client.query(`SELECT order_no,to_char(order_date,'DD-MM-YYYY') as order_date,customer_code,size_id,qr_code,dispatchset,order_qty,(order_qty -  dispatchset) as pending_set,customer_name,mobile_no,city FROM (SELECT a.order_no,a.order_date,a.customer_code,b.size_id,c.qr_code,coalesce(f.dispatchset, 0 ) as dispatchset,sum(qty) as order_qty,e.customer_name,e.mobile_no, coalesce(e.city,'')||' - '|| coalesce(e.pincode,'') as city from tbl_order_taking as a  inner join tbl_order_taking_items as b on a.order_no = b.order_no inner join tbl_item_sizes as c ON c.size_id = b.size_id inner join  tbl_item_management as d on d.trans_no=c.trans_no inner join tbl_customer as e ON e.customer_code = a.customer_code left join (SELECT customer_code,size_id,order_no,sum(dispatch_set) as dispatchset from tbl_dispatch_details where status_flag = 1 and  ${dis_customercode_val} and ${dis_sizeid_val} group by order_no,size_id,customer_code order by order_no) as f on f.order_no = a.order_no and f.customer_code = a.customer_code and f.size_id = b.size_id where ${datediff} and ${customercode_val} and ${sizeid_val} and ${agentcode} group by a.order_no,a.order_date,a.customer_code,b.size_id,c.qr_code,f.dispatchset,e.customer_name,e.mobile_no,e.city,e.pincode order by a.order_date ) as dev where (order_qty -  dispatchset) > 0 ${get_limit}`);
+  
+            var Pending_Array = Pending_List && Pending_List.rows ? Pending_List.rows : []
+           
+            responseData = { "PendingOrderList" : Pending_Array, "total_count" : total_count, "overallTotal_sets" : overallTotal_sets, "overallTotal_Pieces" : overallTotal_Pieces, "dispatchWidget": dispatch_Widget }
+          }
+         
+        if (responseData) {
+          return responseData;
+        }
+        else {
+          return '';
+        }
+      }
+      else {
+        if (client) { client.end(); }
+      }
+    } else {
+      if (client) { client.end(); }
+      throw new Error(constants.userMessage.TOKEN_MISSING);
+    }
+  } catch (error) {
+    if (client) { client.end(); }
+    throw new Error(error);
+  }
+
+  finally {
+    if (client) { client.end(); }// always close the resource
+  }
+}
+
+//create Pending List jwt 
+module.exports.pendingOrderDropdownjwt = async (req) => {
+  try {
+    const token = await commonService.jwtCreate(req);
+    return { token };
+z  } catch (error) {
+    throw new Error(error);
+  }
+}
+//create Pending List
+module.exports.pendingOrderDropdown = async (req) => {
+  const client = new Client({
+    user: connectionString.user,
+    host: connectionString.host,
+    database: connectionString.database,
+    password: connectionString.password,
+    port: connectionString.port,
+  });
+  await client.connect();
+  try {
+    if (req.jwtToken) {
+      var responseData = {}
+      const decoded = await commonService.jwtVerify(req.jwtToken);
+      const {user_id} = decoded.data;
+      if (decoded) {
+        
+            const Pending_Customer_List = await client.query(`SELECT 'All' as label,'0' as value
+            UNION ALL SELECT  distinct customer_name || '-'|| mobile_no as label , customer_code as value FROM (SELECT order_no,to_char(order_date,'DD-MM-YYYY') as order_date,customer_code,size_id,qr_code,dispatchset,order_qty,(order_qty -  dispatchset) as pending_set,customer_name,mobile_no,city FROM (SELECT a.order_no,a.order_date,a.customer_code,b.size_id,c.qr_code,coalesce(f.dispatchset, 0 ) as dispatchset,sum(qty) as order_qty,e.customer_name,e.mobile_no, coalesce(e.city,'')||' - '|| coalesce(e.pincode,'') as city from tbl_order_taking as a  inner join tbl_order_taking_items as b on a.order_no = b.order_no inner join tbl_item_sizes as c ON c.size_id = b.size_id inner join  tbl_item_management as d on d.trans_no=c.trans_no inner join tbl_customer as e ON e.customer_code = a.customer_code left join (SELECT customer_code,size_id,order_no,sum(dispatch_set) as dispatchset from tbl_dispatch_details where status_flag = 1  group by order_no,size_id,customer_code order by order_no) as f on f.order_no = a.order_no and f.customer_code = a.customer_code and f.size_id = b.size_id group by a.order_no,a.order_date,a.customer_code,b.size_id,c.qr_code,f.dispatchset,e.customer_name,e.mobile_no,e.city,e.pincode order by a.order_date ) as dev where (order_qty -  dispatchset) > 0) as dev1 ` ); 
+            const Pending_Design_List = await client.query(`SELECT 'All' as label,'0' as value
+            UNION ALL SELECT  distinct qr_code as label , size_id as value FROM (SELECT order_no,to_char(order_date,'DD-MM-YYYY') as order_date,customer_code,size_id,qr_code,dispatchset,order_qty,(order_qty -  dispatchset) as pending_set,customer_name,mobile_no,city FROM (SELECT a.order_no,a.order_date,a.customer_code,b.size_id,c.qr_code,coalesce(f.dispatchset, 0 ) as dispatchset,sum(qty) as order_qty,e.customer_name,e.mobile_no, coalesce(e.city,'')||' - '|| coalesce(e.pincode,'') as city from tbl_order_taking as a  inner join tbl_order_taking_items as b on a.order_no = b.order_no inner join tbl_item_sizes as c ON c.size_id = b.size_id inner join  tbl_item_management as d on d.trans_no=c.trans_no inner join tbl_customer as e ON e.customer_code = a.customer_code left join (SELECT customer_code,size_id,order_no,sum(dispatch_set) as dispatchset from tbl_dispatch_details where status_flag = 1  group by order_no,size_id,customer_code order by order_no) as f on f.order_no = a.order_no and f.customer_code = a.customer_code and f.size_id = b.size_id group by a.order_no,a.order_date,a.customer_code,b.size_id,c.qr_code,f.dispatchset,e.customer_name,e.mobile_no,e.city,e.pincode order by a.order_date ) as dev where (order_qty -  dispatchset) > 0) as dev1 ` ); 
+            const Pending_Agent_List = await client.query(`SELECT 'All' as label,'0' as value  UNION ALL 
+            SELECT distinct agent_name as label , agent_code as value FROM (SELECT agent_code,agent_name,order_no,to_char(order_date,'DD-MM-YYYY') as order_date,customer_code,size_id,qr_code,dispatchset,order_qty,(order_qty -  dispatchset) as pending_set,customer_name,mobile_no,city FROM (SELECT e.agent_code,g.agent_name,a.order_no,a.order_date,a.customer_code,b.size_id,
+            c.qr_code,coalesce(f.dispatchset, 0 ) as dispatchset,sum(qty) as order_qty,e.customer_name,e.mobile_no,coalesce(e.city,'')||' - '|| coalesce(e.pincode,'') as city from tbl_order_taking as a  inner join tbl_order_taking_items as b on a.order_no = b.order_no inner join tbl_item_sizes as c 
+            ON c.size_id = b.size_id inner join  tbl_item_management as d on d.trans_no=c.trans_no 
+            inner join tbl_customer as e ON e.customer_code = a.customer_code inner join tbl_agent as 
+            g on g.agent_code = e.agent_code left join (SELECT customer_code,size_id,order_no,sum(dispatch_set) as dispatchset from tbl_dispatch_details where status_flag = 1  group by order_no,size_id,customer_code order by order_no) as f on f.order_no = a.order_no and f.customer_code = a.customer_code and f.size_id = b.size_id group by a.order_no,a.order_date,e.agent_code,g.agent_name,a.customer_code,b.size_id,c.qr_code,f.dispatchset,e.customer_name,e.mobile_no,e.city,e.pincode order by a.order_date )	as dev where (order_qty -  dispatchset) > 0) as dev1`)
+            
+  
+            var Pending_Array = Pending_Customer_List && Pending_Customer_List.rows ? Pending_Customer_List.rows : []
+            var Pending_Design_Array = Pending_Design_List && Pending_Design_List.rows ? Pending_Design_List.rows : []
+            var Pending_Agent_Array = Pending_Agent_List && Pending_Agent_List.rows ? Pending_Agent_List.rows : []
+           
+            responseData = { "Pending_Customer_OrderList" : Pending_Array, "Pending_Design_OrderList" : Pending_Design_Array, "Pending_agent_list": Pending_Agent_Array }
+          
+         
         if (responseData) {
           return responseData;
         }

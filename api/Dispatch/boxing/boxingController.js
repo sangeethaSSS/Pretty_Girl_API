@@ -159,3 +159,64 @@ try {
 return res.send(response);
 }
 
+//Create JWt Module
+module.exports.checkFGItemDispatchJwt = async (req, res) => {
+  let response = {};
+  try {
+    const responseFromService = await boxingMgmtService.checkFGItemDispatchJwt(req.body); 
+    if(!responseFromService.token) {
+      response.status = 200;
+    }    
+    response.body = responseFromService;
+  } catch (error) {
+    response.message = error.message;
+  }
+  return res.send(response);
+}
+
+//check FG in dispatch Module
+module.exports.checkFGItemDispatch = async (req, res) => {
+let response = {};
+try {   
+  const responseFromService = await boxingMgmtService.checkFGItemDispatch(req.body); 
+  if(!responseFromService.token) {
+    response.status = 200;
+    response.message = constants.success_message.LISTED_SUCCESS;
+  }    
+  response.body = responseFromService;
+} catch (error) {
+  response.message = error.message;
+}
+return res.send(response);
+}
+//Create JWt Module
+module.exports.DeleteFGItemJwt = async (req, res) => {
+  let response = {};
+  try {
+    const responseFromService = await boxingMgmtService.DeleteFGItemJwt(req.body); 
+    if(!responseFromService.token) {
+      response.status = 200;
+    }    
+    response.body = responseFromService;
+  } catch (error) {
+    response.message = error.message;
+  }
+  return res.send(response);
+}
+
+//Delete Fg 
+module.exports.DeleteFGItem = async (req, res) => {
+let response = {};
+try {   
+  const responseFromService = await boxingMgmtService.DeleteFGItem(req.body); 
+  if(!responseFromService.token) {
+    response.status = 200;
+    response.message = constants.success_message.LISTED_SUCCESS;
+  }    
+  response.body = responseFromService;
+} catch (error) {
+  response.message = error.message;
+}
+return res.send(response);
+}
+

@@ -96,6 +96,11 @@ module.exports = {
    USERPASSWORD_INCORRECT:'username or password is incorrect',
    USER_NOT_FOUND:'User not found'
   },
+  // FG Message
+  FGMessage:{
+    ERRORINDELETE: 'Fg Already in used',
+    ERRORINEDIT: 'Fg Already in used'
+  },
 
   customerStatus: {
     active: 1,
