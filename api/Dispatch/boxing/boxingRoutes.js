@@ -38,6 +38,24 @@ router.post('/getCurrentStock',
     joiSchemaValidation.validateBody(boxingSchema.getCurrentStockJwt),
     boxingController.getCurrentStock
 ) 
+router.post('/getAllStockJwt',
+    joiSchemaValidation.validateBody(boxingSchema.getAllStockJwt),
+    boxingController.getAllStockJwt
+)
+router.post('/getAllStock',
+    joiSchemaValidation.validateBody(boxingSchema.getAllStockJwt),
+    boxingController.getAllStock
+) 
+router.post('/getPendingStockForOrderJwt',
+    joiSchemaValidation.validateBody(boxingSchema.getPendingStockForOrderJwt),
+    boxingController.getPendingStockForOrderJwt
+)
+router.post('/getPendingStockForOrder',
+    joiSchemaValidation.validateBody(boxingSchema.getPendingStockForOrderJwt),
+    boxingController.getPendingStockForOrder
+) 
+
+
 
 router.post('/moveToFGjwt',
     joiSchemaValidation.validateBody(boxingSchema.moveToFGjwt),

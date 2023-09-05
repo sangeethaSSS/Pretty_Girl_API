@@ -40,6 +40,26 @@ module.exports.getCurrentStockJwt = Joi.object().keys({
   color_id: Joi.string().allow(''),
   jwtToken: Joi.string().allow(''), 
 });
+module.exports.getAllStockJwt = Joi.object().keys({
+  user_id: Joi.number().required(),  
+  size_id: Joi.string().required().allow(''), 
+  machine_id: Joi.string().required().allow(''),  
+  limit:Joi.number().required(),   
+  offset:Joi.number().required(),   
+  process: Joi.string().required().allow(''),
+  color_id: Joi.string().allow(''),
+  jwtToken: Joi.string().allow(''), 
+  item_code:Joi.number().required(),   
+});
+
+module.exports.getPendingStockForOrderJwt = Joi.object().keys({
+  user_id: Joi.number().required(),  
+  size_id: Joi.string().required().allow(''), 
+  color_id: Joi.string().allow(''), 
+  item_code:Joi.number().required(),   
+  order_no: Joi.string().required(),  
+  jwtToken: Joi.string().allow(''),
+});
 module.exports.checkFGItemDispatchJwt = Joi.object().keys({
   user_id: Joi.number().required(),  
   size_id: Joi.string().required(),

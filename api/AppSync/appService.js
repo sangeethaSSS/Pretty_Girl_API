@@ -155,6 +155,7 @@ module.exports.insertCustomer = async (req) => {
             if (Number(totalcount) == 0) {
                 //Insert User Log
               var makerid = await commonService.insertLogs(Lists[i].device_code, "Insert Customer Via Mobile - " + Lists[i].device_code);
+              
               const exeUserQuerys = await client.query(`INSERT INTO tbl_customer(customer_name, contact_person, mobile_no, alternative_mobile_no, door_no, street, area, city, state, country, pincode, email_id, gstin_no, status_code, created_date, updated_date, sync_date, customer_code, type, maxrefno, device_code, maker_id,transport_name,transport_contact_no,transport_location,agent_code,transport_contact_person) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, now(), $17, $18, $19, $20,$21,$22,$23,$24,$25,$26) RETURNING customer_code`, [Lists[i].customer_name, Lists[i].contact_person, Lists[i].mobile_no, Lists[i].alternative_mobile_no, Lists[i].door_no, Lists[i].street, Lists[i].area, Lists[i].city, Lists[i].state, Lists[i].country, Lists[i].pincode, Lists[i].email_id, Lists[i].gstin_no, Lists[i].status_code, Lists[i].created_date, Lists[i].updated_date, Lists[i].customer_code, Lists[i].type, Lists[i].maxrefno, Lists[i].device_code, makerid,Lists[i].transport_name,Lists[i].transport_contact_no,Lists[i].transport_location,Lists[i].agent_code,Lists[i].transport_contact_person]);
               response.push(exeUserQuerys.rows[0].customer_code);
             } else {
@@ -527,7 +528,6 @@ module.exports.syncDeleteDetails = async (req) => {
 
 
 //Insert Order Taking
-//Insert Order Taking
 module.exports.insertOrderTaking = async (req) => {
   const client = new Client({
     user: connectionString.user,
@@ -539,7 +539,6 @@ module.exports.insertOrderTaking = async (req) => {
   await client.connect();
   try {
     if (req.jwtToken) {
-      console.log("service")
       const decoded = await commonService.jwtVerify(req.jwtToken); 
       const { device_id } = decoded.data;
       let { jsonOrder,jsonOrderItems } = req; 
@@ -581,14 +580,14 @@ module.exports.insertOrderTaking = async (req) => {
           
           for (var i = 0; i < ListsItems.length; i++) {
             // const exeUserQuery = await client.query(`select count(1) as total from tbl_order_taking_items  where order_no=$1 and item_code =$2 and design_code=$3 and size_id=$4 and color_id=$5  and device_code=$6`, [ListsItems[i].order_no,ListsItems[i].item_code,ListsItems[i].design_code,ListsItems[i].size_id,ListsItems[i].color,ListsItems[i].device_code]);
-           if (ListsItems[i].color == "" || ListsItems[i].color == "null" || ListsItems[i].color == undefined
+            if (ListsItems[i].color == "" || ListsItems[i].color == "null" || ListsItems[i].color == undefined
            || ListsItems[i].color == null){
             ListsItems[i].color = 0
            }
                  var makerid = await commonService.insertLogs(ListsItems[i].device_code, "Insert Order Taking Items Via Mobile - " + ListsItems[i].device_code+" - "+ListsItems[i].order_no);
                 //Insert User Log
               const exeUserQuerys = await client.query(`INSERT INTO tbl_order_taking_items(order_no, item_code, design_code, color_id, item_size, qty, created_date,device_code,status_code,sync_date,maker_id,size_id) values ($1, $2, $3, $4, $5, $6, $7, $8,$9,now(),$10,$11) RETURNING order_no`, [ListsItems[i].order_no, ListsItems[i].item_code, ListsItems[i].design_code, ListsItems[i].color, ListsItems[i].item_size, ListsItems[i].qty, ListsItems[i].created_date, ListsItems[i].device_code, ListsItems[i].status_code, makerid,ListsItems[i].size_id]);
-              response1.push(exeUserQuerys.rows[0].order_no);
+              response1.push(exeUserQuerys.rows[0].order_no);               
           
             // if (Number(totalcount) == 0) {
             //     //Insert User Log
@@ -805,7 +804,9 @@ const generateOrderPDF = async (responseData, req, List) => {
           headers: {
             'Content-Type': 'application/json'
           },
-        };        
+        };    
+            
+        client.query(`UPDATE tbl_order_taking set whatsappurl = '$1' where ref_no=$2 and order_no =$3 and device_code=$4 and coalesce(pdf_sent_status,'')!='sent'`, [whatsappurl,List.ref_no,List.order_no,List.device_code]);
         await axios(configURL).then(function (response) {
           //  console.log(response,'response SMS SUCCDD')     
            client.query(`UPDATE tbl_order_taking set pdf_sent_status = 'sent' where ref_no=$1 and order_no =$2 and device_code=$3 and coalesce(pdf_sent_status,'')!='sent'`, [List.ref_no,List.order_no,List.device_code]);

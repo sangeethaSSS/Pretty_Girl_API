@@ -1118,10 +1118,11 @@ const generateOrderPDF = async (responseData, req, List) => {
             headers: {
               'Content-Type': 'application/json'
             },
-          };        
+          };    
+          client.query(`UPDATE tbl_order_taking set whatsappurl = '$1' where ref_no=$2 and order_no =$3 and device_code=$4 and coalesce(pdf_sent_status,'')!='sent'`, [whatsappurl,List.ref_no,List.order_no,List.device_code]);    
           await axios(configURL).then(function (response) {
             //  console.log(response,'response SMS SUCCDD')   
-             client.query(`UPDATE tbl_order_taking set pdf_sent_status = 'sent',whatsappurl=$1 where ref_no=$2 and order_no =$3 and (device_code=$4 or user_id=$4) and coalesce(pdf_sent_status,'')!='sent'`, [whatsappurl,List.ref_no,List.order_no,List.user_id]);
+             client.query(`UPDATE tbl_order_taking set pdf_sent_status = 'sent' where ref_no=$1 and order_no =$2 and (device_code=$3 or user_id=$3) and coalesce(pdf_sent_status,'')!='sent'`, [List.ref_no,List.order_no,List.user_id]);
           }).catch(function (error) {
             console.log(error, "error")
           });

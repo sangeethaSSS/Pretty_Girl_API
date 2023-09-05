@@ -9,6 +9,7 @@ const Joi = require('@hapi/joi');
     status_id: Joi.number().required(),
     process: Joi.string().required(),
     company_code:Joi.string().allow(''),
+    // agent_code:Joi.number().required()
   });
   module.exports.customerwiseOrderList = Joi.object().keys({
     jwtToken: Joi.string().required(), 

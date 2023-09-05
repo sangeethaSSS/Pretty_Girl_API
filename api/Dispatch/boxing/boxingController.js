@@ -158,6 +158,66 @@ try {
 }
 return res.send(response);
 }
+//Create JWt Module
+module.exports.getAllStockJwt = async (req, res) => {
+  let response = {};
+  try {
+    const responseFromService = await boxingMgmtService.getAllStockJwt(req.body); 
+    if(!responseFromService.token) {
+      response.status = 200;
+    }    
+    response.body = responseFromService;
+  } catch (error) {
+    response.message = error.message;
+  }
+  return res.send(response);
+}
+
+// CUrrent stock Module
+module.exports.getAllStock = async (req, res) => {
+let response = {};
+try {   
+  const responseFromService = await boxingMgmtService.getAllStock(req.body); 
+  if(!responseFromService.token) {
+    response.status = 200;
+    response.message = constants.success_message.LISTED_SUCCESS;
+  }    
+  response.body = responseFromService;
+} catch (error) {
+  response.message = error.message;
+}
+return res.send(response);
+}
+//Create JWt Module
+module.exports.getPendingStockForOrderJwt = async (req, res) => {
+  let response = {};
+  try {
+    const responseFromService = await boxingMgmtService.getPendingStockForOrderJwt(req.body); 
+    if(!responseFromService.token) {
+      response.status = 200;
+    }    
+    response.body = responseFromService;
+  } catch (error) {
+    response.message = error.message;
+  }
+  return res.send(response);
+}
+
+// CUrrent stock Module
+module.exports.getPendingStockForOrder = async (req, res) => {
+let response = {};
+try {   
+  const responseFromService = await boxingMgmtService.getPendingStockForOrder(req.body); 
+  if(!responseFromService.token) {
+    response.status = 200;
+    response.message = constants.success_message.LISTED_SUCCESS;
+  }    
+  response.body = responseFromService;
+} catch (error) {
+  response.message = error.message;
+}
+return res.send(response);
+}
 
 //Create JWt Module
 module.exports.checkFGItemDispatchJwt = async (req, res) => {
