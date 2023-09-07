@@ -50,7 +50,7 @@ module.exports.itemManagementList = async (req) => {
 
                 if (Lists.length > 0) {
                     for (let i = 0; i < Lists.length; i++) {
-                        const size_Result = await client.query(`select a.size_id,a.trans_no,a.start_size as starting_size,a.end_size as ending_size,a.total_set as total_pieces,a.trans_no,a.color_id,b.color_name,a.qr_code,a.current_stock,c.item_code,c.design_id,d.item_name from tbl_item_sizes as a left  join tbl_color as b on a.color_id = b.color_id inner join tbl_item_management as c on a.trans_no = c.trans_no inner join tbl_def_item as d on c.item_code = d.item_id where a.trans_no = ` + Lists[i].trans_no );
+                        const size_Result = await client.query(`select a.size_id,a.trans_no,a.start_size as starting_size,a.end_size as ending_size,a.total_set as total_pieces,a.trans_no,a.color_id,b.color_name,a.qr_code,a.current_stock,c.item_code,c.design_id,d.item_name from tbl_item_sizes as a left join tbl_color as b on a.color_id = b.color_id inner join tbl_item_management as c on a.trans_no = c.trans_no inner join tbl_def_item as d on c.item_code = d.item_id where a.trans_no = ` + Lists[i].trans_no );
                         let size_Array = size_Result && size_Result.rows ? size_Result.rows : [];
                         let obj = Lists[i]
                         obj['SizeArray'] = size_Array
@@ -301,7 +301,7 @@ module.exports.editItemList = async (req) => {
             if (decoded) {
                 const item_Result = await client.query(`select a.item_code,a.trans_no,a.design_id,a.status_id,c.item_name,b.status_name from tbl_item_management as a  inner join tbl_def_status as b on a.status_id = b.status_id inner join tbl_def_item as c on a.item_code = c.item_id    where a.trans_no = ` + trans_no);
 
-                // const size_Result = await client.query(`select a.size_id,a.trans_no,a.start_size as starting_size,a.end_size as ending_size,a.total_set as total_pieces,a.trans_no,a.color_id,b.color_name,a.qr_code,a.current_stock,a.settype from tbl_item_sizes as a left  join tbl_color as b on a.color_id = b.color_id where a.trans_no = ` + trans_no);
+                // const size_Result = await client.query(`select a.size_id,a.trans_no,a.start_size as starting_size,a.end_size as ending_size,a.total_set as total_pieces,a.trans_no,a.color_id,b.color_name,a.qr_code,a.current_stock from tbl_item_sizes as a left join tbl_color as b on a.color_id = b.color_id where a.trans_no = ` + trans_no);
                 const size_Result = await client.query(`select a.size_id,a.trans_no,a.start_size as starting_size,a.end_size as ending_size,a.total_set as total_pieces,a.trans_no,0 as color_id,'' as color_name,a.qr_code,a.current_stock,a.settype from tbl_item_sizes as a  where a.trans_no = ` + trans_no);
                 if (client) {
                     client.end();

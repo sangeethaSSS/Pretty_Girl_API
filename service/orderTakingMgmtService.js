@@ -94,8 +94,7 @@ module.exports.ChangeAutoItemCode = async (req) => {
       const decoded = await commonService.jwtVerify(req.jwtToken);
       if (decoded != null) {
         const { itemcode } = decoded.data
-
-        const Size_Result = await client.query(`select a.trans_no,b.start_size,b.size_id,b.end_size,b.total_set,b.qr_code,b.color_id,'' as qty,a.item_code,c.item_name,d.color_name,a.design_id from tbl_item_management as a inner join tbl_item_sizes as b on a.trans_no = b.trans_no inner join tbl_def_item as c on a.item_code = c.item_id left  join tbl_color as d on b.color_id = d.color_id where b.size_id = $1`, [itemcode]);
+        const Size_Result = await client.query(`select a.trans_no,b.start_size,b.size_id,b.end_size,b.total_set,b.qr_code,b.color_id,'' as qty,a.item_code,c.item_name,d.color_name,a.design_id from tbl_item_management as a inner join tbl_item_sizes as b on a.trans_no = b.trans_no inner join tbl_def_item as c on a.item_code = c.item_id left join tbl_color as d on b.color_id = d.color_id where b.size_id = $1`, [itemcode]);
         let sizeList = Size_Result && Size_Result.rows ? Size_Result.rows[0] : '';
         if (client) {
           client.end();
@@ -555,7 +554,7 @@ module.exports.editOrderTaking = async (req) => {
         if (Lists.length > 0) {
 
           for (let i = 0; i < Lists.length; i++) {
-            const order_item_Result = await client.query(`select a.order_no,a.item_code,a.design_code as design_id,a.color_id,a.item_size,a.qty,b.item_name,c.color_name,a.size_id,e.start_size,e.size_id,e.end_size,e.total_set,e.qr_code,a.old_qty from tbl_order_taking_items as a inner join tbl_def_item as b on a.item_code = b.item_id left  join tbl_color as c on a.color_id = c.color_id inner join tbl_item_sizes as e on a.size_id = e.size_id where lower (a.order_no)  = lower($1)`, [Lists[i].order_no]);
+            const order_item_Result = await client.query(`select a.order_no,a.item_code,a.design_code as design_id,a.color_id,a.item_size,a.qty,b.item_name,c.color_name,a.size_id,e.start_size,e.size_id,e.end_size,e.total_set,e.qr_code,a.old_qty from tbl_order_taking_items as a inner join tbl_def_item as b on a.item_code = b.item_id left join tbl_color as c on a.color_id = c.color_id inner join tbl_item_sizes as e on a.size_id = e.size_id where lower (a.order_no)  = lower($1)`, [Lists[i].order_no]);
             let Order_ListArray = order_item_Result && order_item_Result.rows ? order_item_Result.rows : [];
             let obj = Lists[i]
             obj['Order_ItemList'] = Order_ListArray
@@ -617,7 +616,7 @@ module.exports.printOrderSlip = async (req) => {
 
       if (decoded) {
 
-        const Order_Slip_Result = await client.query(`select a.order_no,b.item_code,c.item_name,b.design_code,b.item_size,b.qty,b.color_id,b.size_id,d.color_name,e.total_set,a.order_date,e.settype from tbl_order_taking  as a inner join tbl_order_taking_items as b on a.order_no = b.order_no inner join tbl_def_item as c on b.item_code = c.item_id left  join tbl_color as d on b.color_id = d.color_id inner join tbl_item_sizes as e on b.size_id = e.size_id
+        const Order_Slip_Result = await client.query(`select a.order_no,b.item_code,c.item_name,b.design_code,b.item_size,b.qty,b.color_id,b.size_id,d.color_name,e.total_set,a.order_date from tbl_order_taking  as a inner join tbl_order_taking_items as b on a.order_no = b.order_no inner join tbl_def_item as c on b.item_code = c.item_id left join tbl_color as d on b.color_id = d.color_id inner join tbl_item_sizes as e on b.size_id = e.size_id
         where lower(a.order_no) = lower('`+ order_no + `') order by b.item_code asc`);
 
         const Order_Item_List = await client.query(`SELECT order_no,item_code,item_name,SUM(qty) as qty,
@@ -643,7 +642,6 @@ module.exports.printOrderSlip = async (req) => {
         let Company_Array = company_Result && company_Result.rows ? company_Result.rows : [];
         let Lists = Order_Slip_Result && Order_Slip_Result.rows ? Order_Slip_Result.rows : [];
         let ItemLists = Order_Item_List && Order_Item_List.rows ? Order_Item_List.rows : [];
-        
 
         responseData = {
           "OrderSlip": Lists, "CustomerArray": Customer_array, "CompanyArray": Company_Array, "ItemCount": itemcount,"ItemLists":ItemLists
@@ -827,7 +825,7 @@ module.exports.ChangeAutoItemName = async (req) => {
       if (decoded != null) {
         const { itemname } = decoded.data
 
-        const Size_Result = await client.query(`select a.trans_no,b.start_size,b.size_id,b.end_size,b.total_set,b.qr_code,b.color_id,'' as qty,a.item_code,c.item_name,d.color_name,a.design_id from tbl_item_management as a inner join tbl_item_sizes as b on a.trans_no = b.trans_no inner join tbl_def_item as c on a.item_code = c.item_id left  join tbl_color as d on b.color_id = d.color_id where lower(b.qr_code) = lower($1)`, [itemname]);
+        const Size_Result = await client.query(`select a.trans_no,b.start_size,b.size_id,b.end_size,b.total_set,b.qr_code,b.color_id,'' as qty,a.item_code,c.item_name,d.color_name,a.design_id from tbl_item_management as a inner join tbl_item_sizes as b on a.trans_no = b.trans_no inner join tbl_def_item as c on a.item_code = c.item_id left join tbl_color as d on b.color_id = d.color_id where lower(b.qr_code) = lower($1)`, [itemname]);
         let sizeList = Size_Result && Size_Result.rows ? Size_Result.rows[0] : '';
         if (client) {
           client.end();
@@ -896,16 +894,25 @@ module.exports.sendOrderToWhatsapp = async (req) => {
               let order_id = exeQuery1?.rows[0]?.order_no || '';
 
               const exeQuery2= await client.query(
-                `select ROW_NUMBER () OVER (ORDER BY a.order_no) as sno,a.order_no,b.item_code,c.item_name,b.design_code,b.item_size,b.qty,b.color_id,b.size_id,d.color_name,e.total_set,a.order_date,e.total_set::INTEGER*b.qty as total_pcs from tbl_order_taking  as a inner join tbl_order_taking_items as b on a.order_no = b.order_no inner join tbl_def_item as c on b.item_code = c.item_id left join tbl_color as d on b.color_id = d.color_id inner join tbl_item_sizes as e on b.size_id = e.size_id where a.ref_no=$1 and a.order_no =$2 and (a.device_code=$3 or a.user_id=$3) order by b.item_code asc`, [order_details[k].ref_no, order_details[k].order_no, order_details[k].user_id] 
+                `select ROW_NUMBER () OVER (ORDER BY a.order_no) as sno,a.order_no,b.item_code,c.item_name,b.design_code,b.item_size,b.qty,b.color_id,b.size_id,d.color_name,e.total_set,a.order_date,e.total_set::INTEGER*b.qty as total_pcs,remarks from tbl_order_taking  as a inner join tbl_order_taking_items as b on a.order_no = b.order_no inner join tbl_def_item as c on b.item_code = c.item_id left join tbl_color as d on b.color_id = d.color_id inner join tbl_item_sizes as e on b.size_id = e.size_id where a.ref_no=$1 and a.order_no =$2 and (a.device_code=$3 or a.user_id=$3) order by b.item_code asc`, [order_details[k].ref_no, order_details[k].order_no, order_details[k].user_id] 
               );
               let order_item_details = exeQuery2?.rows || []; 
               const exeQuery3= await client.query(
                 `select coalesce(mobile_no,'') as mobile_no from tbl_user where user_id=$1`, [order_details[k].user_id] 
               );
               let user_mobileno = exeQuery3?.rows ? exeQuery3?.rows[0].mobile_no: '' || ''; 
+              const Order_Item_List = await client.query(`SELECT order_no,item_code,item_name,SUM(qty) as qty,
+              sum(total_piece) as total_piece from (select a.order_no,b.item_code,c.item_name,
+              b.qty,e.total_set,(b.qty::INTEGER*e.total_set::INTEGER) as total_piece
+              from tbl_order_taking  as a inner join tbl_order_taking_items as b 
+              on a.order_no = b.order_no inner join tbl_def_item as c on b.item_code = c.item_id 
+              inner join tbl_color as d on b.color_id = d.color_id inner join tbl_item_sizes as 
+              e on b.size_id = e.size_id where a.ref_no=$1 and a.order_no =$2 and (a.device_code=$3 or a.user_id=$3) order by b.item_code asc) as dev group by order_no,item_code,item_name order by item_code asc`, [order_details[k].ref_no, order_details[k].order_no, order_details[k].user_id]);
+              let ItemLists = Order_Item_List && Order_Item_List.rows ? Order_Item_List.rows : [];
               let responseData = {
-                "OrderSlip": order_item_details, "CustomerArray": order_customer_details, "CompanyArray": Company_Array ,"order_id":order_id, "user_mobile_no":user_mobileno
+                "OrderSlip": order_item_details, "CustomerArray": order_customer_details, "CompanyArray": Company_Array ,"order_id":order_id, "user_mobile_no":user_mobileno,"ItemLists":ItemLists
               } 
+              console.log("Start")
               await generateOrderPDF(responseData,req, order_details[k]);
             }
           }
@@ -1036,7 +1043,9 @@ const generateOrderPDF = async (responseData, req, List) => {
 
       let total_pcs_value = 0, short_frock_set = 0, short_frock_pcs = 0, long_frock_set = 0, long_frock_pcs = 0, total_set_value = 0
       let row = responseData.OrderSlip || []
+      let remark = ''
       for (let i = 0; i < row.length; i++) {
+        remark = row[0].remarks
         total_set_value += row[i].qty
         let total_pcs = 0
         total_pcs = row[i].total_set * row[i].qty
@@ -1058,7 +1067,7 @@ const generateOrderPDF = async (responseData, req, List) => {
         checklongfrock = 'true';
       }
       responseData = {
-        ...responseData, total_pcs_value: total_pcs_value, short_frock_set: short_frock_set, short_frock_pcs: short_frock_pcs, long_frock_set: long_frock_set, long_frock_pcs: long_frock_pcs, total_set_value: total_set_value, checkshortfrock:checkshortfrock, checklongfrock: checklongfrock
+        ...responseData, total_pcs_value: total_pcs_value, short_frock_set: short_frock_set, short_frock_pcs: short_frock_pcs, long_frock_set: long_frock_set, long_frock_pcs: long_frock_pcs, total_set_value: total_set_value, checkshortfrock:checkshortfrock, checklongfrock: checklongfrock, remark : remark
       }
       
       // launch a new chrome instance 
@@ -1118,15 +1127,15 @@ const generateOrderPDF = async (responseData, req, List) => {
             headers: {
               'Content-Type': 'application/json'
             },
-          };    
-          client.query(`UPDATE tbl_order_taking set whatsappurl = '$1' where ref_no=$2 and order_no =$3 and device_code=$4 and coalesce(pdf_sent_status,'')!='sent'`, [whatsappurl,List.ref_no,List.order_no,List.device_code]);    
+          };   
+          client.query(`UPDATE tbl_order_taking set whatsappurl = $1 where ref_no=$2 and order_no =$3 and device_code=$4 and coalesce(pdf_sent_status,'')!='sent'`, [whatsappurl,List.ref_no,List.order_no,List.device_code]);     
           await axios(configURL).then(function (response) {
             //  console.log(response,'response SMS SUCCDD')   
              client.query(`UPDATE tbl_order_taking set pdf_sent_status = 'sent' where ref_no=$1 and order_no =$2 and (device_code=$3 or user_id=$3) and coalesce(pdf_sent_status,'')!='sent'`, [List.ref_no,List.order_no,List.user_id]);
           }).catch(function (error) {
             console.log(error, "error")
           });
-        }   
+        }    
         if(List.enableagent == "yes") {
           if(usermobile_no && usermobile_no.length == 10) {
             get_whatsappdata = get_whatsappdata.replace("mobile_no", '91'+usermobile_no);

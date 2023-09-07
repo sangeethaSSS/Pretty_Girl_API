@@ -83,13 +83,13 @@ module.exports.jobcardList = async (req) => {
                 let jobcard_Result = '';
                 if (status_id === 7) {
                     jobcard_Result = await client.query(`SELECT a.job_date,a.job_id,b.employee_name,a.employee_id,a.machine_id,a.design_id,a.completed_date,coalesce(a.total_pieces,0) as total_pieces,coalesce(a.number_set,0) as number_set,a.jobtype_id,extract(day from CURRENT_DATE::timestamp - a.job_date::date ) as noofdays,c.item_name,d.machine_no,f.qr_code as design_no,g.status_name,a.status_id,'' as itemgroup_id,h.color_name,k.jobtype_name,a.salary_status_id,l.salary_status_name, concat_ws(' - ',f.start_size, f.end_size) as size,coalesce(a.rate,0) as rate,coalesce(a.total_amount,0) as total_amount,false as show_rate,(select trans_no from tbl_item_sizes where size_id=a.design_id) as unique_design_no from tbl_job_details  as a inner join tbl_employee_details as b on a.employee_id = b.employee_id inner join tbl_def_item as c on a.item_id = c.item_id inner join tbl_machine as d on a.machine_id = d.machine_id 
-                    left join tbl_item_sizes as f on f.size_id = a.design_id inner join tbl_def_status as g on g.status_id =  a.status_id left  join tbl_color as h on h.color_id = a.color_id   
+                    left join tbl_item_sizes as f on f.size_id = a.design_id inner join tbl_def_status as g on g.status_id =  a.status_id left join tbl_color as h on h.color_id = a.color_id   
                     inner join tbl_def_jobtype as k on a.jobtype_id = k.jobtype_id 
                     inner join tbl_def_salary_status as l on a.salary_status_id = l.salary_status_id  where   coalesce(a.rate,0) = 0 and  (a.status_id=3 or a.status_id=4 or a.status_id=5) and a.salary_status_id=0 order by a.design_id desc`);
                       responseTotalData = { "TotalJob": 0, "TotalJobSet": 0, "TotalJobPiece": 0, "PendingJob": 0, "PendingJobSet": 0, "PendingJobPiece": 0, "CompletedJob": 0, "CompletedJobSet": 0, "CompletedJobPiece": 0, "TransferJob": 0, "TransferJobSet": 0, "TransferJobPiece": 0 }
                 } else {
                     jobcard_Result = await client.query(`SELECT a.job_date,a.job_id,b.employee_name,a.employee_id,a.machine_id,a.design_id,a.completed_date,coalesce(a.total_pieces,0) as total_pieces,coalesce(a.number_set,0) as number_set,a.jobtype_id,extract(day from CURRENT_DATE::timestamp - a.job_date::date ) as noofdays,c.item_name,d.machine_no,f.qr_code as design_no,g.status_name,a.status_id,'' as itemgroup_id,h.color_name,k.jobtype_name,a.salary_status_id,l.salary_status_name, concat_ws(' - ',f.start_size, f.end_size) as size,coalesce(a.rate,0) as rate,coalesce(a.total_amount,0) as total_amount,false as show_rate,(select trans_no from tbl_item_sizes where size_id=a.design_id) as unique_design_no from tbl_job_details  as a inner join tbl_employee_details as b on a.employee_id = b.employee_id inner join tbl_def_item as c on a.item_id = c.item_id inner join tbl_machine as d on a.machine_id = d.machine_id 
-                left join tbl_item_sizes as f on f.size_id = a.design_id inner join tbl_def_status as g on g.status_id =  a.status_id left  join tbl_color as h on h.color_id = a.color_id   
+                left join tbl_item_sizes as f on f.size_id = a.design_id inner join tbl_def_status as g on g.status_id =  a.status_id left join tbl_color as h on h.color_id = a.color_id   
                 inner join tbl_def_jobtype as k on a.jobtype_id = k.jobtype_id 
                 inner join tbl_def_salary_status as l on a.salary_status_id = l.salary_status_id  where ` + datediff + ` and ` + status + ` and ` + itemgroup + ` and ` + design + ` and ` + employee + ` and ` + color + ` and ` + jobtype + ` order by a.job_id desc`);
                 
@@ -111,22 +111,22 @@ module.exports.jobcardList = async (req) => {
                     // }
                     //Get Total set and total piece
                     const totalCount = await client.query(`select count(*) as total_job,sum(coalesce(number_set,0)) as total_set,sum(coalesce(total_pieces,0)) as total_piece from tbl_job_details  as a inner join tbl_employee_details as b on a.employee_id = b.employee_id inner join tbl_def_item as c on a.item_id = c.item_id inner join tbl_machine as d on a.machine_id = d.machine_id 
-                left join tbl_item_sizes as f on f.size_id = a.design_id inner join tbl_def_status as g on g.status_id =  a.status_id left  join tbl_color as h on h.color_id = a.color_id   
+                left join tbl_item_sizes as f on f.size_id = a.design_id inner join tbl_def_status as g on g.status_id =  a.status_id left join tbl_color as h on h.color_id = a.color_id   
                 inner join tbl_def_jobtype as k on a.jobtype_id = k.jobtype_id 
                 inner join tbl_def_salary_status as l on a.salary_status_id = l.salary_status_id  where ` + datediff + ` and ` + tot_status + ` and ` + itemgroup + ` and ` + design + ` and ` + employee + ` and ` + color + ` and ` + jobtype + `  `);
                
                     const pendingCount = await client.query(`select count(*) as pending_job,sum(coalesce(number_set,0)) as total_set,sum(coalesce(total_pieces,0)) as total_piece from tbl_job_details  as a inner join tbl_employee_details as b on a.employee_id = b.employee_id inner join tbl_def_item as c on a.item_id = c.item_id inner join tbl_machine as d on a.machine_id = d.machine_id 
-                left join tbl_item_sizes as f on f.size_id = a.design_id inner join tbl_def_status as g on g.status_id =  a.status_id left  join tbl_color as h on h.color_id = a.color_id   
+                left join tbl_item_sizes as f on f.size_id = a.design_id inner join tbl_def_status as g on g.status_id =  a.status_id left join tbl_color as h on h.color_id = a.color_id   
                 inner join tbl_def_jobtype as k on a.jobtype_id = k.jobtype_id 
                 inner join tbl_def_salary_status as l on a.salary_status_id = l.salary_status_id  where ` + datediff + ` and ` + pend_status + ` and ` + itemgroup + ` and ` + design + ` and ` + employee + ` and ` + color + ` and ` + jobtype + ` `);
                 
                     const completedCount = await client.query(`select count(*) as completed_job,sum(coalesce(number_set,0)) as total_set,sum(coalesce(total_pieces,0)) as total_piece  from tbl_job_details  as a inner join tbl_employee_details as b on a.employee_id = b.employee_id inner join tbl_def_item as c on a.item_id = c.item_id inner join tbl_machine as d on a.machine_id = d.machine_id 
-                left join tbl_item_sizes as f on f.size_id = a.design_id inner join tbl_def_status as g on g.status_id =  a.status_id left  join tbl_color as h on h.color_id = a.color_id   
+                left join tbl_item_sizes as f on f.size_id = a.design_id inner join tbl_def_status as g on g.status_id =  a.status_id left join tbl_color as h on h.color_id = a.color_id   
                 inner join tbl_def_jobtype as k on a.jobtype_id = k.jobtype_id 
                 inner join tbl_def_salary_status as l on a.salary_status_id = l.salary_status_id  where ` + completed_date + ` and ` + com_status + ` and ` + itemgroup + ` and ` + design + ` and ` + employee + ` and ` + color + ` and ` + jobtype + ` `);
 
                     const transferCount = await client.query(`select count(*) as transfer_job,sum(coalesce(number_set,0)) as total_set,sum(coalesce(total_pieces,0)) as total_piece  from tbl_job_details  as a inner join tbl_employee_details as b on a.employee_id = b.employee_id inner join tbl_def_item as c on a.item_id = c.item_id inner join tbl_machine as d on a.machine_id = d.machine_id 
-                left join tbl_item_sizes as f on f.size_id = a.design_id inner join tbl_def_status as g on g.status_id =  a.status_id left  join tbl_color as h on h.color_id = a.color_id   
+                left join tbl_item_sizes as f on f.size_id = a.design_id inner join tbl_def_status as g on g.status_id =  a.status_id left join tbl_color as h on h.color_id = a.color_id   
                 inner join tbl_def_jobtype as k on a.jobtype_id = k.jobtype_id 
                 inner join tbl_def_salary_status as l on a.salary_status_id = l.salary_status_id  where ` + datediff + ` and ` + trans_status + ` and ` + itemgroup + ` and ` + design + ` and ` + employee + ` and ` + color + ` and ` + jobtype + ` `);
 
@@ -224,7 +224,7 @@ module.exports.saveJobcard = async (req) => {
                     // }
                    
                     const jobcard_Result = await client.query(`SELECT a.job_date,a.job_id,b.employee_name,a.employee_id,a.machine_id,a.design_id,a.completed_date,a.total_pieces,a.jobtype_id,extract(day from CURRENT_DATE::timestamp - a.job_date::date ) as noofdays,c.item_name,d.machine_no,f.qr_code as design_no,g.status_name,a.status_id,'' as itemgroup_id,h.color_name,k.jobtype_name,a.salary_status_id,l.salary_status_name, concat_ws(' - ',f.start_size, f.end_size) as size from tbl_job_details  as a inner join tbl_employee_details as b on a.employee_id = b.employee_id inner join tbl_def_item as c on a.item_id = c.item_id inner join tbl_machine as d on a.machine_id = d.machine_id 
-                    left join tbl_item_sizes as f on f.size_id = a.design_id inner join tbl_def_status as g on g.status_id =  a.status_id left  join tbl_color as h on h.color_id = a.color_id   
+                    left join tbl_item_sizes as f on f.size_id = a.design_id inner join tbl_def_status as g on g.status_id =  a.status_id left join tbl_color as h on h.color_id = a.color_id   
                     inner join tbl_def_jobtype as k on a.jobtype_id = k.jobtype_id 
                     inner join tbl_def_salary_status as l on a.salary_status_id = l.salary_status_id  where  a.job_id =$1`, [maxjobcard]);
                     let Jobcard_json = jobcard_Result && jobcard_Result.rows ? jobcard_Result.rows[0] : {};
@@ -248,7 +248,7 @@ module.exports.saveJobcard = async (req) => {
                         //     await client.query(`UPDATE "tbl_design" set piece_rate=$1,updated_date=CURRENT_TIMESTAMP where design_id = $2 `, [rate,design_id]);  
                         // }
                         const jobcard_Result = await client.query(`SELECT a.job_date,a.job_id,b.employee_name,a.employee_id,a.machine_id,a.design_id,a.completed_date,a.total_pieces,a.jobtype_id,extract(day from CURRENT_DATE::timestamp - a.job_date::date ) as noofdays,c.item_name,d.machine_no,f.qr_code as design_no,g.status_name,a.status_id,'' as itemgroup_id,h.color_name,k.jobtype_name,a.salary_status_id,l.salary_status_name, concat_ws(' - ',f.start_size, f.end_size) as size from tbl_job_details  as a inner join tbl_employee_details as b on a.employee_id = b.employee_id inner join tbl_def_item as c on a.item_id = c.item_id inner join tbl_machine as d on a.machine_id = d.machine_id 
-                        left join tbl_item_sizes as f on f.size_id = a.design_id inner join tbl_def_status as g on g.status_id =  a.status_id left  join tbl_color as h on h.color_id = a.color_id   
+                        left join tbl_item_sizes as f on f.size_id = a.design_id inner join tbl_def_status as g on g.status_id =  a.status_id left join tbl_color as h on h.color_id = a.color_id   
                         inner join tbl_def_jobtype as k on a.jobtype_id = k.jobtype_id 
                         inner join tbl_def_salary_status as l on a.salary_status_id = l.salary_status_id  where  a.job_id =$1`, [job_id]);
                         let Jobcard_json = jobcard_Result && jobcard_Result.rows ? jobcard_Result.rows[0] : {};

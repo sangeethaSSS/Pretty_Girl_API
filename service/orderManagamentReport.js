@@ -44,6 +44,7 @@ module.exports.customerWiserOrderList = async (req) => {
         const order_qty = await client.query(`select sum(qty) as totalset,sum(qty*coalesce(d.total_set,'0')::Integer) as totalpiece  from tbl_order_taking as a inner join tbl_customer as b
           on a.customer_code = b.customer_code  inner join tbl_order_taking_items as c on a.order_no=c.order_no
           inner join tbl_item_sizes as d on c.size_id=d.size_id where ` + datediff + ` and ` + status_code + ` and `+ getcustomercode +``);
+          const OrderWidget = await client.query(`SELECT item_name,item_code,order_set,order_pieces  FROM (SELECT d.item_code,sum(b.qty) as order_set, sum(qty*coalesce(c.total_set,'0')::Integer) as order_pieces FROM tbl_order_taking as a inner join tbl_order_taking_items as b on a.order_no =b.order_no inner join tbl_item_sizes as c ON c.size_id = b.size_id inner join tbl_item_management as d on d.trans_no=c.trans_no inner join tbl_customer as e ON e.customer_code = a.customer_code where ` + datediff + ` and ` + status_code + ` and `+ getcustomercode +` group by d.item_code) as dev inner join tbl_def_item as f on dev.item_code = f.item_id  `)
 
         if (process === 'View') {
           const order_Result = await client.query(`select a.order_no,b.customer_code,b.customer_name,b.city,b.contact_person,b.mobile_no,b.gstin_no,b.alternative_mobile_no,(select coalesce(sum(qty),0) from tbl_order_taking_items where order_no= a.order_no) as totalset,(select sum(coalesce(qty,0) * coalesce((select coalesce(total_set,'1')::integer from tbl_item_sizes where size_id=d.size_id),'1')) from tbl_order_taking_items as d inner join tbl_order_taking as e on
@@ -53,20 +54,21 @@ module.exports.customerWiserOrderList = async (req) => {
           let Lists = order_Result && order_Result.rows ? order_Result.rows : [];
           let TotalList = order_count && order_count.rows ? order_count.rows[0].totalcount : 0;
           let TotalQty = order_qty && order_qty.rows ? order_qty.rows : [];
+          let Order_Widget = OrderWidget && OrderWidget.rows ? OrderWidget.rows : [];
           if (client) {
             client.end();
           }
           if (Lists && Lists.length > 0) {
-            return response = { "OrderTakinglist": Lists, "OrderTotalCount": TotalList, "TotalQty": TotalQty }
+            return response = { "OrderTakinglist": Lists, "OrderTotalCount": TotalList, "TotalQty": TotalQty, "OrderWidget" : Order_Widget }
           }
           else {
-            return response = { "OrderTakinglist": [], "OrderTotalCount": 0, "TotalQty": [] }
+            return response = { "OrderTakinglist": [], "OrderTotalCount": 0, "TotalQty": [], "OrderWidget" : [] }
           }
         }
         else {
           const company_details = await client.query(`SELECT  print_id, company_name, addressline1, addressline2, area, city, gstin, mobile_number, telephone_number, status_id, footer_name
             FROM  tbl_print_setting where  print_id = 1`);
-
+          
           const order_Result = await client.query(`select a.order_no,b.customer_code,b.customer_name,b.city,b.contact_person,b.mobile_no,b.gstin_no,b.alternative_mobile_no,(select coalesce(sum(qty),0) from tbl_order_taking_items where order_no= a.order_no) as totalset,(select sum(coalesce(qty,0) * coalesce((select coalesce(total_set,'1')::integer from tbl_item_sizes where size_id=d.size_id),'1')) from tbl_order_taking_items as d inner join tbl_order_taking as e on
             d.order_no= e.order_no where e.order_no= a.order_no)   
            as totalpiece,to_char(a.order_date,'dd-mm-yyyy') as order_date,(select user_name from tbl_user where user_id = (select user_id from tbl_userlog  where autonum = a.maker_id limit 1)) as employeename,(select coalesce(to_char(log_date,'DD-MM-YYYY HH12:MI PM'),'') from tbl_userlog where autonum = a.maker_id limit 1) as createddate,a.status_code,case when a.status_code=1 then 'Active' else 'Cancelled' end as statusname from tbl_order_taking as a inner join tbl_customer as b on a.customer_code = b.customer_code where ` + datediff + ` and ` + status_code + ` and `+ getcustomercode +`  order by a.created_date`);
@@ -80,14 +82,15 @@ module.exports.customerWiserOrderList = async (req) => {
           let TotalList = order_count && order_count.rows ? order_count.rows[0].totalcount : 0;
           let company_data = company_details && company_details.rows ? company_details.rows : [];
           let item_Result_list = item_Result && item_Result.rows ? item_Result.rows : [];
+          let Order_Widget = OrderWidget && OrderWidget.rows ? OrderWidget.rows : [];
           if (client) {
             client.end();
           }
           if (Lists && Lists.length > 0) {
-            return response = { "OrderTakinglist": Lists, "OrderTotalCount": TotalList, "company_details": company_data, "item_Result": item_Result_list }
+            return response = { "OrderTakinglist": Lists, "OrderTotalCount": TotalList, "company_details": company_data, "item_Result": item_Result_list,  "OrderWidget" : Order_Widget }
           }
           else {
-            return response = { "OrderTakinglist": [], "OrderTotalCount": 0, "company_details": [], "item_Result": [] }
+            return response = { "OrderTakinglist": [], "OrderTotalCount": 0, "company_details": [], "item_Result": [],"OrderWidget" : [] }
           }
         }
       }
@@ -161,19 +164,19 @@ module.exports.itemWiseOrderList = async (req) => {
         const order_count = await client.query(` SELECT count(*) as totalcount from (select a.size_id 
           from tbl_order_taking_items as a inner join tbl_item_sizes as b on a.size_id=b.size_id
           inner join tbl_order_taking  as c on  c.order_no=a.order_no   inner join tbl_customer as d on d.customer_code=c.customer_code   inner join tbl_item_management as e on e.design_id=a.design_code 
-          left  join tbl_color as f on f.color_id =b.color_id where `+ datediff + ` and ` + getcolor_id + ` and ` + getdesign_id + ` and ` + getcustomer_code + ` and `+getsize_id+` and c.status_code!=2  group by a.size_id,b.qr_code,a.item_code) as dev `);
+          left join tbl_color as f on f.color_id =b.color_id where `+ datediff + ` and ` + getcolor_id + ` and ` + getdesign_id + ` and ` + getcustomer_code + ` and `+getsize_id+` and c.status_code!=2  group by a.size_id,b.qr_code,a.item_code) as dev `);
 
         const item_data_Result = await client.query(` SELECT a.size_id,b.qr_code,a.item_code,sum(qty) as total_set , sum(qty*coalesce(b.total_set,'0')::Integer) as total_piece,
           (select item_name from tbl_def_item where item_id=a.item_code) as item_name,'body' as process
           from tbl_order_taking_items as a inner join tbl_item_sizes as b on a.size_id=b.size_id
           inner join tbl_order_taking  as c on  c.order_no=a.order_no   inner join tbl_customer as d on d.customer_code=c.customer_code   inner join tbl_item_management as e on e.design_id=a.design_code 
-          left  join tbl_color as f on f.color_id =b.color_id where `+ datediff + ` and ` + getcolor_id + ` and ` + getdesign_id + ` and ` + getcustomer_code + ` and `+getsize_id+` and c.status_code!=2 group by a.size_id,b.qr_code,a.item_code LIMIT $1 OFFSET $2`, [limit, offset]);
+          left join tbl_color as f on f.color_id =b.color_id where `+ datediff + ` and ` + getcolor_id + ` and ` + getdesign_id + ` and ` + getcustomer_code + ` and `+getsize_id+` and c.status_code!=2 group by a.size_id,b.qr_code,a.item_code LIMIT $1 OFFSET $2`, [limit, offset]);
 
         const item_data_qty = await client.query(` SELECT sum(total_set) as totalset,sum(total_piece) as  totalpiece from (SELECT a.size_id,b.qr_code,a.item_code,sum(qty) as total_set , sum(qty*coalesce(b.total_set,'0')::Integer) as total_piece,
           (select item_name from tbl_def_item where item_id=a.item_code) as item_name
           from tbl_order_taking_items as a inner join tbl_item_sizes as b on a.size_id=b.size_id
           inner join tbl_order_taking  as c on  c.order_no=a.order_no   inner join tbl_customer as d on d.customer_code=c.customer_code   inner join tbl_item_management as e on e.design_id=a.design_code 
-          left  join tbl_color as f on f.color_id =b.color_id where `+ datediff + ` and ` + getcolor_id + ` and ` + getdesign_id + ` and ` + getcustomer_code + ` and `+getsize_id+` and c.status_code!=2 group by a.size_id,b.qr_code,a.item_code  ) as dev`);
+          left join tbl_color as f on f.color_id =b.color_id where `+ datediff + ` and ` + getcolor_id + ` and ` + getdesign_id + ` and ` + getcustomer_code + ` and `+getsize_id+` and c.status_code!=2 group by a.size_id,b.qr_code,a.item_code  ) as dev`);
 
         let Lists = item_data_Result && item_data_Result.rows ? item_data_Result.rows : [];
         let result = [];
@@ -186,7 +189,7 @@ module.exports.itemWiseOrderList = async (req) => {
                     from tbl_order_taking_items as a inner join tbl_item_sizes as b on a.size_id=b.size_id
                     inner join tbl_order_taking  as c on  c.order_no=a.order_no  
                 inner join tbl_customer as d on d.customer_code=c.customer_code inner join tbl_item_management as e on e.design_id=a.design_code 
-                left  join tbl_color as f on f.color_id =b.color_id where `+ datediff + ` and ` + getcolor_id + ` and ` + getdesign_id + ` and ` + getcustomer_code + ` and `+getsize_id+` and   a.size_id='` + Lists[i].size_id + `' and c.status_code!=2  group by a.size_id,d.customer_code,
+                left join tbl_color as f on f.color_id =b.color_id where `+ datediff + ` and ` + getcolor_id + ` and ` + getdesign_id + ` and ` + getcustomer_code + ` and `+getsize_id+` and   a.size_id='` + Lists[i].size_id + `' and c.status_code!=2  group by a.size_id,d.customer_code,
                 d.customer_name,d.mobile_no,d.contact_person ` );
             let size_Array = [];
             if (customer_code != "0" && customer_code != 0) {
@@ -207,7 +210,7 @@ module.exports.itemWiseOrderList = async (req) => {
           (select item_name from tbl_def_item where item_id=a.item_code) as item_name
           from tbl_order_taking_items as a inner join tbl_item_sizes as b on a.size_id=b.size_id
           inner join tbl_order_taking  as c on  c.order_no=a.order_no   inner join tbl_customer as d on d.customer_code=c.customer_code   inner join tbl_item_management as e on e.design_id=a.design_code 
-          left  join tbl_color as f on f.color_id =b.color_id  where `+ datediff + ` and ` + getcolor_id + ` and ` + getdesign_id + ` and ` + getcustomer_code + ` and `+getsize_id+` and c.status_code!=2  group by a.item_code ) as dev`)
+          left join tbl_color as f on f.color_id =b.color_id  where `+ datediff + ` and ` + getcolor_id + ` and ` + getdesign_id + ` and ` + getcustomer_code + ` and `+getsize_id+` and c.status_code!=2  group by a.item_code ) as dev`)
         let item_set = single_item_qtys && single_item_qtys.rows.length > 0 ? single_item_qtys.rows[0].totalset : 0;
         let item_piece = single_item_qtys && single_item_qtys.rows.length > 0 ? single_item_qtys.rows[0].totlapiece : 0;
 
@@ -221,7 +224,7 @@ module.exports.itemWiseOrderList = async (req) => {
           (select item_name from tbl_def_item where item_id=a.item_code) as item_name,'body' as process
           from tbl_order_taking_items as a inner join tbl_item_sizes as b on a.size_id=b.size_id
           inner join tbl_order_taking  as c on  c.order_no=a.order_no   inner join tbl_customer as d on d.customer_code=c.customer_code   inner join tbl_item_management as e on e.design_id=a.design_code 
-          left  join tbl_color as f on f.color_id =b.color_id   where `+ datediff + ` and ` + getcolor_id + ` and ` + getdesign_id + ` and ` + getcustomer_code + ` and `+getsize_id+` and c.status_code!=2  group by a.item_code  ` + item_design + ` `);
+          left join tbl_color as f on f.color_id =b.color_id   where `+ datediff + ` and ` + getcolor_id + ` and ` + getdesign_id + ` and ` + getcustomer_code + ` and `+getsize_id+` and c.status_code!=2  group by a.item_code  ` + item_design + ` `);
 
         let TotalList = order_count && order_count.rows.length > 0 ? order_count.rows[0].totalcount : 0;
         let TotalDesignList = 0;
@@ -587,7 +590,7 @@ module.exports.excelItemWiseOrderList = async (req) => {
           (select item_name from tbl_def_item where item_id=a.item_code) as item_name,'body' as process
           from tbl_order_taking_items as a inner join tbl_item_sizes as b on a.size_id=b.size_id
           inner join tbl_order_taking  as c on  c.order_no=a.order_no   inner join tbl_customer as d on d.customer_code=c.customer_code   inner join tbl_item_management as e on e.design_id=a.design_code 
-          left  join tbl_color as f on f.color_id =b.color_id where `+ datediff + ` and ` + getcolor_id + ` and ` + getdesign_id + ` and ` + getcustomer_code + ` and `+getsize_id+`  and c.status_code!=2 group by a.size_id,b.qr_code,a.item_code order by a.item_code asc`);
+          left join tbl_color as f on f.color_id =b.color_id where `+ datediff + ` and ` + getcolor_id + ` and ` + getdesign_id + ` and ` + getcustomer_code + ` and `+getsize_id+`  and c.status_code!=2 group by a.size_id,b.qr_code,a.item_code order by a.item_code asc`);
 
         let Lists = item_data_Result && item_data_Result.rows ? item_data_Result.rows : [];
         let result = [];
@@ -600,7 +603,7 @@ module.exports.excelItemWiseOrderList = async (req) => {
                   from tbl_order_taking_items as a inner join tbl_item_sizes as b on a.size_id=b.size_id
                   inner join tbl_order_taking  as c on  c.order_no=a.order_no  
               inner join tbl_customer as d on d.customer_code=c.customer_code inner join tbl_item_management as e on e.design_id=a.design_code 
-              left  join tbl_color as f on f.color_id =b.color_id where `+ datediff + ` and ` + getcolor_id + ` and ` + getdesign_id + ` and ` + getcustomer_code + `  and `+getsize_id+`  and   a.size_id='` + Lists[i].size_id + `'  and c.status_code!=2  group by a.size_id,d.customer_code,
+              left join tbl_color as f on f.color_id =b.color_id where `+ datediff + ` and ` + getcolor_id + ` and ` + getdesign_id + ` and ` + getcustomer_code + `  and `+getsize_id+`  and   a.size_id='` + Lists[i].size_id + `'  and c.status_code!=2  group by a.size_id,d.customer_code,
               d.customer_name,d.mobile_no,d.contact_person ` );
             let size_Array = [];
             if (customer_code != "0" && customer_code != 0) {

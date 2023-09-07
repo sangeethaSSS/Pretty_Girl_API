@@ -89,6 +89,8 @@ module.exports.fetchcommonData = async (req) => {
 
         const customer_Result = await client.query(`select 'All' as label, '0' as value  union all select coalesce(customer_name,'') || ' - '|| coalesce(mobile_no,'') as label, customer_code as value from tbl_customer order by value,label   ` );
 
+        const all_agent_Result = await client.query(`select 0 as value, 'All' as label union all select agent_code as value,agent_name as label from tbl_agent where status_id =  1`);
+
         const menu_Result = await client.query(`select menu_id, menu_name, false as checked from tbl_def_menu_details`);
         if (client) {
           client.end();
@@ -124,9 +126,10 @@ module.exports.fetchcommonData = async (req) => {
         const agent_Array = agent_Result && agent_Result.rows ? agent_Result.rows : [];
         let customerData = customer_Result && customer_Result.rows ? customer_Result.rows : [];
         const menu_Array = menu_Result && menu_Result.rows ? menu_Result.rows : [];
+        let agentdata = all_agent_Result && all_agent_Result.rows ? all_agent_Result.rows : [];
 
         
-        responseData = {"BloodGroupArray": BloodGroup_Array, "StateArray": state_Array, "StatusArray": status_Array, "GenderArray": gender_Array,"EmployeecateryArray": employeecatery_Array, "UserroleArray": userrole_Array, "MaritalArray": marital_Array, "JobTypeArray": jobtype_Array, "ItemgroupArray" : itemgroup_Array,"DesignationArray":designation_Array,"DepartmentArray":department_Array,"allDepartmentArray":allDepartment_Array,"allDesignationArray":allDesignation_Array,"allemployeecateryArray":allemployeecatery_Array,"DesignArray":Design_Array,"MachineArray":Machine_Array,"ColorArray":Color_Array,"EmployeeArray":Employee_Array,"ItemArray":Item_Array,"alljobtypeArray":alljobtype_Array,"allcolorArray":allcolor_Array,"allitemgroupArray":allitemgroup_Array,"alldesignArray":alldesign_Array,"designRateArray":designrate_Array,"SelectEmployeeArray":select_employee_Array,"EditEmployeeArray":edit_employee_Array,"allitemArray":allitem_Array,"DefItemArray":def_item_Array,"AgentArray":agent_Array,"customerList": customerData, "menuArray":menu_Array}
+        responseData = {"BloodGroupArray": BloodGroup_Array, "StateArray": state_Array, "StatusArray": status_Array, "GenderArray": gender_Array,"EmployeecateryArray": employeecatery_Array, "UserroleArray": userrole_Array, "MaritalArray": marital_Array, "JobTypeArray": jobtype_Array, "ItemgroupArray" : itemgroup_Array,"DesignationArray":designation_Array,"DepartmentArray":department_Array,"allDepartmentArray":allDepartment_Array,"allDesignationArray":allDesignation_Array,"allemployeecateryArray":allemployeecatery_Array,"DesignArray":Design_Array,"MachineArray":Machine_Array,"ColorArray":Color_Array,"EmployeeArray":Employee_Array,"ItemArray":Item_Array,"alljobtypeArray":alljobtype_Array,"allcolorArray":allcolor_Array,"allitemgroupArray":allitemgroup_Array,"alldesignArray":alldesign_Array,"designRateArray":designrate_Array,"SelectEmployeeArray":select_employee_Array,"EditEmployeeArray":edit_employee_Array,"allitemArray":allitem_Array,"DefItemArray":def_item_Array,"AgentArray":agent_Array,"customerList": customerData, "menuArray":menu_Array, "agentdata" : agentdata}
 
         if (responseData) {
           return responseData;
