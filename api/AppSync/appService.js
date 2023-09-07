@@ -815,14 +815,18 @@ const generateOrderPDF = async (responseData, req, List) => {
             'Content-Type': 'application/json'
           },
         };    
-            
-        client.query(`UPDATE tbl_order_taking set whatsappurl = $1 where ref_no=$2 and order_no =$3 and device_code=$4 and coalesce(pdf_sent_status,'')!='sent'`, [whatsappurl,List.ref_no,List.order_no,List.device_code]);
-        await axios(configURL).then(function (response) {
-          //  console.log(response,'response SMS SUCCDD')     
-           client.query(`UPDATE tbl_order_taking set pdf_sent_status = 'sent' where ref_no=$1 and order_no =$2 and device_code=$3 and coalesce(pdf_sent_status,'')!='sent'`, [List.ref_no,List.order_no,List.device_code]);
-        }).catch(function (error) {
-          console.log(error, "error")
-        });
+        const exeQuery_update = await client.query(`UPDATE tbl_order_taking set whatsappurl = $1 where ref_no=$2 and order_no =$3 and device_code=$4 and coalesce(pdf_sent_status,'')!='sent'`, [whatsappurl,List.ref_no,List.order_no,List.device_code]);
+        if(exeQuery_update.rowCount > 0){
+          await axios(configURL).then(async function (response) {
+                      //  console.log(response,'response SMS SUCCDD')   
+                      await client.query(`UPDATE tbl_order_taking set pdf_sent_status = 'sent' where ref_no=$1 and order_no =$2 and device_code=$3 and coalesce(pdf_sent_status,'')!='sent'`, [List.ref_no,List.order_no,List.user_id]);
+                      if (client) {
+                        client.end();
+                      } 
+            }).catch(function (error) {
+              console.log(error, "error")
+            });
+        }
         if(usermobile_no && usermobile_no.length == 10) {
           get_whatsappdata = get_whatsappdata.replace("mobile_no", '91'+usermobile_no);
           get_whatsappdata = get_whatsappdata.replace("pdf_url", pdf_url);
@@ -840,9 +844,6 @@ const generateOrderPDF = async (responseData, req, List) => {
           });
         }
       }
-      if (client) {
-        client.end();
-      } 
       return true;
     } else {
       return false;
@@ -1173,6 +1174,83 @@ module.exports.OrderTakingCheck = async (req) => {
           client.end();
         } 
         return {totalcount: totalcount};
+      } else {
+        if (client) {
+          client.end();
+        }
+        return {totalcount: ''};
+      }
+  } catch (error) {
+    if (client) {
+      client.end();
+    }
+    throw new Error(error);
+  } finally {
+    if (client) {
+      client.end();
+    } // always close the resource
+  }
+};
+module.exports.GetCurrentStock = async (req) => {
+  const client = new Client({
+    user: connectionString.user,
+    host: connectionString.host,
+    database: connectionString.database,
+    password: connectionString.password,
+    port: connectionString.port,
+  });
+  await client.connect();
+  try {
+      var responseData = {}
+      let { device_id,color_id,design_id,item_id } = req; 
+      let designid_val = '1=1';
+      let getcolor_id = '1=1';
+      let get_item_code = '1=1';
+      
+      
+      if(design_id && size_id != "" && size_id != "0"){
+        const design_code_val = size_id ? '\'' + size_id.split(',').join('\',\'') + '\'' : ''
+        designid_val = `d.design_id in (` + design_code_val + `) `
+      }
+      if (color_id && color_id != "0" && color_id != "") {
+        const color_code_val = color_id ? '\'' + color_id.split(',').join('\',\'') + '\'' : ''
+        getcolor_id = `f.color_id in (` + color_code_val + `) `;
+      }
+      if (item_id && item_id != "0" && color_id != "") {
+        const item_code_val = item_id ? '\'' + item_id.split(',').join('\',\'') + '\'' : ''
+        get_item_code= `e.item_id = ` + item_code_val + ` `;
+      }
+      if (device_id) {
+        const exeUserQuery = await client.query(`select a.size_id,(sum(a.no_of_set) - 
+        coalesce((SELECT sum(dispatch_set) from tbl_dispatch_details where status_flag = 1 
+        and size_id = a.size_id ),0)) as current_set,coalesce(sum(coalesce(no_of_pieces,0)) - (SELECT coalesce(sum(dispatch_pieces),0) from tbl_dispatch_details where status_flag = 1 and size_id = a.size_id )) as current_pieces,a.user_id,b.qr_code,c.user_name,d.design_id from tbl_fg_items as a  inner join tbl_item_sizes as b on a.size_id=b.size_id  inner join tbl_user as c on c.user_id=a.user_id  inner join tbl_item_management as d on d.trans_no =b.trans_no inner join tbl_color as f on f.color_id =b.color_id  inner join tbl_def_item as e on d.item_code = e.item_id where ` + getcolor_id + ` and ` + designid_val +` and `+ get_item_code +` group by a.size_id,a.user_id,b.qr_code,c.user_name,d.design_id order by d.design_id`);
+
+        const currentStockWidget = await client.query(` SELECT item_name,item_id,sum(current_pieces) as current_pieces,sum(current_set) as current_set from (select d.item_code,coalesce(sum(coalesce(no_of_set,0))- coalesce((SELECT sum(dispatch_set) from tbl_dispatch_details where status_flag = 1 and size_id = a.size_id ),0),0) as current_set,coalesce(sum(coalesce(no_of_pieces,0)) - (SELECT coalesce(sum(dispatch_pieces),0) from tbl_dispatch_details where status_flag = 1 and size_id = a.size_id )) as current_pieces from tbl_fg_items as a inner join tbl_item_sizes as c on c.size_id=a.size_id inner join tbl_item_management as d on c.trans_no=d.trans_no                  inner join tbl_color as f on f.color_id =c.color_id where ` + getcolor_id + ` and ` + designid_val +` and `+ get_item_code +`   group by d.item_code,a.size_id order by d.item_code ) as dev inner join tbl_def_item as e on dev.item_code = e.item_id  group by item_name,item_id order by item_id`);
+        let CurrentStock_Array = exeUserQuery && exeUserQuery.rows ? exeUserQuery.rows : [];
+        let result = [];
+        if (CurrentStock_Array.length > 0) {
+          for (let i = 0; i < CurrentStock_Array.length; i++) {
+            const item_Result = await client.query(` select a.size_id,(sum(a.no_of_set) - 
+            coalesce((SELECT sum(dispatch_set) from tbl_dispatch_details where status_flag = 1 and size_id = a.size_id ),0)) as qty,coalesce(sum(coalesce(no_of_pieces,0)) - (SELECT coalesce(sum(dispatch_pieces),0) from tbl_dispatch_details where status_flag = 1 and size_id = a.size_id )) as current_pieces,a.user_id,b.qr_code,c.user_name,d.design_id from tbl_fg_items as a  
+            inner join tbl_item_sizes as b on a.size_id=b.size_id  inner join tbl_user as c on c.user_id=a.user_id  inner join tbl_item_management as d on d.trans_no =b.trans_no inner join tbl_color as f on f.color_id =b.color_id  inner join tbl_def_item as e on 
+            d.item_code = e.item_id where ` + getcolor_id + ` and `+ get_item_code +` and d.design_id = $1 group by a.size_id,a.user_id,b.qr_code,c.user_name,d.design_id order by d.design_id`,[CurrentStock_Array[i].design_id] );
+            let item_Array = item_Result && item_Result.rows ? item_Result.rows : []; 
+            let obj = CurrentStock_Array[i]
+            obj['ItemArray'] = item_Array
+            result.push(obj)
+          }
+        }
+
+        if (client) {
+          client.end();
+        } 
+        
+        let  currentStock_Widget = currentStockWidget && currentStockWidget.rows ? currentStockWidget.rows : [];
+
+        responseData = { "CurrentStock": result, "currentStock_Widget": currentStock_Widget }
+        if (responseData) {
+          return responseData;
+        }
       } else {
         if (client) {
           client.end();

@@ -371,7 +371,7 @@ module.exports.orderToWhatsappList = async (req) => {
         if (ordertype && ordertype != 'All'){
           order_type = ' a.type =' + '\'' + ordertype + '\''          
         }
-        const order_Result = await client.query(`select a.ref_no,a.order_no,b.customer_code,b.customer_name,b.city,b.contact_person,b.mobile_no,b.gstin_no,b.alternative_mobile_no,(select coalesce(sum(qty),0) from tbl_order_taking_items where order_no= a.order_no) as totalset,a.order_date as order_date,(select user_name from tbl_user where user_id = (select user_id from tbl_userlog  where autonum = a.maker_id limit 1)) as employeename,(select coalesce(to_char(log_date,'DD-MM-YYYY HH12:MI PM'),'') from tbl_userlog where autonum = a.maker_id limit 1) as createddate,'yes' as enableagent,'yes' as enablecompany,'yes' as enableAll,CASE WHEN a.user_id is not null then a.user_id else a.device_code end as user_id from tbl_order_taking as a inner join tbl_customer as b on a.customer_code = b.customer_code where coalesce(a.pdf_sent_status,'')!='sent' and a.status_code = 1 and `+order_type+` and ` + datediff + ` order by a.created_date desc`);
+        const order_Result = await client.query(`select a.ref_no,a.order_no,b.customer_code,b.customer_name,b.city,b.contact_person,b.mobile_no,b.gstin_no,b.alternative_mobile_no,(select coalesce(sum(qty),0) from tbl_order_taking_items where order_no= a.order_no) as totalset,a.order_date as order_date,(select user_name from tbl_user where user_id = (select user_id from tbl_userlog  where autonum = a.maker_id limit 1)) as employeename,(select coalesce(to_char(log_date,'DD-MM-YYYY HH12:MI PM'),'') from tbl_userlog where autonum = a.maker_id limit 1) as createddate,'yes' as enableagent,'yes' as enablecompany,'yes' as enableAll,CASE WHEN a.user_id is not null then a.user_id else a.device_code end as user_id,a.type from tbl_order_taking as a inner join tbl_customer as b on a.customer_code = b.customer_code where coalesce(a.pdf_sent_status,'')!='sent' and a.status_code = 1 and `+order_type+` and ` + datediff + ` order by a.created_date desc`);
 
         let Lists = order_Result && order_Result.rows ? order_Result.rows : [];
 
@@ -1066,8 +1066,9 @@ const generateOrderPDF = async (responseData, req, List) => {
       if (short_frock_set == 0) {
         checklongfrock = 'true';
       }
+      const ImagePath = path.resolve('./pretty_girl_svg.svg');
       responseData = {
-        ...responseData, total_pcs_value: total_pcs_value, short_frock_set: short_frock_set, short_frock_pcs: short_frock_pcs, long_frock_set: long_frock_set, long_frock_pcs: long_frock_pcs, total_set_value: total_set_value, checkshortfrock:checkshortfrock, checklongfrock: checklongfrock, remark : remark
+        ...responseData, total_pcs_value: total_pcs_value, short_frock_set: short_frock_set, short_frock_pcs: short_frock_pcs, long_frock_set: long_frock_set, long_frock_pcs: long_frock_pcs, total_set_value: total_set_value, checkshortfrock:checkshortfrock, checklongfrock: checklongfrock, remark : remark, ImagePath: ImagePath
       }
       
       // launch a new chrome instance 
@@ -1128,13 +1129,18 @@ const generateOrderPDF = async (responseData, req, List) => {
               'Content-Type': 'application/json'
             },
           };   
-          client.query(`UPDATE tbl_order_taking set whatsappurl = $1 where ref_no=$2 and order_no =$3 and device_code=$4 and coalesce(pdf_sent_status,'')!='sent'`, [whatsappurl,List.ref_no,List.order_no,List.device_code]);     
-          await axios(configURL).then(function (response) {
-            //  console.log(response,'response SMS SUCCDD')   
-             client.query(`UPDATE tbl_order_taking set pdf_sent_status = 'sent' where ref_no=$1 and order_no =$2 and (device_code=$3 or user_id=$3) and coalesce(pdf_sent_status,'')!='sent'`, [List.ref_no,List.order_no,List.user_id]);
-          }).catch(function (error) {
-            console.log(error, "error")
-          });
+          const exeQuery_update = await client.query(`UPDATE tbl_order_taking set whatsappurl = $1 where ref_no=$2 and order_no =$3 and (device_code=$4 or user_id=$4) and coalesce(pdf_sent_status,'')!='sent'`, [whatsappurl,List.ref_no,List.order_no,List.user_id]);
+          if(exeQuery_update.rowCount > 0){
+            await axios(configURL).then(async function (response) {
+                        //  console.log(response,'response SMS SUCCDD')   
+                        await client.query(`UPDATE tbl_order_taking set pdf_sent_status = 'sent' where ref_no=$1 and order_no =$2 and (device_code=$3 or user_id=$3) and coalesce(pdf_sent_status,'')!='sent'`, [List.ref_no,List.order_no,List.user_id]);
+                        if (client) {
+                          client.end();
+                        } 
+              }).catch(function (error) {
+                console.log(error, "error")
+              });
+          }          
         }    
         if(List.enableagent == "yes") {
           if(usermobile_no && usermobile_no.length == 10) {
@@ -1156,9 +1162,7 @@ const generateOrderPDF = async (responseData, req, List) => {
         }    
         
       }
-      if (client) {
-        client.end();
-      } 
+     
       return true;
     } else {
       return false;
