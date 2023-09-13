@@ -445,7 +445,8 @@ module.exports.dispatchList = async (req) => {
         if(dispatch_from_date && dispatch_to_date){
           dispatch_date = `dispatch_date between '`+dispatch_from_date+`' and '`+dispatch_to_date+`' `;
         }
-        if(designcode && designcode != "" && designcode != "0" && filter_type === 'itemwise'){
+        // && filter_type === 'itemwise'
+        if(designcode && designcode != "" && designcode != "0" ){
           const design_code_val = designcode ? '\'' + designcode.split(',').join('\',\'') + '\'' : ''
           design_code = `c.design_id in (` + design_code_val + `) `
         }
@@ -557,6 +558,8 @@ module.exports.dispatchDropdownList = async (req) => {
       if (decoded) {   
         const item_exec_Result = await client.query(`select 'All' as label, '0' as value union all select distinct c.design_id as label,c.design_id as value from tbl_dispatch_details as a inner join tbl_item_sizes as b ON b.size_id = a.size_id inner join 
         tbl_item_management as c on c.trans_no=b.trans_no where a.status_flag = 1 and a.dispatch_type='itemwise'`); 
+        const item_exec_Result_All = await client.query(`select 'All' as label, '0' as value union all select distinct c.design_id as label,c.design_id as value from tbl_dispatch_details as a inner join tbl_item_sizes as b ON b.size_id = a.size_id inner join 
+        tbl_item_management as c on c.trans_no=b.trans_no where a.status_flag = 1 and a.dispatch_type='customerwise'`); 
         const customer_exec_Result = await client.query(`select 'All' as label, '0' as value union all select DISTINCT c.customer_name || '-'||c.mobile_no as label,a.customer_code as value  from tbl_dispatch_details as a  inner join tbl_customer as c ON c.customer_code = a.customer_code where a.status_flag = 1 and a.dispatch_type='customerwise' `); 
         const itemcategory_exec_Result = await client.query(`select 'All' as label, '0' as value union all  SELECT * FROM (select DISTINCT d.item_name as label,c.item_code as value from tbl_dispatch_details as a inner join tbl_item_sizes as b on a.size_id=b.size_id inner join tbl_item_management as c on c.trans_no =b.trans_no inner join tbl_def_item as d on c.item_code = d.item_id where status_flag = 1 ) as dev       group by value ,label `); 
         const agent_exec_Result = await client.query(`select 'All' as label, '0' as value union all
@@ -571,10 +574,11 @@ module.exports.dispatchDropdownList = async (req) => {
         }  
         let item_Array = item_exec_Result && item_exec_Result.rows ? item_exec_Result.rows : [];
         let Customer_Array = customer_exec_Result && customer_exec_Result.rows ? customer_exec_Result.rows : [];
+        let item_Custom_Array = item_exec_Result_All && item_exec_Result_All.rows ? item_exec_Result_All.rows : [];
         let itemCategory_Array = itemcategory_exec_Result && itemcategory_exec_Result.rows ? itemcategory_exec_Result.rows : [];
         let Agent_Array = agent_exec_Result && agent_exec_Result.rows ? agent_exec_Result.rows : [];
 
-        responseData = { "DesignArray": item_Array , "Customer_Array":Customer_Array, "itemCategory_Array":itemCategory_Array, "Agent_Array":Agent_Array }
+        responseData = { "DesignArray": item_Array , "Customer_Array":Customer_Array, "itemCategory_Array":itemCategory_Array, "Agent_Array":Agent_Array,"Item_Custom_Array" :item_Custom_Array }
         if (responseData) {
           return responseData;
         }

@@ -281,9 +281,10 @@ module.exports.saveOrderTaking = async (req) => {
 
             const update_result = await client.query(`UPDATE "tbl_order_taking" set ref_no=$1,order_date=$2,customer_code=$3,status_code=$4,maker_id = $5,"user_id"= $6,updated_date=CURRENT_TIMESTAMP,remarks=$8 where order_no = $7 `, [ref_no, order_date, customer_id, status_id, makerid, user_id, order_id,remarks]);
 
-            await client.query(`DELETE FROM tbl_order_taking_items where lower(order_no) = lower($1)`, [order_id])
-            await client.query(`DELETE FROM tbl_stock_transaction where lower(trans_no) = lower($1) and user_id = $2`, [order_id, user_id])
-
+            const delete_result = await client.query(`DELETE FROM tbl_order_taking_items where lower(order_no) = lower($1)`, [order_id])
+            var deleteresult = delete_result && delete_result.rowCount;
+            const delete_stock =  await client.query(`DELETE FROM tbl_stock_transaction where lower(trans_no) = lower($1) and user_id = $2`, [order_id, user_id])
+            var deletestock = delete_stock && delete_stock.rowCount;
             if (item_array && item_array.length > 0) {
               for (let i = 0; i < item_array.length; i++) {
                 var item_size = ''
@@ -292,14 +293,16 @@ module.exports.saveOrderTaking = async (req) => {
                 } else {
                   item_size = item_array[i].item_size
                 }
-
+                if(deleteresult > 0) {
                 const Item_list = await client.query(`INSERT INTO "tbl_order_taking_items"("order_no","item_code","design_code","item_size","color_id","qty","size_id","user_id","status_code","old_qty","created_date") values ($1, $2, $3, $4,$5,$6,$7,$8,$9,$10,CURRENT_TIMESTAMP) `, [order_id, item_array[i].item_code, item_array[i].design_id, item_size, item_array[i].color_id, item_array[i].qty, item_array[i].size_id, user_id, 1, item_array[i].qty]);
                 let normal_code = Item_list && Item_list.rowCount ? Item_list.rowCount : 0;
                 console.log(normal_code)
-
+                }
+                if(deletestock > 0){
                 const Stock_list = await client.query(`INSERT INTO "tbl_stock_transaction"("stock_date","size_id","trans_no","inward","outward","user_id","created_date") values ($1, $2, $3, $4,$5,$6,CURRENT_TIMESTAMP) `, [order_date, item_array[i].size_id, order_id, 0, item_array[i].qty, user_id]);
                 let stock_code = Stock_list && Stock_list.rowCount ? Stock_list.rowCount : 0;
                 console.log(stock_code)
+                }
 
               }
             }
