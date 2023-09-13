@@ -135,6 +135,15 @@ router.post('/OrderTakingCheck',
 joiSchemaValidation.validateBody(loginSchema.OrderTakingCheck),
 appController.OrderTakingCheck
 )
+router.post('/GetCurrentStock',
+joiSchemaValidation.validateBody(loginSchema.getCurrentStock),
+appController.GetCurrentStock
+)
+router.post('/GetDispatchReportList',
+joiSchemaValidation.validateBody(loginSchema.GetDispatchReportList),
+appController.GetDispatchReportList
+)
+
 
 
 module.exports = router;

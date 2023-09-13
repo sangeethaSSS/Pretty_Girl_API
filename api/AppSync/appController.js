@@ -227,4 +227,31 @@ module.exports.checkStockDetails = async (req, res) => {
   return res.send(response);
   }
   
+  module.exports.GetCurrentStock = async (req, res) => {
+    let response = {};
+    try {   
+      const responseFromService = await appService.GetCurrentStock(req.body); 
+      if(!responseFromService.token) {
+        response.status = 200;
+      }    
+      response.body = responseFromService;
+    } catch (error) {
+      response.message = error.message;
+    }
+    return res.send(response);
+    }
+    module.exports.GetDispatchReportList = async (req, res) => {
+      let response = {};
+      try {   
+        const responseFromService = await appService.GetDispatchReportList(req.body); 
+        if(!responseFromService.token) {
+          response.status = 200;
+        }    
+        response.body = responseFromService;
+      } catch (error) {
+        response.message = error.message;
+      }
+      return res.send(response);
+      }
+    
   

@@ -138,7 +138,7 @@ module.exports.saveCustomerManagement = async (req) => {
                     [customer_name, contact_person, mobile_no, alternative_mobile_no, door_no, street, area, city,
                         state, country_id, pincode, email_id, gstin_no, status_code, customer_code, type, maxrefno,
                         makerid, transport_name, transport_contact_no, transport_location, user_id, transport_contact_person, agent_code]);
-                return responseData = { "message": 'Customer ' + constants.userMessage.USER_CREATED, "statusFlag": 1, "customer_id": customer_code };
+                return responseData = { "message": 'Customer ' + constants.userMessage.USER_CREATED, "statusFlag": 1, "customer_id": customer_code, "customer_name" : customer_name };
             }
         }
             else {

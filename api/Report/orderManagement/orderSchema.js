@@ -39,7 +39,7 @@ const Joi = require('@hapi/joi');
     offset: Joi.number().required(),
     company_code: Joi.string().allow(''),
     design_id: Joi.string().allow(''),
-    color_id: Joi.string().allow(''),
+    set_type: Joi.string().allow(''),
     size_id: Joi.string().allow(''),
     process:Joi.string().required(),
   });

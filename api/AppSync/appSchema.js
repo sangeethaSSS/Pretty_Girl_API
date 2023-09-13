@@ -64,3 +64,16 @@ module.exports.checkStock = Joi.object().keys({
   qty: Joi.string().allow(''), 
   process: Joi.string().allow(''), 
 }); 
+
+module.exports.getCurrentStock = Joi.object().keys({
+  device_id: Joi.string().required(),   
+  set_type: Joi.string().allow(''),
+  design_id:Joi.string().allow(''),
+  item_id:Joi.string().allow('')
+});
+module.exports.GetDispatchReportList = Joi.object().keys({
+  device_id: Joi.string().required(),   
+  company_code: Joi.string().allow(''),
+  from_date: Joi.string().required().allow(''),  
+  to_date: Joi.string().required().allow(''),   
+});

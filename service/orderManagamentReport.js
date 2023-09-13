@@ -282,8 +282,8 @@ module.exports.customerOrderList = async (req) => {
   try {
     if (req.jwtToken) {
       const decoded = await commonService.jwtVerify(req.jwtToken);
-      const { user_id, from_date, to_date, limit, offset, company_code, process,design_id, color_id, size_id  } = decoded.data;
-      var datediff = '1=1', getcustomercode = '1=1', getdesign_id='1=1', getcolor_id='1=1', get_another_color_id='1=1', getsize_id='1=1', get_another_size_id='1=1';
+      const { user_id, from_date, to_date, limit, offset, company_code, process,design_id, set_type, size_id  } = decoded.data;
+      var datediff = '1=1', getcustomercode = '1=1', getdesign_id='1=1', getset_type='1=1', get_another_set_type='1=1', getsize_id='1=1', get_another_size_id='1=1';
       if (decoded) {
         if (from_date && to_date) {
           datediff = `to_char(order_date,'YYYY-MM-DD') :: date BETWEEN `
@@ -298,28 +298,28 @@ module.exports.customerOrderList = async (req) => {
           const design_code_val = design_id ? '\'' + design_id.split(',').join('\',\'') + '\'' : ''
           getdesign_id = `e.design_id in (` + design_code_val + `) `;
         }
-        if (color_id != "0" && color_id != '') {
-          const color_code_val = color_id ? '\'' + color_id.split(',').join('\',\'') + '\'' : ''
-          getcolor_id = `d.color_id in (` + color_code_val + `) `;
-          get_another_color_id = `c.color_id in (` + color_code_val + `) `;
+        if (set_type != "0" && set_type != '') {
+          const color_code_val = set_type ? '\'' + set_type.split(',').join('\',\'') + '\'' : ''
+          getset_type = `d.settype in (` + color_code_val + `) `;
+          get_another_set_type= `c.settype in (` + color_code_val + `) `;
         }
         if (size_id != "0" && size_id != '') {
           const color_code_val = size_id ? '\'' + size_id.split(',').join('\',\'') + '\'' : ''
           getsize_id = `coalesce(d.start_size,'') || '-'|| coalesce(d.end_size,'') in (` + color_code_val + `) `;
           get_another_size_id = `coalesce(c.start_size,'') || '-'|| coalesce(c.end_size,'') in (` + color_code_val + `) `;
         }
-        const order_count = await client.query(`select count(*) as totalcount from (select a.customer_code from tbl_customer as a inner join tbl_order_taking as b on a.customer_code=b.customer_code  inner join tbl_order_taking_items as c on b.order_no = c.order_no inner join tbl_item_sizes as d   on d.size_id=c.size_id  inner join tbl_item_management as e on e.trans_no =d.trans_no where  ` + datediff + ` and ` + getcustomercode + ` and `+getdesign_id+` and `+getcolor_id+` and `+getsize_id+` and b.status_code!=2 group by a.customer_name,a.contact_person,a.mobile_no,a.alternative_mobile_no,a.street ,a.area,a.city,a.pincode,a.email_id,a.gstin_no, a.customer_code) as dev`);
+        const order_count = await client.query(`select count(*) as totalcount from (select a.customer_code from tbl_customer as a inner join tbl_order_taking as b on a.customer_code=b.customer_code  inner join tbl_order_taking_items as c on b.order_no = c.order_no inner join tbl_item_sizes as d   on d.size_id=c.size_id  inner join tbl_item_management as e on e.trans_no =d.trans_no where  ` + datediff + ` and ` + getcustomercode + ` and `+getdesign_id+` and `+getset_type+` and `+getsize_id+` and b.status_code!=2 group by a.customer_name,a.contact_person,a.mobile_no,a.alternative_mobile_no,a.street ,a.area,a.city,a.pincode,a.email_id,a.gstin_no, a.customer_code) as dev`);
 
         if (process === 'View') {
           const item_Result = await client.query(`select a.customer_name,a.contact_person,a.mobile_no,a.alternative_mobile_no,a.street,a.area,a.city,a.pincode,a.email_id,a.gstin_no, a.customer_code, sum(coalesce(qty,'0'))  
-          as sumqty,sum(qty*coalesce(d.total_set,'0')::Integer) as totalpiece from tbl_customer as a inner join tbl_order_taking as b on a.customer_code=b.customer_code inner join tbl_order_taking_items as c on b.order_no = c.order_no inner join tbl_item_sizes as d   on d.size_id=c.size_id  inner join tbl_item_management as e on e.trans_no =d.trans_no where  `+ datediff + `and ` + getcustomercode + `  and `+getdesign_id+`  and `+getcolor_id+` and `+getsize_id+`  and b.status_code!=2  group by a.customer_name,a.contact_person,a.mobile_no,a.alternative_mobile_no,a.street  ,a.area,a.city,a.pincode,a.email_id,a.gstin_no, a.customer_code  LIMIT $1 OFFSET $2`, [limit, offset]);
+          as sumqty,sum(qty*coalesce(d.total_set,'0')::Integer) as totalpiece from tbl_customer as a inner join tbl_order_taking as b on a.customer_code=b.customer_code inner join tbl_order_taking_items as c on b.order_no = c.order_no inner join tbl_item_sizes as d   on d.size_id=c.size_id  inner join tbl_item_management as e on e.trans_no =d.trans_no where  `+ datediff + `and ` + getcustomercode + `  and `+getdesign_id+`  and `+getset_type+` and `+getsize_id+`  and b.status_code!=2  group by a.customer_name,a.contact_person,a.mobile_no,a.alternative_mobile_no,a.street  ,a.area,a.city,a.pincode,a.email_id,a.gstin_no, a.customer_code  LIMIT $1 OFFSET $2`, [limit, offset]);
 
           let Lists = item_Result && item_Result.rows ? item_Result.rows : [];
           let result = [];
 
           if (Lists.length > 0) {
             for (let i = 0; i < Lists.length; i++) { 
-              const single_item_qtys = await client.query(`select sum(total_set) as qty,sum(total_piece) as  totlapiece from ( SELECT sum(b.qty) as total_set , sum(b.qty*coalesce(c.total_set,'0')::Integer) as total_piece from tbl_order_taking as a inner join tbl_order_taking_items  as b on  b.order_no = a.order_no  inner join tbl_item_sizes as c on b.size_id = c.size_id inner join tbl_item_management as  e on e.trans_no=c.trans_no  and a.status_code!=2  where a.customer_code='` + Lists[i].customer_code + `' and  ` + datediff + ` and `+getdesign_id+` and `+get_another_color_id+` and `+get_another_size_id+` ) as dev`)
+              const single_item_qtys = await client.query(`select sum(total_set) as qty,sum(total_piece) as  totlapiece from ( SELECT sum(b.qty) as total_set , sum(b.qty*coalesce(c.total_set,'0')::Integer) as total_piece from tbl_order_taking as a inner join tbl_order_taking_items  as b on  b.order_no = a.order_no  inner join tbl_item_sizes as c on b.size_id = c.size_id inner join tbl_item_management as  e on e.trans_no=c.trans_no  and a.status_code!=2  where a.customer_code='` + Lists[i].customer_code + `' and  ` + datediff + ` and `+getdesign_id+` and `+get_another_set_type+` and `+get_another_size_id+` ) as dev`)
               let item_set = single_item_qtys && single_item_qtys.rows.length > 0 ? single_item_qtys.rows[0].qty : 0;
               let item_piece = single_item_qtys && single_item_qtys.rows.length > 0 ? single_item_qtys.rows[0].totlapiece : 0;
 
@@ -328,11 +328,12 @@ module.exports.customerOrderList = async (req) => {
                 item_design = ` union all select  99999 as sno,'','','','', ` + item_set + ` ,0,0,0,` + item_piece + `,'Total' ,'footer' as process`;
               }
 
-              const size_Result = await client.query(`select * from (select 1 as sno,a.order_no,a.customer_code,b.design_code,to_char(a.order_date,'dd-mm-yyyy') as order_date,sum(b.qty) as qty,b.size_id,b.item_code,b.color_id,sum(b.qty*coalesce(c.total_set,'0')::Integer) as total_piece, (select item_name from tbl_def_item where item_id=b.item_code ) || ' '|| b.design_code|| '-'||  (select color_name from tbl_color  where color_id=b.color_id) ||  (select '('||start_size||'/'||end_size||')' from tbl_item_sizes where size_id=b.size_id) as item_name,'body' as process   from tbl_order_taking as a inner join tbl_order_taking_items as b  on a.order_no=b.order_no inner join tbl_item_sizes as c on b.size_id = c.size_id inner join tbl_item_management as  e on e.trans_no=c.trans_no  where a.customer_code='` + Lists[i].customer_code + `' and  ` + datediff + ` and `+getdesign_id+`  and `+get_another_color_id+`  and `+get_another_size_id+`  and a.status_code!=2   group by b.design_code, a.customer_code,a.order_date,b.size_id,b.item_code,b.color_id,a.order_no `+ item_design +` ) as dev order by sno,order_date`);
+              const size_Result = await client.query(`select * from (select 1 as sno,a.order_no,a.customer_code,b.design_code,to_char(a.order_date,'dd-mm-yyyy') as order_date,sum(b.qty) as qty,b.size_id,b.item_code,b.color_id,sum(b.qty*coalesce(c.total_set,'0')::Integer) as total_piece, (select item_name from tbl_def_item where item_id=b.item_code ) || ' '|| b.design_code|| '-'||  (select settype from tbl_item_sizes  where size_id=b.size_id) ||  (select '('||start_size||'/'||end_size||')' from tbl_item_sizes where size_id=b.size_id) as item_name,'body' as process   from tbl_order_taking as a inner join tbl_order_taking_items as b  on a.order_no=b.order_no inner join tbl_item_sizes as c on b.size_id = c.size_id inner join tbl_item_management as  e on e.trans_no=c.trans_no  where a.customer_code='` + Lists[i].customer_code + `' and  ` + datediff + ` and `+getdesign_id+`  and `+get_another_set_type+`  and `+get_another_size_id+`  and a.status_code!=2   group by b.design_code, a.customer_code,a.order_date,b.size_id,b.item_code,b.color_id,a.order_no `+ item_design +` ) as dev order by sno,order_date`);
               let size_Array = size_Result && size_Result.rows ? size_Result.rows : [];
               let obj = Lists[i]
               obj['SizeArray'] = size_Array
               result.push(obj)
+              // settype
             }
           }
           let TotalList = order_count && order_count.rows.length > 0 ? order_count.rows[0].totalcount : 0;
@@ -356,7 +357,7 @@ module.exports.customerOrderList = async (req) => {
 
           if (Lists.length > 0) {
             for (let i = 0; i < Lists.length; i++) {
-              const size_Result = await client.query(`select a.order_no,a.customer_code,b.design_code,to_char(a.order_date,'dd-mm-yyyy') as order_date,sum(b.qty) as qty,b.size_id,b.item_code,b.color_id,sum(b.qty*coalesce(c.total_set,'0')::Integer) as total_piece, (select item_name from tbl_def_item where item_id=b.item_code ) || ' '|| b.design_code|| '-'||  (select color_name from tbl_color  where color_id=b.color_id) ||  (select '('||start_size||'/'||end_size||')' from tbl_item_sizes where size_id=b.size_id) as item_name   from tbl_order_taking as a inner join tbl_order_taking_items as b  on a.order_no=b.order_no inner join tbl_item_sizes as c on b.size_id = c.size_id  inner join tbl_item_management as  e on e.trans_no=c.trans_no  where a.customer_code='` + Lists[i].customer_code + `' and  ` + datediff + ` and `+getdesign_id+`  and `+get_another_color_id+` and `+get_another_size_id+` and a.status_code!=2  group by b.design_code, a.customer_code,a.order_date,b.size_id,b.item_code,b.color_id,a.order_no order by a.order_date  `);
+              const size_Result = await client.query(`select a.order_no,a.customer_code,b.design_code,to_char(a.order_date,'dd-mm-yyyy') as order_date,sum(b.qty) as qty,b.size_id,b.item_code,b.color_id,sum(b.qty*coalesce(c.total_set,'0')::Integer) as total_piece, (select item_name from tbl_def_item where item_id=b.item_code ) || ' '|| b.design_code|| '-'||  (select settype from tbl_item_sizes where size_id=b.size_id) ||  (select '('||start_size||'/'||end_size||')' from tbl_item_sizes where size_id=b.size_id) as item_name   from tbl_order_taking as a inner join tbl_order_taking_items as b  on a.order_no=b.order_no inner join tbl_item_sizes as c on b.size_id = c.size_id  inner join tbl_item_management as  e on e.trans_no=c.trans_no  where a.customer_code='` + Lists[i].customer_code + `' and  ` + datediff + ` and `+getdesign_id+`  and `+get_another_color_id+` and `+get_another_size_id+` and a.status_code!=2  group by b.design_code, a.customer_code,a.order_date,b.size_id,b.item_code,b.color_id,a.order_no order by a.order_date  `);
               let size_Array = size_Result && size_Result.rows ? size_Result.rows : [];
               let obj = Lists[i]
               obj['SizeArray'] = size_Array
