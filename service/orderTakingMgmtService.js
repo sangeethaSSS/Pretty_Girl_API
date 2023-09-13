@@ -122,6 +122,60 @@ module.exports.ChangeAutoItemCode = async (req) => {
     if (client) { client.end(); }
   }
 }
+module.exports.getCurrentOrderStockJwt = async (req) => {
+  try {
+    const token = await commonService.jwtCreate(req);
+    return { token };
+
+  } catch (error) {
+    throw new Error(error);
+  }
+} 
+
+module.exports.getCurrentOrderStock = async (req) => {
+  const client = new Client({
+    user: connectionString.user,
+    host: connectionString.host,
+    database: connectionString.database,
+    password: connectionString.password,
+    port: connectionString.port,
+  });
+  await client.connect();
+  try {
+    if (req.jwtToken) {
+      var responseData = {}
+      const decoded = await commonService.jwtVerify(req.jwtToken);
+      if (decoded != null) {
+        const { itemcode, order_date } = decoded.data       
+        const order_qty = await client.query(`SELECT coalesce(sum(b.qty),0) as order_qty from tbl_order_taking as a inner join tbl_order_taking_items as b on a.order_no = b.order_no where  to_char(a.order_date,'YYYY-MM-DD') :: date = to_date('${order_date}','YYYY-MM-DD') and b.size_id = ${itemcode}`);
+        let orderqty = order_qty && order_qty.rows && order_qty.rows[0] ? order_qty.rows[0].order_qty : 0;
+        const current_stock = await client.query(`SELECT coalesce(sum(coalesce(no_of_set,0))- coalesce((SELECT sum(dispatch_set) from tbl_dispatch_details where status_flag = 1 and size_id = a.size_id ),0),0) as current_set from tbl_fg_items as a inner join tbl_item_sizes as b on b.size_id=a.size_id where a.size_id = ${itemcode}  group by a.size_id`);
+        let currentstock = current_stock && current_stock.rows && current_stock.rows[0] ? current_stock.rows[0].current_set : 0;
+        if (client) {
+          client.end();
+          responseData = { "Order_Qty": orderqty, "Current_Stock": currentstock}
+          if (responseData) {
+            return responseData;
+          }
+          else {
+            return '';
+          }
+        }
+      } else {
+        if (client) { client.end(); }
+        throw new Error(constants.userMessage.USER_NOT_FOUND);
+      }
+    } else {
+      if (client) { client.end(); }
+      throw new Error(constants.token.INVALID_TOKEN);
+    }
+  } catch (error) {
+    if (client) { client.end(); }
+    throw new Error(error);
+  } finally {
+    if (client) { client.end(); }
+  }
+}
 
 //create Save Check Order Taking jwt 
 module.exports.saveOrderTakingjwt = async (req) => {

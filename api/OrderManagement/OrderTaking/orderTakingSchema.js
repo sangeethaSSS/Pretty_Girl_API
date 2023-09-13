@@ -18,6 +18,16 @@ module.exports.ChangeAutoItemCode = Joi.object().keys({
     jwtToken: Joi.string().required(), 
 });
 
+module.exports.getCurrentOrderStockJwt = Joi.object().keys({
+  user_id: Joi.number().required(),
+  itemcode:Joi.number().required(),
+  order_date:Joi.string().required(),
+});
+
+module.exports.getCurrentOrderStock = Joi.object().keys({
+  jwtToken: Joi.string().required(), 
+});
+
 module.exports.ChangeAutoItemNamejwt = Joi.object().keys({
   user_id: Joi.number().required(),
   itemname:Joi.string().required(),

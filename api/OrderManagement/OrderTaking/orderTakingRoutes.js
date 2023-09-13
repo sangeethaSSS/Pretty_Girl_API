@@ -24,6 +24,14 @@ router.post('/ChangeAutoItemCode',
 joiSchemaValidation.validateBody(orderTakingSchema.ChangeAutoItemCode),
 orderTakingController.ChangeAutoItemCode
 )
+router.post('/getCurrentOrderStockJwt',
+joiSchemaValidation.validateBody(orderTakingSchema.getCurrentOrderStockJwt),
+orderTakingController.getCurrentOrderStockJwt
+)
+router.post('/getCurrentOrderStock',
+joiSchemaValidation.validateBody(orderTakingSchema.getCurrentOrderStock),
+orderTakingController.getCurrentOrderStock
+)
 router.post('/ChangeAutoItemNamejwt',
 joiSchemaValidation.validateBody(orderTakingSchema.ChangeAutoItemNamejwt),
 orderTakingController.ChangeAutoItemNamejwt

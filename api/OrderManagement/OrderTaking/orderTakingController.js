@@ -62,6 +62,35 @@ module.exports.ChangeAutoItemCode = async (req, res) => {
   return res.send(response);
 }
 
+module.exports.getCurrentOrderStockJwt = async (req, res) => {
+  let response = {};
+  try {
+    const responseFromService = await orderTakingMgmtService.getCurrentOrderStockJwt(req.body);
+    if (!responseFromService.token) {
+      response.status = 200;
+    }
+    response.body = responseFromService;
+  } catch (error) {
+    response.message = error.message;
+  }
+  return res.send(response);
+}
+
+//Change Auto Design Name Module
+module.exports.getCurrentOrderStock = async (req, res) => {
+  let response = {};
+  try {
+    const responseFromService = await orderTakingMgmtService.getCurrentOrderStock(req.body);
+    if (!responseFromService.token) {
+      response.status = 200;
+    }
+    response.body = responseFromService;
+  } catch (error) {
+    response.message = error.message;
+  }
+  return res.send(response);
+}
+
 //Change Auto Design Name JWt Module
 module.exports.ChangeAutoItemNamejwt = async (req, res) => {
   let response = {};
