@@ -365,6 +365,16 @@ module.exports.deleteItemManagement = async (req) => {
 
                 const itemsize_Count_date = await client.query(`select count(*) from tbl_job_details where design_id in (select size_id from tbl_item_sizes where trans_no = $1)`, [trans_no])
                 var order_item_Check1 = itemsize_Count_date && itemsize_Count_date.rows[0].count || 0;
+
+                const itemsize_Count_Stock_Transaction = await client.query(`SELECT count(*) as count FROM tbl_stock_transaction where size_id in (select size_id from tbl_item_sizes where trans_no = $1)`, [trans_no])
+                var stock_item_Check1 = itemsize_Count_Stock_Transaction && itemsize_Count_Stock_Transaction.rows[0].count || 0;
+
+                const itemsize_Count_Dispatch = await client.query(`select count(*) as count from tbl_dispatch_details where size_id in (select size_id from tbl_item_sizes where trans_no = $1)`, [trans_no])
+                var dispatch_item_Check1 = itemsize_Count_Dispatch && itemsize_Count_Dispatch.rows[0].count || 0;
+                
+                const itemsize_Count_FG = await client.query(`select count(*) as count from tbl_fg_items where size_id in (select size_id from tbl_item_sizes where trans_no = $1)`, [trans_no])
+                var fg_item_Check1 = itemsize_Count_FG && itemsize_Count_FG.rows[0].count || 0;
+
                 if (order_item_Check1 > 0) {
                     responseData = { "message": constants.userMessage.ALREADY_USE +" in job card", "statusFlag": 2 }
                     if (responseData) {
@@ -374,6 +384,34 @@ module.exports.deleteItemManagement = async (req) => {
                       return '';
                     }
                 }
+                if (stock_item_Check1 > 0) {
+                    responseData = { "message": constants.userMessage.ALREADY_USE +" in stock transaction", "statusFlag": 2 }
+                    if (responseData) {
+                      return responseData;
+                    }
+                    else {
+                      return '';
+                    }
+                }
+                if (fg_item_Check1 > 0) {
+                    responseData = { "message": constants.userMessage.ALREADY_USE +" in FG", "statusFlag": 2 }
+                    if (responseData) {
+                      return responseData;
+                    }
+                    else {
+                      return '';
+                    }
+                }
+                if (dispatch_item_Check1 > 0) {
+                    responseData = { "message": constants.userMessage.ALREADY_USE +" in dispatch", "statusFlag": 2 }
+                    if (responseData) {
+                      return responseData;
+                    }
+                    else {
+                      return '';
+                    }
+                }
+                
                 if (order_item_Check == 0 || order_item_Check == '0') {
                 const item_Count = await client.query(`select count(*) as count FROM tbl_item_management where trans_no =` + trans_no)
                 var count_Check = item_Count && item_Count.rows[0].count;
