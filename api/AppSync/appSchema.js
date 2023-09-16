@@ -31,7 +31,7 @@ module.exports.syncDeleteSchema = Joi.object().keys({
 }); 
 module.exports.OrderTakingCheck = Joi.object().keys({
   device_id: Joi.string().required(),   
-  order_no: Joi.string().required(), 
+  order_no: Joi.string().required().allow(''), 
 });
 
 

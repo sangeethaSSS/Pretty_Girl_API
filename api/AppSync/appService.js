@@ -147,7 +147,8 @@ module.exports.insertCustomer = async (req) => {
         let Lists = jsonCustomer.JSonObject;
         if (Lists && Lists.length > 0) {
           for (var i = 0; i < Lists.length; i++) {
-            const exeUserQuery = await client.query(`select count(customer_code) as total from tbl_customer  where device_code=$1 and type =$2 and customer_code=$3`, [Lists[i].device_code,Lists[i].type,Lists[i].customer_code]);
+            // const exeUserQuery = await client.query(`select count(customer_code) as total from tbl_customer  where device_code=$1 and type =$2 and customer_code=$3`, [Lists[i].device_code,Lists[i].type,Lists[i].customer_code]);
+            const exeUserQuery = await client.query(`select count(customer_code) as total from tbl_customer  where type =$1 and customer_code=$2`, [Lists[i].type,Lists[i].customer_code]);
             let totalcount = exeUserQuery?.rows?.[0].total;
             if(Lists[i].updated_date == "null" || Lists[i].updated_date == "" || Lists[i].updated_date == undefined){
               Lists[i].updated_date = null
@@ -156,8 +157,10 @@ module.exports.insertCustomer = async (req) => {
                 //Insert User Log
               var makerid = await commonService.insertLogs(Lists[i].device_code, "Insert Customer Via Mobile - " + Lists[i].device_code);
               
-              const exeUserQuerys = await client.query(`INSERT INTO tbl_customer(customer_name, contact_person, mobile_no, alternative_mobile_no, door_no, street, area, city, state, country, pincode, email_id, gstin_no, status_code, created_date, updated_date, sync_date, customer_code, type, maxrefno, device_code, maker_id,transport_name,transport_contact_no,transport_location,agent_code,transport_contact_person) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, now(), $17, $18, $19, $20,$21,$22,$23,$24,$25,$26) RETURNING customer_code`, [Lists[i].customer_name, Lists[i].contact_person, Lists[i].mobile_no, Lists[i].alternative_mobile_no, Lists[i].door_no, Lists[i].street, Lists[i].area, Lists[i].city, Lists[i].state, Lists[i].country, Lists[i].pincode, Lists[i].email_id, Lists[i].gstin_no, Lists[i].status_code, Lists[i].created_date, Lists[i].updated_date, Lists[i].customer_code, Lists[i].type, Lists[i].maxrefno, Lists[i].device_code, makerid,Lists[i].transport_name,Lists[i].transport_contact_no,Lists[i].transport_location,Lists[i].agent_code,Lists[i].transport_contact_person]);
-              response.push(exeUserQuerys.rows[0].customer_code);
+              // const exeUserQuerys = await client.query(`INSERT INTO tbl_customer(customer_name, contact_person, mobile_no, alternative_mobile_no, door_no, street, area, city, state, country, pincode, email_id, gstin_no, status_code, created_date, updated_date, sync_date, customer_code, type, maxrefno, device_code, maker_id,transport_name,transport_contact_no,transport_location,agent_code,transport_contact_person) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, now(), $17, $18, $19, $20,$21,$22,$23,$24,$25,$26) RETURNING customer_code`, [Lists[i].customer_name, Lists[i].contact_person, Lists[i].mobile_no, Lists[i].alternative_mobile_no, Lists[i].door_no, Lists[i].street, Lists[i].area, Lists[i].city, Lists[i].state, Lists[i].country, Lists[i].pincode, Lists[i].email_id, Lists[i].gstin_no, Lists[i].status_code, Lists[i].created_date, Lists[i].updated_date, Lists[i].customer_code, Lists[i].type, Lists[i].maxrefno, Lists[i].device_code, makerid,Lists[i].transport_name,Lists[i].transport_contact_no,Lists[i].transport_location,Lists[i].agent_code,Lists[i].transport_contact_person]);
+              // response.push(exeUserQuerys.rows[0].customer_code);
+              const exeUserQuerys = await client.query(`UPDATE tbl_customer set customer_name=$1, contact_person=$2, mobile_no=$3, alternative_mobile_no=$4, door_no=$5, street=$6, area=$7, city=$8, state=$9, country=$10, pincode=$11, email_id=$12, gstin_no=$13, status_code=$14, created_date=$15, updated_date=$16, sync_date=now() ,maxrefno=$17, maker_id=$18,transport_name=$21,transport_contact_no=$22,transport_location=$23,agent_code=$24,transport_contact_person=$25 where  customer_code=$19 and type=$20 RETURNING customer_code`, [Lists[i].customer_name, Lists[i].contact_person, Lists[i].mobile_no, Lists[i].alternative_mobile_no, Lists[i].door_no, Lists[i].street, Lists[i].area, Lists[i].city, Lists[i].state, Lists[i].country, Lists[i].pincode, Lists[i].email_id, Lists[i].gstin_no, Lists[i].status_code, Lists[i].created_date, Lists[i].updated_date,  Lists[i].maxrefno,makerid, Lists[i].customer_code, Lists[i].type,Lists[i].transport_name,Lists[i].transport_contact_no,Lists[i].transport_location,Lists[i].agent_code,Lists[i].transport_contact_person]);
+                response.push(exeUserQuerys.rows[0].customer_code);
             } else {
                 //Insert User Log
                 var makerid = await commonService.insertLogs(Lists[i].device_code, "Update Customer Via Mobile - " + Lists[i].device_code);
@@ -421,11 +424,11 @@ module.exports.getItemManagement = async (req) => {
          let exeQuery2;
          if (exit_check > 0) {
            exeQuery2 = await client.query(
-             "select * from (SELECT 'Insert' as process , autonum, trans_no, item_code, design_id , created_date, updated_date, maker_id from tbl_item_management where (select syncdate from tbl_sync_details where device_id=$1 and syncfile='itemManagement' order by syncdate desc limit 1 ) <= created_date union all SELECT 'Update' as process , autonum, trans_no, item_code, design_id , created_date, updated_date, maker_id  from tbl_item_management where (select syncdate from tbl_sync_details where device_id=$1 and syncfile='itemManagement' order by syncdate desc limit 1 ) <= updated_date) as dev ",[device_id]
+             "select * from (SELECT 'Insert' as process , autonum, trans_no, item_code, design_id , created_date, updated_date, maker_id,status_id from tbl_item_management where (select syncdate from tbl_sync_details where device_id=$1 and syncfile='itemManagement' order by syncdate desc limit 1 ) <= created_date union all SELECT 'Update' as process , autonum, trans_no, item_code, design_id , created_date, updated_date, maker_id,status_id  from tbl_item_management where (select syncdate from tbl_sync_details where device_id=$1 and syncfile='itemManagement' order by syncdate desc limit 1 ) <= updated_date) as dev ",[device_id]
            );
          } else {
            exeQuery2 = await client.query(
-             "SELECT  'Insert' as process ,autonum, trans_no, item_code, design_id , created_date, updated_date, maker_id from tbl_item_management order by created_date "
+             "SELECT  'Insert' as process ,autonum, trans_no, item_code, design_id , created_date, updated_date, maker_id,status_id from tbl_item_management order by created_date "
            );
          } 
          //Get Item Sizes
