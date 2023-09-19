@@ -50,6 +50,14 @@ router.post('/deleteItemManagement',
 joiSchemaValidation.validateBody(itemManagementSchema.deleteItemManagement),
 itemManagementController.deleteItemManagement
 )
+router.post('/checkItemExistTransactionjwt',
+joiSchemaValidation.validateBody(itemManagementSchema.checkItemExistTransactionjwt),
+itemManagementController.checkItemExistTransactionjwt
+)
+router.post('/checkItemExistTransaction',
+joiSchemaValidation.validateBody(itemManagementSchema.checkItemExistTransaction),
+itemManagementController.checkItemExistTransaction
+)
 
 
 module.exports = router;

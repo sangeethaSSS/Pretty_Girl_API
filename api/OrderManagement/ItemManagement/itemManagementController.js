@@ -157,4 +157,35 @@ module.exports.deleteItemManagement = async (req, res) => {
     }
     return res.send(response);
     }
+
+       //Create item Management JWt Module
+module.exports.checkItemExistTransactionjwt = async (req, res) => {
+  let response = {};
+  try {
+    const responseFromService = await itemManagementMgmtService.checkItemExistTransactionjwt(req.body); 
+    if(!responseFromService.token) {
+      response.status = 200;
+    }    
+    response.body = responseFromService;
+  } catch (error) {
+    response.message = error.message;
+  }
+  return res.send(response);
+}
+
+
+//Delete item Management Module
+module.exports.checkItemExistTransaction = async (req, res) => {
+  let response = {};
+  try {   
+    const responseFromService = await itemManagementMgmtService.checkItemExistTransaction(req.body); 
+    if(!responseFromService.token) {
+      response.status = 200;
+    }    
+    response.body = responseFromService;
+  } catch (error) {
+    response.message = error.message;
+  }
+  return res.send(response);
+  }
   

@@ -422,28 +422,34 @@ module.exports.getItemManagement = async (req) => {
          const exeQuery_sync = await client.query("SELECT count(1) as countval  from tbl_sync_details where device_id=$1 and syncfile='itemManagement'  ",[device_id]);
          var exit_check = exeQuery_sync && exeQuery_sync.rows[0].countval ? exeQuery_sync && exeQuery_sync.rows[0].countval : 0;
          let exeQuery2;
-         if (exit_check > 0) {
-           exeQuery2 = await client.query(
-             "select * from (SELECT 'Insert' as process , autonum, trans_no, item_code, design_id , created_date, updated_date, maker_id,status_id from tbl_item_management where (select syncdate from tbl_sync_details where device_id=$1 and syncfile='itemManagement' order by syncdate desc limit 1 ) <= created_date union all SELECT 'Update' as process , autonum, trans_no, item_code, design_id , created_date, updated_date, maker_id,status_id  from tbl_item_management where (select syncdate from tbl_sync_details where device_id=$1 and syncfile='itemManagement' order by syncdate desc limit 1 ) <= updated_date) as dev ",[device_id]
-           );
-         } else {
-           exeQuery2 = await client.query(
-             "SELECT  'Insert' as process ,autonum, trans_no, item_code, design_id , created_date, updated_date, maker_id,status_id from tbl_item_management order by created_date "
-           );
-         } 
+        //  if (exit_check > 0) {
+        //    exeQuery2 = await client.query(
+        //      "select * from (SELECT 'Insert' as process , autonum, trans_no, item_code, design_id , created_date, updated_date, maker_id,status_id from tbl_item_management where (select syncdate from tbl_sync_details where device_id=$1 and syncfile='itemManagement' order by syncdate desc limit 1 ) <= created_date union all SELECT 'Update' as process , autonum, trans_no, item_code, design_id , created_date, updated_date, maker_id,status_id  from tbl_item_management where (select syncdate from tbl_sync_details where device_id=$1 and syncfile='itemManagement' order by syncdate desc limit 1 ) <= updated_date) as dev ",[device_id]
+        //    );
+        //  } else {
+        //    exeQuery2 = await client.query(
+        //      "SELECT  'Insert' as process ,autonum, trans_no, item_code, design_id , created_date, updated_date, maker_id,status_id from tbl_item_management order by created_date "
+        //    );
+        //  } 
+        exeQuery2 = await client.query(
+          "SELECT  'Insert' as process ,autonum, trans_no, item_code, design_id , created_date, updated_date, maker_id,status_id from tbl_item_management order by created_date "
+        );
          //Get Item Sizes
          const exeQuery_sync1 = await client.query("SELECT count(1) as countval  from tbl_sync_details where device_id=$1 and syncfile='itemSizes' ",[device_id]);
          var exit_check = exeQuery_sync1 && exeQuery_sync1.rows[0].countval ? exeQuery_sync1 && exeQuery_sync1.rows[0].countval : 0;
          let exeQuery3;
-         if (exit_check > 0) {
-           exeQuery3 = await client.query(
-             " SELECT 'Insert' as process , autonum, trans_no, start_size, end_size, total_set, created_date ,size_id,color_id,qr_code,current_stock from tbl_item_sizes where (select syncdate from tbl_sync_details where device_id=$1 and syncfile='itemSizes' order by syncdate desc limit 1 ) <= created_date   ",[device_id]
-           );
-         } else {
-           exeQuery3 = await client.query(
-             "SELECT  'Insert' as process , autonum, trans_no, start_size, end_size, total_set, created_date,size_id,color_id,qr_code,current_stock from tbl_item_sizes order by created_date "
-           );
-         } 
+        //  if (exit_check > 0) {
+        //    exeQuery3 = await client.query(
+        //      " SELECT 'Insert' as process , autonum, trans_no, start_size, end_size, total_set, created_date ,size_id,color_id,qr_code,current_stock from tbl_item_sizes where (select syncdate from tbl_sync_details where device_id=$1 and syncfile='itemSizes' order by syncdate desc limit 1 ) <= created_date   ",[device_id]
+        //    );
+        //  } else {
+        //    exeQuery3 = await client.query(
+        //      "SELECT  'Insert' as process , autonum, trans_no, start_size, end_size, total_set, created_date,size_id,color_id,qr_code,current_stock from tbl_item_sizes order by created_date "
+        //    );
+        //  } 
+        exeQuery3 = await client.query(
+          "SELECT  'Insert' as process , autonum, trans_no, start_size, end_size, total_set, created_date,size_id,color_id,qr_code,current_stock from tbl_item_sizes order by created_date "
+        );
          //Get Item Master
          const exeQuery_sync2 = await client.query("SELECT count(1) as countval  from tbl_sync_details where device_id=$1 and syncfile='itemMaster' ",[device_id]);
          var exit_check = exeQuery_sync2 && exeQuery_sync2.rows[0].countval ? exeQuery_sync2 && exeQuery_sync2.rows[0].countval : 0;

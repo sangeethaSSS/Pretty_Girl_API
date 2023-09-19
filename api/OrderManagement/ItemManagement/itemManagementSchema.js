@@ -49,3 +49,12 @@ module.exports.deleteItemManagementjwt = Joi.object().keys({
 module.exports.deleteItemManagement = Joi.object().keys({
     jwtToken: Joi.string().required(), 
 });
+//FOR delete Item  Management
+module.exports.checkItemExistTransactionjwt = Joi.object().keys({
+    user_id: Joi.number().required(),
+    size_id: Joi.number().required(),
+});
+
+module.exports.checkItemExistTransaction = Joi.object().keys({
+    jwtToken: Joi.string().required(), 
+});
