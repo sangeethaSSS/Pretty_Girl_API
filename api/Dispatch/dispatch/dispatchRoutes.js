@@ -79,4 +79,22 @@ router.post('/printItemCustomerWiseDispatch',
     dispatchController.printItemCustomerWiseDispatch
 )
 
+router.post('/editDispatchDataJwt',
+    joiSchemaValidation.validateBody(dispatchSchema.editDispatchDataJwt),
+    dispatchController.editDispatchDataJwt
+)
+router.post('/editDispatchData',
+    joiSchemaValidation.validateBody(dispatchSchema.editDispatchDataJwt),
+    dispatchController.editDispatchData
+)
+
+router.post('/deleteDispatchDataJwt',
+    joiSchemaValidation.validateBody(dispatchSchema.deleteDispatchDataJwt),
+    dispatchController.deleteDispatchDataJwt
+)
+router.post('/deleteDispatchData',
+    joiSchemaValidation.validateBody(dispatchSchema.deleteDispatchDataJwt),
+    dispatchController.deleteDispatchData
+)
+
 module.exports = router;

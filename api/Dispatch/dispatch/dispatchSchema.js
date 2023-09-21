@@ -54,6 +54,17 @@ module.exports.itemCustomerWiseListJwt = Joi.object().keys({
     dispatch_id: Joi.number().required(), 
     jwtToken: Joi.string().allow(''), 
   });
+  module.exports.editDispatchDataJwt = Joi.object().keys({
+    user_id: Joi.number().required(),  
+    dispatch_id: Joi.number().required(),
+    jwtToken: Joi.string().allow(''), 
+  });
+
+  module.exports.deleteDispatchDataJwt = Joi.object().keys({
+    user_id: Joi.number().required(),   
+    dispatch_details: Joi.array().required().allow([]),  
+    jwtToken: Joi.string().allow(''), 
+  });
   
 
 

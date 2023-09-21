@@ -751,3 +751,141 @@ module.exports.printItemCustomerWiseDispatch = async (req) => {
     if (client) { client.end(); }// always close the resource
   }
 }
+//create jwt 
+module.exports.editDispatchDataJwt = async (req) => {
+  try {
+    const token = await commonService.jwtCreate(req);
+    return { token };
+
+  } catch (error) {
+      throw new Error(error);
+  }
+}
+//cancle dispatch
+module.exports.editDispatchData = async (req) => {
+const client = new Client({
+  user: connectionString.user,
+  host: connectionString.host,
+  database: connectionString.database,
+  password: connectionString.password,
+  port: connectionString.port,
+});
+await client.connect();
+try {
+  if (req.jwtToken) { 
+  const decoded = await commonService.jwtVerify(req.jwtToken);  
+  const {user_id, dispatch_id} = decoded.data; 
+  if (decoded) { 
+    let result = [];
+    const item_exec_Result = await client.query(`SELECT a.dispatch_id,b.customer_code,b.customer_name as customer_name,coalesce(street, '') as street,coalesce(area, '') as area,coalesce(city,'') as city,coalesce(pincode,'') as pincode,coalesce(mobile_no,'') as mobile_no,dispatch_no FROm tbl_dispatch_details as a inner join tbl_customer as b on a.customer_code=b.customer_code where dispatch_id=${dispatch_id} and status_flag = 1 group by a.dispatch_id,b.customer_code,b.customer_name,dispatch_no `)
+    let dispatch_array = item_exec_Result && item_exec_Result.rows ? item_exec_Result.rows : [];          
+     
+     if (dispatch_array.length > 0) {
+       for (let i = 0; i < dispatch_array.length; i++) {
+         const item_Result = await client.query(` SELECT dispatch_no,a.dispatch_id,c.customer_code,a.dispatch_set,coalesce(a.dispatch_pieces, 0 ) as dispatch_pieces,a.size_id,b.qr_code as 
+         qr_code FROm tbl_dispatch_details as a inner join tbl_item_sizes as b  on b.size_id=a.size_id inner join tbl_customer as  c on a.customer_code = c.customer_code  where dispatch_id=$1 and 
+         a.customer_code=$2 group by dispatch_no,a.dispatch_id,c.customer_code,a.dispatch_set,
+         a.dispatch_pieces,a.size_id,b.qr_code,created_at order by created_at desc`,[dispatch_array[i].dispatch_id,dispatch_array[i].customer_code] );
+         let item_Array = item_Result && item_Result.rows ? item_Result.rows : []; 
+         let obj = dispatch_array[i]
+         obj['ItemArray'] = item_Array
+         result.push(obj)
+       }
+     }
+     responseData = { "dispatch_array": result}
+    if (client) {
+      client.end();
+    } 
+    if (responseData) {
+      return responseData;
+    }
+    else {
+      return '';
+    }
+  }
+  else {
+      if (client) { client.end(); }
+      return ""; 
+  }
+  } else {
+    if (client) { client.end(); }
+    throw new Error(constants.userMessage.TOKEN_MISSING);
+  }
+} catch (error) {
+  if (client) { client.end(); }
+  throw new Error(error);
+}
+
+finally {
+  if (client) { client.end(); }// always close the resource
+}
+}
+
+// 
+
+//create jwt 
+module.exports.deleteDispatchDataJwt = async (req) => {
+  try {
+    const token = await commonService.jwtCreate(req);
+    return { token };
+
+  } catch (error) {
+      throw new Error(error);
+  }
+}
+//delete dispatch
+module.exports.deleteDispatchData = async (req) => {
+const client = new Client({
+  user: connectionString.user,
+  host: connectionString.host,
+  database: connectionString.database,
+  password: connectionString.password,
+  port: connectionString.port,
+});
+await client.connect();
+try {
+  if (req.jwtToken) { 
+  const decoded = await commonService.jwtVerify(req.jwtToken);  
+  const {user_id, dispatch_details} = decoded.data; 
+  if (decoded) { 
+    // tbl_dispatch_delete_details
+    var makerid = await commonService.insertLogs(user_id, "Delete Dispatch");
+  
+    if(dispatch_details && dispatch_details.length > 0 ){
+      const id_max = await client.query(`select coalesce (max(delete_dispatch_id),0) + 1 as delete_dispatch_id FROM tbl_dispatch_delete_details`)
+      var delete_dispatch_id = id_max && id_max.rows[0].delete_dispatch_id;
+     
+      for(let i=0; i < dispatch_details.length; i++){
+        var makerid = await commonService.insertLogs(user_id, "Cancel Dispatch");           
+        const exeQuery = await client.query(`INSERT INTO  tbl_dispatch_delete_details(dispatch_id, order_no, customer_code, order_set,dispatch_set, size_id, dispatch_type, user_id, created_at,dispatch_date,dispatch_no,status_flag,dispatch_pieces,delete_dispatch_id)
+                SELECT dispatch_id,order_no,customer_code,order_set,dispatch_set,size_id,dispatch_type,$1,
+                CURRENT_TIMESTAMP,dispatch_date,dispatch_no,status_flag,dispatch_pieces,$2
+                from tbl_dispatch_details where dispatch_id = $3 and dispatch_no = $4 and size_id = $5 and customer_code= $6 `,[user_id, delete_dispatch_id, dispatch_details[i].dispatch_id,dispatch_details[i].dispatch_no,dispatch_details[i].size_id,dispatch_details[i].customer_code])
+        if (exeQuery && exeQuery.rowCount > 0) {
+          await client.query(`DELETE FROM tbl_dispatch_details where  dispatch_id = $1 and dispatch_no = $2 and size_id = $3 and customer_code= $4`,[dispatch_details[i].dispatch_id,dispatch_details[i].dispatch_no,dispatch_details[i].size_id,dispatch_details[i].customer_code]); 
+        }
+      } 
+    } 
+    
+    if (client) {
+      client.end();
+    } 
+    return response = { "message": constants.DispatchMessage.DELETESUCCESS, "statusFlag": 1 }; 
+  }
+  else {
+      if (client) { client.end(); }
+      return ""; 
+  }
+  } else {
+    if (client) { client.end(); }
+    throw new Error(constants.userMessage.TOKEN_MISSING);
+  }
+} catch (error) {
+  if (client) { client.end(); }
+  throw new Error(error);
+}
+
+finally {
+  if (client) { client.end(); }// always close the resource
+}
+}

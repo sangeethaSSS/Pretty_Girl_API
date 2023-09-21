@@ -1321,8 +1321,7 @@ module.exports.GetDispatchReportList = async (req) => {
       let Dispatch_Array = []
       //'da2478e76dc3b67b'
       if (device_id) {
-        let deviceid = '\'' + device_id  + '\''
-        console.log(`SELECT coalesce(view_dispatch,'') as dispatchview,devices_id FROM tbl_user where devices_id = `+ deviceid +``);
+        let deviceid = '\'' + device_id  + '\''      
         const view_agent = await client.query(`SELECT coalesce(view_dispatch,'') as dispatchview,devices_id FROM tbl_user where devices_id = `+ deviceid +``);
         if(view_agent && view_agent.rows[0]){
           const view_agent_enable = view_agent && view_agent.rows[0] && view_agent.rows[0].dispatchview ? view_agent.rows[0].dispatchview : '';
@@ -1333,11 +1332,7 @@ module.exports.GetDispatchReportList = async (req) => {
           if(userid && userid !=''){
             getuser_code = `a.user_id = `+userid+``;
           }
-
-        }
-        console.log(`SELECT dispatch_id,dispatch_no,to_char(dispatch_date, 'dd-MM-YYYY') as dispatch_date,sum(coalesce(dispatch_set,0)) as dispatch_set ,sum(coalesce(dispatch_pieces,0)) as dispatch_pieces,a.user_id,string_agg(distinct customer_name, ',') as customer_name from tbl_dispatch_details a inner join tbl_item_sizes as b ON b.size_id = a.size_id inner join tbl_item_management as c on c.trans_no=b.trans_no inner join tbl_customer as d on 
-        a.customer_code = d.customer_code inner join tbl_agent as e on d.agent_code = e.agent_code where 
-        a.status_flag = 1 and  ` + dispatch_date +` and `+ getCompany_code +` and `+getuser_code+` group by dispatch_id,a.user_id,dispatch_no,dispatch_date order by dispatch_id desc`)
+        }        
         const DispatchListData = await client.query(`SELECT dispatch_id,dispatch_no,to_char(dispatch_date, 'dd-MM-YYYY') as dispatch_date,sum(coalesce(dispatch_set,0)) as dispatch_set ,sum(coalesce(dispatch_pieces,0)) as dispatch_pieces,a.user_id,string_agg(distinct customer_name, ',') as customer_name from tbl_dispatch_details a inner join tbl_item_sizes as b ON b.size_id = a.size_id inner join tbl_item_management as c on c.trans_no=b.trans_no inner join tbl_customer as d on 
           a.customer_code = d.customer_code inner join tbl_agent as e on d.agent_code = e.agent_code where 
           a.status_flag = 1 and  ` + dispatch_date +` and `+ getCompany_code +` and `+getuser_code+` group by dispatch_id,a.user_id,dispatch_no,dispatch_date order by dispatch_id desc`); 

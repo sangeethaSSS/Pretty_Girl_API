@@ -250,4 +250,66 @@ try {
 return res.send(response);
 }
 
+//edit dispatch 
+//Create JWt Module
+module.exports.editDispatchDataJwt = async (req, res) => {
+  let response = {};
+  try {
+    const responseFromService = await dispatchMgmtService.editDispatchDataJwt(req.body); 
+    if(!responseFromService.token) {
+      response.status = 200;
+    }    
+    response.body = responseFromService;
+  } catch (error) {
+    response.message = error.message;
+  }
+  return res.send(response);
+}
+
+//edit dispatch Module
+module.exports.editDispatchData = async (req, res) => {
+let response = {};
+try {   
+  const responseFromService = await dispatchMgmtService.editDispatchData(req.body); 
+  if(!responseFromService.token) {
+    response.status = 200;
+    response.message = constants.success_message.LISTED_SUCCESS;
+  }    
+  response.body = responseFromService;
+} catch (error) {
+  response.message = error.message;
+}
+return res.send(response);
+}
+
+//Create JWt Module
+module.exports.deleteDispatchDataJwt = async (req, res) => {
+  let response = {};
+  try {
+    const responseFromService = await dispatchMgmtService.deleteDispatchDataJwt(req.body); 
+    if(!responseFromService.token) {
+      response.status = 200;
+    }    
+    response.body = responseFromService;
+  } catch (error) {
+    response.message = error.message;
+  }
+  return res.send(response);
+}
+
+//delete dispatch Module
+module.exports.deleteDispatchData = async (req, res) => {
+let response = {};
+try {   
+  const responseFromService = await dispatchMgmtService.deleteDispatchData(req.body); 
+  if(!responseFromService.token) {
+    response.status = 200;
+    response.message = constants.success_message.LISTED_SUCCESS;
+  }    
+  response.body = responseFromService;
+} catch (error) {
+  response.message = error.message;
+}
+return res.send(response);
+}
 

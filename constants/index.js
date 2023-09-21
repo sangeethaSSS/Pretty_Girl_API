@@ -86,7 +86,9 @@ module.exports = {
     SOMETHING_WENT_WRONG: 'Something went wrong',
     TOKEN_MISSING:'Token not found',
     IRONMACHINENO_DUPLICATE: 'Iron machine no. already exits',
-    CANCEL_SUCCESS: 'Cancelled Successfully'
+    CANCEL_SUCCESS: 'Cancelled Successfully',
+    CANCEL_FAILED: 'Unable to Cancel',
+    ALREADY_SYNC : 'Already synced'
 
   },
   //login message 
@@ -106,6 +108,9 @@ module.exports = {
     active: 1,
     inActive: 2,
     cancel: 8
-  }
+  },
+  DispatchMessage:{
+    DELETESUCCESS: 'Dispatch item deleted successfully'
+  },
 }
 
