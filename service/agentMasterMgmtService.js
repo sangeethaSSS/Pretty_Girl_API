@@ -199,7 +199,7 @@ module.exports.deleteAgentjwt = async (req) => {
               }
               let deletecode = delete_result && delete_result.rowCount ? delete_result.rowCount : 0;
               if (deletecode == 1) {
-                responseData = { "message": constants.userMessage.USER_DELETED, "statusFlag": 2 }
+                responseData = { "message": constants.userMessage.USER_DELETED, "statusFlag": 1 }
                 if (responseData) {
                   return responseData;
                 }

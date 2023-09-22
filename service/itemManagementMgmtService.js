@@ -378,7 +378,7 @@ module.exports.deleteItemManagement = async (req) => {
                 const itemsize_Sync_Count = await client.query(`SELECT count(*) as count FROM tbl_item_management where trans_no = $1 and created_date <
                 (SELECT syncdate from  tbl_sync_details  where syncfile = 'itemManagement'
                 order by syncdate desc limit 1
-                ) )`, [trans_no])
+                )`, [trans_no])
                 var item_sync_count = itemsize_Sync_Count && itemsize_Sync_Count.rows[0].count || 0;
                 
                 if (order_item_Check1 > 0) {
@@ -440,7 +440,7 @@ module.exports.deleteItemManagement = async (req) => {
                     }
                     let deletecode = delete_result && delete_result.rowCount ? delete_result.rowCount : 0;
                     if (deletecode == 1) {
-                        responseData = { "message": constants.userMessage.USER_DELETED, "statusFlag": 2 }
+                        responseData = { "message": constants.userMessage.USER_DELETED, "statusFlag": 1 }
                         if (responseData) {
                             return responseData;
                         }
