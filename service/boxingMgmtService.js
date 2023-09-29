@@ -383,7 +383,7 @@ module.exports.getCurrentStock = async (req) => {
         let get_limit = '';
         let machineid = '1=1';
         let getsettype = '1=1';
-        let getset_type = '1=1';        
+        let getset_type = '1=1';    
         if(size_id && size_id != "" && size_id != "0"){
           const design_code_val = size_id ? '\'' + size_id.split(',').join('\',\'') + '\'' : ''
           designid_val = `d.design_id in (` + design_code_val + `) `
@@ -866,13 +866,25 @@ module.exports.checkFGItemDispatch = async (req) => {
       var responseData = {}
       const decoded = await commonService.jwtVerify(req.jwtToken);  
       if (decoded) { 
-        const {user_id, size_id, fg_qty, process} = decoded.data;
-        
-        const fg_Result = await client.query(`SELECT * FROM (SELECT size_id,coalesce(sum(coalesce(no_of_set,0))- coalesce((SELECT sum(dispatch_set) from tbl_dispatch_details where
-        status_flag = 1 and size_id = a.size_id ),0),0) as current_set from tbl_fg_items as a 
-        where size_id = ${size_id}  group by size_id) as dev where current_set > 0 `);
-        // const fg_Result = await client.query(`SELECT * FROM (SELECT size_id,coalesce((SELECT sum(dispatch_set) from tbl_dispatch_details where status_flag = 1 and size_id = a.size_id ),0) as current_set from tbl_fg_items as a where size_id = ${size_id}  group by size_id) as dev where current_set < ${fg_qty} `);
-        responseData = { "FGArray": fg_Result && fg_Result.rows ? fg_Result.rows : [], "Message" :  fg_Result && fg_Result.rowCount > 0 ? "" : process === "delete" ? constants.FGMessage.ERRORINDELETE : constants.FGMessage.ERRORINEDIT }        
+        const {user_id, size_id, fg_qty, process, fg_id} = decoded.data;
+ 
+        if (process === "delete") {     
+          const fg_Result = await client.query(`SELECT * FROM (SELECT size_id,coalesce(sum(coalesce(no_of_set,0))- coalesce((SELECT sum(dispatch_set) from tbl_dispatch_details where
+          status_flag = 1 and size_id = a.size_id ),0),0) as current_set from tbl_fg_items as a 
+          where size_id = ${size_id}  group by size_id) as dev where current_set > 0 `);
+          responseData = { "FGArray": fg_Result && fg_Result.rows ? fg_Result.rows : [], "Message" :  fg_Result && fg_Result.rowCount > 0 ? "" : constants.FGMessage.ERRORINDELETE }        
+        }
+        if (process === "edit") {
+          // const fg_Result = await client.query(`SELECT * FROM (SELECT size_id,coalesce(sum(coalesce(no_of_set,0))- coalesce((SELECT sum(dispatch_set) from tbl_dispatch_details where
+          // status_flag = 1 and size_id = a.size_id ),0),0) as current_set from tbl_fg_items as a 
+          // where size_id = ${size_id}  group by size_id) as dev where current_set >= ${fg_qty} `);
+ 
+          const fg_Result = await client.query(`SELECT *,(fg_set - fgset + ${fg_qty} ) - dispatch_set  as current_set FROM (SELECT size_id,sum(coalesce(no_of_set,0)) as fg_set, coalesce((SELECT no_of_set FROM tbl_fg_items where fg_id = ${fg_id} and size_id = ${size_id}),0) as fgset,coalesce((SELECT sum(dispatch_set) from tbl_dispatch_details where status_flag = 1 and size_id = a.size_id ),0) as dispatch_set from tbl_fg_items as a where size_id = ${size_id}  group by size_id) as dev where dispatch_set <= (fg_set - fgset +  ${fg_qty} ) `);
+ 
+          // const fg_Result = await client.query(`SELECT * FROM (SELECT size_id,coalesce((SELECT sum(dispatch_set) from tbl_dispatch_details where status_flag = 1 and size_id = a.size_id ),0) as current_set from tbl_fg_items as a where size_id = ${size_id}  group by size_id) as dev where current_set < ${fg_qty} `);
+          responseData = { "FGArray": fg_Result && fg_Result.rows ? fg_Result.rows : [], "Message" :  fg_Result && fg_Result.rowCount > 0 ? "" : constants.FGMessage.ERRORINEDIT }  
+ 
+        }
         if (client) {
           client.end();
         }  
@@ -895,13 +907,13 @@ module.exports.checkFGItemDispatch = async (req) => {
     if (client) { client.end(); }
     throw new Error(error);
   }
-
+ 
   finally {
     if (client) { client.end(); }// always close the resource
   }
-}
-
-
+ }
+ 
+ 
  //Delete itemgroup jwt 
  module.exports.DeleteFGItemJwt = async (req) => {
   try {
@@ -910,10 +922,10 @@ module.exports.checkFGItemDispatch = async (req) => {
   } catch (error) {
     throw new Error(error);
   }
-}
-
-//Delete itemgroup service
-module.exports.DeleteFGItem = async (req) => {
+ }
+ 
+ //Delete itemgroup service
+ module.exports.DeleteFGItem = async (req) => {
   const client = new Client({
     user: connectionString.user,
     host: connectionString.host,

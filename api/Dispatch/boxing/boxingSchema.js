@@ -63,7 +63,8 @@ module.exports.getPendingStockForOrderJwt = Joi.object().keys({
 module.exports.checkFGItemDispatchJwt = Joi.object().keys({
   user_id: Joi.number().required(),  
   size_id: Joi.string().required(),
-  fg_qty: Joi.number().required(),    
+  fg_qty: Joi.number().required(), 
+  fg_id: Joi.number().required(),    
   process: Joi.string().required(),
   jwtToken: Joi.string().allow(''), 
 });

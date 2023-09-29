@@ -364,7 +364,7 @@ module.exports.orderTakingList = async (req) => {
           datediff = `to_char(a.order_date,'YYYY-MM-DD') :: date BETWEEN `
             .concat(`to_date('` + from_date + `','YYYY-MM-DD') AND to_date('` + to_date + `','YYYY-MM-DD')`);
         }
-        const order_Result = await client.query(`select a.ref_no,a.order_no,b.customer_code,b.customer_name,b.city,b.contact_person,b.mobile_no,b.gstin_no,b.alternative_mobile_no,(select coalesce(sum(qty),0) from tbl_order_taking_items where order_no= a.order_no) as totalset,a.order_date as order_date,(select user_name from tbl_user where user_id = (select user_id from tbl_userlog  where autonum = a.maker_id limit 1)) as employeename,(select coalesce(to_char(log_date,'DD-MM-YYYY HH12:MI PM'),'') from tbl_userlog where autonum = a.maker_id limit 1) as createddate,a.type from tbl_order_taking as a inner join tbl_customer as b on a.customer_code = b.customer_code where a.status_code = 1 and  ` + datediff + ` order by a.created_date desc`);
+        const order_Result = await client.query(`select a.ref_no,a.order_no,b.customer_code,b.customer_name,b.city,b.contact_person,b.mobile_no,b.gstin_no,b.alternative_mobile_no,(select coalesce(sum(qty),0) from tbl_order_taking_items where order_no= a.order_no) as totalset,a.order_date as order_date,(select user_name from tbl_user where user_id = (select user_id from tbl_userlog  where autonum = a.maker_id limit 1)) as employeename,(select coalesce(to_char(log_date,'DD-MM-YYYY HH12:MI PM'),'') from tbl_userlog where autonum = a.maker_id limit 1) as createddate,a.type, (SELECT count(dispatch_no) FROM tbl_dispatch_details where order_no = a.order_no and status_flag = 1) as dispatch_count from tbl_order_taking as a inner join tbl_customer as b on a.customer_code = b.customer_code where a.status_code = 1 and  ` + datediff + ` order by a.created_date desc`);
 
         let Lists = order_Result && order_Result.rows ? order_Result.rows : [];
 
@@ -673,7 +673,7 @@ module.exports.printOrderSlip = async (req) => {
 
       if (decoded) {
 
-        const Order_Slip_Result = await client.query(`select a.order_no,b.item_code,c.item_name,b.design_code,b.item_size,b.qty,b.color_id,b.size_id,d.color_name,e.total_set,a.order_date from tbl_order_taking  as a inner join tbl_order_taking_items as b on a.order_no = b.order_no inner join tbl_def_item as c on b.item_code = c.item_id left join tbl_color as d on b.color_id = d.color_id inner join tbl_item_sizes as e on b.size_id = e.size_id
+        const Order_Slip_Result = await client.query(`select a.order_no,b.item_code,c.item_name,b.design_code,b.item_size,b.qty,b.color_id,b.size_id,d.color_name,e.total_set,a.order_date,remarks from tbl_order_taking  as a inner join tbl_order_taking_items as b on a.order_no = b.order_no inner join tbl_def_item as c on b.item_code = c.item_id left join tbl_color as d on b.color_id = d.color_id inner join tbl_item_sizes as e on b.size_id = e.size_id
         where lower(a.order_no) = lower('`+ order_no + `') order by b.item_code asc`);
 
         const Order_Item_List = await client.query(`SELECT order_no,item_code,item_name,SUM(qty) as qty,
@@ -1197,7 +1197,7 @@ const generateOrderPDF = async (responseData, req, List) => {
               }).catch(function (error) {
                 console.log(error, "error")
               });
-          }          
+          }
         }    
         if(List.enableagent == "yes") {
           if(usermobile_no && usermobile_no.length == 10) {
@@ -1216,10 +1216,8 @@ const generateOrderPDF = async (responseData, req, List) => {
               console.log(error, "error")
             });
           }
-        }    
-        
+        }
       }
-     
       return true;
     } else {
       return false;

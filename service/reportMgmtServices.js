@@ -636,3 +636,202 @@ module.exports.pendingOrderDropdown = async (req) => {
     if (client) { client.end(); }// always close the resource
   }
 }
+//
+
+//create DashBoard List jwt 
+module.exports.dashboardListJwt = async (req) => {
+  try {
+    const token = await commonService.jwtCreate(req);
+    return { token };
+
+  } catch (error) {
+    throw new Error(error);
+  }
+}
+//create DashBoard List
+module.exports.dashboardList = async (req) => {
+  const client = new Client({
+    user: connectionString.user,
+    host: connectionString.host,
+    database: connectionString.database,
+    password: connectionString.password,
+    port: connectionString.port,
+  });
+  await client.connect();
+  try {
+    if (req.jwtToken) {
+      var responseData = {}
+      const decoded = await commonService.jwtVerify(req.jwtToken);
+      const { date } = decoded.data;
+      if (decoded) {
+
+        const total_order = await client.query(`SELECT coalesce(sum(qty),0) as totalset,coalesce(sum(qty*coalesce(c.total_set,'0')::Integer),0) as totalpiece FROM tbl_order_taking as a inner join tbl_order_taking_items 
+        as b on a.order_no = b.order_no inner join tbl_item_sizes as c ON c.size_id = b.size_id where to_char(a.order_date,'YYYY-MM-DD') :: date = to_date('` + date + `','YYYY-MM-DD') and a.status_code = 1`);
+        const total_order_all = await client.query(`SELECT count(*) as total_order FROM tbl_order_taking as a where to_char(a.order_date,'YYYY-MM-DD') :: date = to_date('` + date + `','YYYY-MM-DD') `);
+        const total_Cancelled_order = await client.query(`SELECT count(*)  as total_cancel_order FROM tbl_order_taking as a where to_char(a.order_date,'YYYY-MM-DD') :: date = to_date('` + date + `','YYYY-MM-DD') and a.status_code = 2 `);
+
+        // const top_five_customer_wise_order = await client.query(`SELECT * FROM (SELECT count(a.order_no) as order_count,a.customer_code,c.customer_name,c.city,c.mobile_no FROM tbl_order_taking as a          inner join tbl_customer as c on a.customer_code = c.customer_code where to_char(a.order_date,'YYYY-MM-DD') :: date = to_date('` + date + `','YYYY-MM-DD') and a.status_code = 1
+        // group by a.customer_code,c.customer_name,c.city,c.mobile_no ) as dev order by order_count 
+        // desc limit 5`);
+        const top_five_customer_wise_order = await client.query(`SELECT sum(order_count) as order_count,sum(order_set) as order_set,sum(order_piece) as order_piece,customer_code,customer_name,city,mobile_no
+        FROM (SELECT (SELECT count(order_no) from tbl_order_taking where order_no = a.order_no )               as order_count,sum(b.qty) as order_set,SUM((b.qty :: INTEGER * d.total_set :: INTEGER)) as order_piece
+         ,a.customer_code,c.customer_name,c.city,c.mobile_no FROM tbl_order_taking as a inner join tbl_order_taking_items as b on a.order_no = b.order_no inner join tbl_item_sizes as d on b.size_id = d.size_id inner join tbl_customer as c on a.customer_code = c.customer_code where                 to_char(a.order_date,'YYYY-MM-DD') :: date = to_date('` + date + `','YYYY-MM-DD') and                 a.status_code = 1 group by a.order_no,a.customer_code,c.customer_name,c.city,c.mobile_no ) as dev     group by customer_code,customer_name,city,mobile_no order by order_piece desc limit 5`)
+
+        const least_five_customer_wise_order = await client.query(`SELECT sum(order_count) as order_count,sum(order_set) as order_set,sum(order_piece) as order_piece,customer_code,customer_name,city,mobile_no
+        FROM (SELECT (SELECT count(order_no) from tbl_order_taking where order_no = a.order_no )               as order_count,sum(b.qty) as order_set,SUM((b.qty :: INTEGER * d.total_set :: INTEGER)) as order_piece
+         ,a.customer_code,c.customer_name,c.city,c.mobile_no FROM tbl_order_taking as a inner join tbl_order_taking_items as b on a.order_no = b.order_no inner join tbl_item_sizes as d on b.size_id = d.size_id inner join tbl_customer as c on a.customer_code = c.customer_code where                 to_char(a.order_date,'YYYY-MM-DD') :: date = to_date('` + date + `','YYYY-MM-DD') and                 a.status_code = 1 group by a.order_no,a.customer_code,c.customer_name,c.city,c.mobile_no ) as dev     group by customer_code,customer_name,city,mobile_no order by order_piece asc limit 5`)
+
+        const top_five_item_wise_order = await client.query(`SELECT * FROM (SELECT sum(b.qty) as order_set,
+        SUM((b.qty :: INTEGER * c.total_set :: INTEGER)) as order_piece,b.size_id,c.qr_code FROM tbl_order_taking as a inner join tbl_order_taking_items as b on a.order_no = b.order_no inner join tbl_item_sizes as c on b.size_id = c.size_id where to_char(a.order_date,'YYYY-MM-DD') :: date = to_date('` + date + `','YYYY-MM-DD') and a.status_code = 1 group by b.size_id,c.qr_code ) as dev order by order_piece desc limit 5`);
+
+        const least_five_item_wise_order = await client.query(`SELECT * FROM (SELECT sum(b.qty) as order_set,
+        SUM((b.qty :: INTEGER * c.total_set :: INTEGER)) as order_piece,b.size_id,c.qr_code FROM tbl_order_taking as a inner join tbl_order_taking_items as b on a.order_no = b.order_no inner join tbl_item_sizes as c on b.size_id = c.size_id where to_char(a.order_date,'YYYY-MM-DD') :: date = to_date('` + date + `','YYYY-MM-DD') and a.status_code = 1 group by b.size_id,c.qr_code ) as dev order by order_piece asc limit 5`);
+
+        // const top_five_agent_wise_order = await client.query(`SELECT * FROM (SELECT count(a.order_no) as order_count,c.agent_code,d.agent_name FROM tbl_order_taking as a inner join tbl_customer as c on a.customer_code = c.customer_code inner join tbl_agent as d on c.agent_code = d.agent_code
+        // where to_char(a.order_date,'YYYY-MM-DD') :: date = to_date('` + date + `','YYYY-MM-DD') and a.status_code = 1 group by c.agent_code,d.agent_name ) as dev order by order_count desc limit 2`);
+        const top_five_agent_wise_order = await client.query(`SELECT sum(order_count) as order_count,sum(order_set) as order_set,sum(order_piece) as order_piece,
+        agent_code, agent_name  FROM (SELECT (SELECT count(order_no) from tbl_order_taking where order_no = a.order_no ) as order_count,sum(b.qty) as order_set, SUM((b.qty :: INTEGER * e.total_set :: INTEGER)) as order_piece,c.agent_code,d.agent_name FROM tbl_order_taking as a inner join tbl_order_taking_items as b on a.order_no = b.order_no inner join tbl_item_sizes as e on b.size_id = e.size_id                inner join tbl_customer as c on a.customer_code = c.customer_code inner join tbl_agent as d on c.agent_code = d.agent_code where to_char(a.order_date,'YYYY-MM-DD') :: date = to_date('` + date + `','YYYY-MM-DD') and a.status_code = 1 group by a.order_no,c.agent_code,d.agent_name ) as dev
+        group by agent_code,agent_name order by order_piece desc limit 2`)
+
+        // const least_five_agent_wise_order = await client.query(`SELECT * FROM (SELECT count(a.order_no) as order_count,c.agent_code,d.agent_name FROM tbl_order_taking as a inner join tbl_customer as c on a.customer_code = c.customer_code inner join tbl_agent as d on c.agent_code = d.agent_code
+        // where to_char(a.order_date,'YYYY-MM-DD') :: date = to_date('` + date + `','YYYY-MM-DD') and a.status_code = 1 group by c.agent_code,d.agent_name ) as dev order by order_count asc limit 2`)
+
+        const least_five_agent_wise_order = await client.query(`SELECT sum(order_count) as order_count,sum(order_set) as order_set,sum(order_piece) as order_piece,
+        agent_code, agent_name  FROM (SELECT (SELECT count(order_no) from tbl_order_taking where order_no = a.order_no ) as order_count,sum(b.qty) as order_set, SUM((b.qty :: INTEGER * e.total_set :: INTEGER)) as order_piece,c.agent_code,d.agent_name FROM tbl_order_taking as a inner join tbl_order_taking_items as b on a.order_no = b.order_no inner join tbl_item_sizes as e on b.size_id = e.size_id                inner join tbl_customer as c on a.customer_code = c.customer_code inner join tbl_agent as d on c.agent_code = d.agent_code where to_char(a.order_date,'YYYY-MM-DD') :: date = to_date('` + date + `','YYYY-MM-DD') and a.status_code = 1 group by a.order_no,c.agent_code,d.agent_name ) as dev
+        group by agent_code,agent_name order by order_piece asc limit 2`)
+
+
+        const total_dispatch= await  client.query(`SELECT coalesce(sum(dispatch_set),0) as totalset,coalesce(sum(dispatch_pieces),0) as totalpiece from tbl_dispatch_details where to_char(dispatch_date,'YYYY-MM-DD') :: date = to_date('` + date + `','YYYY-MM-DD')`);
+
+        const total_fg = await client.query(`SELECT coalesce(sum(no_of_set),0) as totalset,coalesce(sum(no_of_pieces),0) as totalpiece FROM tbl_fg_items where to_char(date,'YYYY-MM-DD') :: date = 
+        to_date('` + date + `','YYYY-MM-DD') `);
+
+        const totalCount = await client.query(`select count(*) as total_job,sum(coalesce(number_set,0)) as total_set,sum(coalesce(total_pieces,0)) as total_piece from tbl_job_details where to_char(job_date,'YYYY-MM-DD') :: date =  to_char(CURRENT_DATE , 'YYYY-MM-DD') :: date`);
+
+        const total_job = await client.query(`SELECT coalesce(sum(number_set),0) as total_set,
+        coalesce(sum(total_pieces),0) as total_piece from tbl_job_details where to_char(job_date,'YYYY-MM-DD') :: date = to_date('` + date + `','YYYY-MM-DD') `)
+
+        const total_order_categorywise = await client.query(`SELECT item_id,INITCAP(item_name) as item_name,sum(qty) as totalset,sum(qty*coalesce(c.total_set,'0')::Integer) as totalpiece FROM tbl_order_taking as a inner join tbl_order_taking_items as b on a.order_no = b.order_no inner join tbl_item_sizes as c 
+        ON c.size_id = b.size_id inner join tbl_item_management as d on c.trans_no = d.trans_no
+        inner join tbl_def_item as e on d.item_code = e.item_id where to_char(a.order_date,'YYYY-MM-DD') :: date = to_date('` + date + `','YYYY-MM-DD') and a.status_code = 1  group by item_id,item_name       
+        `)
+        
+        const total_dispatch_categorywise = await client.query(`SELECT item_id,INITCAP(item_name) as item_name,
+        coalesce(sum(dispatch_set),0) as totalset,coalesce(sum(dispatch_pieces),0) as totalpiece from  tbl_dispatch_details as a inner join tbl_item_sizes as b ON a.size_id = b.size_id inner join tbl_item_management as c on b.trans_no = c.trans_no inner join tbl_def_item as d on c.item_code = d.item_id where to_char(dispatch_date,'YYYY-MM-DD') :: date = to_date('` + date + `','YYYY-MM-DD') and  a.status_flag = 1 group by item_id,item_name`)
+        const total_fg_categorywise = await client.query(`SELECT item_id,INITCAP(item_name) as item_name,
+        coalesce(sum(no_of_set),0) as totalset,coalesce(sum(no_of_pieces),0) as totalpiece 
+        FROM tbl_fg_items as a inner join tbl_item_sizes as b ON a.size_id = b.size_id inner join tbl_item_management as c on b.trans_no = c.trans_no inner join tbl_def_item as d on c.item_code = d.item_id where to_char(date,'YYYY-MM-DD') :: date = to_date('` + date + `','YYYY-MM-DD')  group by item_id,item_name`)
+
+        const total_jobCard_categorywise = await client.query(`SELECT d.item_id,INITCAP(item_name) as item_name,coalesce(sum(coalesce(number_set,0)),0) as total_set,coalesce(sum(coalesce(total_pieces,0)),0) as total_piece
+        from tbl_job_details  as a inner join tbl_item_sizes as b ON a.size_id = b.size_id inner join tbl_item_management as c on b.trans_no = c.trans_no inner join tbl_def_item as d on c.item_code = d.item_id where to_char(job_date,'YYYY-MM-DD') :: date = to_date('` + date + `','YYYY-MM-DD') group by d.item_id,item_name`)
+
+        var Total_Order = total_order && total_order.rows ? total_order.rows : []
+        var Overall_Total_Order = total_order_all && total_order_all.rows && total_order_all.rows[0].total_order ? total_order_all.rows[0].total_order : 0
+        var Total_Cancel_Order = total_Cancelled_order && total_Cancelled_order.rows && total_Cancelled_order.rows[0].total_cancel_order ? total_Cancelled_order.rows[0].total_cancel_order : 0;
+        var TopFive_customerwiseOrder = top_five_customer_wise_order && top_five_customer_wise_order.rows ? top_five_customer_wise_order.rows : []
+
+        // result = []; 
+        // if (TopFive_customerwiseOrder.length > 0) {
+        //   for (let i = 0; i < TopFive_customerwiseOrder.length; i++) {
+        //     const item_Result = await client.query(`SELECT a.customer_code,sum(b.qty) as order_set,
+        //     SUM((b.qty :: INTEGER * d.total_set :: INTEGER)) as order_piece FROM tbl_order_taking as a        
+        //     inner join tbl_order_taking_items as b on a.order_no = b.order_no     
+        //     inner join tbl_item_sizes as d on b.size_id = d.size_id     
+        //     inner join tbl_customer as c on a.customer_code = c.customer_code where 
+        //     to_char(a.order_date,'YYYY-MM-DD') :: date = to_date('` + date + `','YYYY-MM-DD') 
+        //     and a.status_code = 1 and a.customer_code = $1
+        //    group by a.customer_code,c.customer_name,c.city,c.mobile_no `,[TopFive_customerwiseOrder[i].customer_code] );
+        //     let item_Array = item_Result && item_Result.rows ? item_Result.rows : []; 
+        //     let obj = TopFive_customerwiseOrder[i]
+        //     obj['order_set'] = item_Array[0].order_set
+        //     obj['order_piece'] = item_Array[0].order_piece
+        //     result.push(obj)
+        //   }
+        // }
+
+        var Leastfive_customerwiseOrder = least_five_customer_wise_order && least_five_customer_wise_order.rows ? least_five_customer_wise_order.rows : []
+
+        // leastresult = []; 
+        // if (Leastfive_customerwiseOrder.length > 0) {
+        //   for (let i = 0; i < Leastfive_customerwiseOrder.length; i++) {
+        //     const item_Result = await client.query(`SELECT a.customer_code,sum(b.qty) as order_set,
+        //     SUM((b.qty :: INTEGER * d.total_set :: INTEGER)) as order_piece FROM tbl_order_taking as a        
+        //     inner join tbl_order_taking_items as b on a.order_no = b.order_no     
+        //     inner join tbl_item_sizes as d on b.size_id = d.size_id     
+        //     inner join tbl_customer as c on a.customer_code = c.customer_code where 
+        //     to_char(a.order_date,'YYYY-MM-DD') :: date = to_date('` + date + `','YYYY-MM-DD') 
+        //     and a.status_code = 1 and a.customer_code = $1
+        //    group by a.customer_code,c.customer_name,c.city,c.mobile_no `,[Leastfive_customerwiseOrder[i].customer_code] );
+        //     let item_Array = item_Result && item_Result.rows ? item_Result.rows : []; 
+        //     let obj = Leastfive_customerwiseOrder[i]
+        //     obj['order_set'] = item_Array[0].order_set
+        //     obj['order_piece'] = item_Array[0].order_piece
+        //     leastresult.push(obj)
+        //   }
+        // }
+
+        var TopFive_itemWiseOrder = top_five_item_wise_order && top_five_item_wise_order.rows ? top_five_item_wise_order.rows : []
+        var LeastFive_itemWiseOrder = least_five_item_wise_order && least_five_item_wise_order.rows ? least_five_item_wise_order.rows : []
+        var TopFive_agentWiseOrder = top_five_agent_wise_order && top_five_agent_wise_order.rows ? top_five_agent_wise_order.rows : []
+
+        // topagentresult = []; 
+        // if (TopFive_agentWiseOrder.length > 0) {
+        //   for (let i = 0; i < TopFive_agentWiseOrder.length; i++) {
+        //     const item_Result = await client.query(`SELECT c.agent_code,sum(b.qty) as order_set, SUM((b.qty :: INTEGER * e.total_set :: INTEGER)) as order_piece FROM tbl_order_taking as a inner join tbl_order_taking_items as b on a.order_no = b.order_no inner join tbl_item_sizes as e on b.size_id = e.size_id  inner join tbl_customer as c on a.customer_code = c.customer_code inner join tbl_agent as d on c.agent_code = d.agent_code where to_char(a.order_date,'YYYY-MM-DD') :: date = to_date('2023-09-27','YYYY-MM-DD') and a.status_code = 1 and c.agent_code = $1 group by c.agent_code,d.agent_name `,[TopFive_agentWiseOrder[i].agent_code] );
+        //     let item_Array = item_Result && item_Result.rows ? item_Result.rows : []; 
+        //     let obj = TopFive_agentWiseOrder[i]
+        //     obj['order_set'] = item_Array[0].order_set
+        //     obj['order_piece'] = item_Array[0].order_piece
+        //     topagentresult.push(obj)
+        //   }
+        // }
+
+        var LeastFive_agentWiseOrder = least_five_agent_wise_order && least_five_agent_wise_order.rows ? least_five_agent_wise_order.rows : []
+
+        // leaseagentresult = []; 
+        // if (LeastFive_agentWiseOrder.length > 0) {
+        //   for (let i = 0; i < LeastFive_agentWiseOrder.length; i++) {
+        //     const item_Result = await client.query(`SELECT c.agent_code,sum(b.qty) as order_set, SUM((b.qty :: INTEGER * e.total_set :: INTEGER)) as order_piece FROM tbl_order_taking as a inner join tbl_order_taking_items as b on a.order_no = b.order_no inner join tbl_item_sizes as e on b.size_id = e.size_id  inner join tbl_customer as c on a.customer_code = c.customer_code inner join tbl_agent as d on c.agent_code = d.agent_code where to_char(a.order_date,'YYYY-MM-DD') :: date = to_date('2023-09-27','YYYY-MM-DD') and a.status_code = 1 and c.agent_code = $1 group by c.agent_code,d.agent_name `,[LeastFive_agentWiseOrder[i].agent_code] );
+        //     let item_Array = item_Result && item_Result.rows ? item_Result.rows : []; 
+        //     let obj = LeastFive_agentWiseOrder[i]
+        //     obj['order_set'] = item_Array[0].order_set
+        //     obj['order_piece'] = item_Array[0].order_piece
+        //     leaseagentresult.push(obj)
+        //   }
+        // }
+        
+        var Total_Dispatch = total_dispatch && total_dispatch.rows ? total_dispatch.rows : []
+        var Total_FG = total_fg && total_fg.rows ? total_fg.rows : []
+        var Total_Job = total_job && total_job.rows ? total_job.rows : []
+        var Total_Order_Category_Wise = total_order_categorywise && total_order_categorywise.rows ? total_order_categorywise.rows : []
+        var Total_Dispatch_Category_Wise = total_dispatch_categorywise && total_dispatch_categorywise.rows ? total_dispatch_categorywise.rows : [] 
+        var Total_Fg_Category_Wise = total_fg_categorywise && total_fg_categorywise.rows ? total_fg_categorywise.rows : [] 
+        var Total_JobCard_Category_Wise = total_jobCard_categorywise && total_jobCard_categorywise.rows ? total_jobCard_categorywise.rows : [] 
+        
+
+      
+
+        responseData = { "TotalOrder": Total_Order, "OverallTotalOrder" : Overall_Total_Order, "TotalCancelOrder": Total_Cancel_Order,  "TopFiveCustomerwiseOrder" : TopFive_customerwiseOrder, "LeastFiveCustomerwiseOrder": Leastfive_customerwiseOrder,  "TopFiveItemWiseOrder" : TopFive_itemWiseOrder, "LeastFiveItemWiseOrder": LeastFive_itemWiseOrder,  "TopFiveAgentWiseOrder" : TopFive_agentWiseOrder, "LeastFiveAgentWiseOrder": LeastFive_agentWiseOrder, "TotalDispatch": Total_Dispatch, "TotalFG": Total_FG,  "TotalJob": Total_Job, "TotalOrderCategorywise": Total_Order_Category_Wise, "TotalDispatchCategorywise" : Total_Dispatch_Category_Wise, "TotalFgCategorywise" :Total_Fg_Category_Wise, "TotalJobCardCategorywise" : Total_JobCard_Category_Wise }
+        if (responseData) {
+          return responseData;
+        }
+        else {
+          return '';
+        }
+      }
+      else {
+        if (client) { client.end(); }
+      }
+    } else {
+      if (client) { client.end(); }
+      throw new Error(constants.userMessage.TOKEN_MISSING);
+    }
+  } catch (error) {
+    if (client) { client.end(); }
+    throw new Error(error);
+  }
+
+  finally {
+    if (client) { client.end(); }// always close the resource
+  }
+}
