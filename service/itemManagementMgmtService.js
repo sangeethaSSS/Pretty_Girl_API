@@ -182,7 +182,6 @@ module.exports.saveItemManagement = async (req) => {
                                  for (let i = 0; i < delete_array.length; i++) {
                                    const Delete_size = await client.query(`DELETE FROM tbl_item_sizes where size_id=` + delete_array[i].size_id) 
                                    let Delete_code = Delete_size && Delete_size.rowCount ? Delete_size.rowCount : 0;
-                                     console.log(Delete_code)
                                 }  
                                }
                                 let insert_array = size_array.filter(e => e.isaddflag == 1)
@@ -190,9 +189,8 @@ module.exports.saveItemManagement = async (req) => {
                                     for (let i = 0; i < insert_array.length; i++) {
                                         const size = await client.query(`select coalesce (max(size_id),0) + 1 as mr FROM tbl_item_sizes`)
                                         var size_max = size && size.rows[0].mr;
-                                        const sizeresult = await client.query(`INSERT INTO "tbl_item_sizes"("trans_no","start_size","end_size","total_set","size_id","color_id","qr_code","current_stock","created_date") values ($1, $2, $3, $4,$5,$6,$7,$8,CURRENT_TIMESTAMP) `, [trans_no, insert_array[i].starting_size, insert_array[i].ending_size, insert_array[i].total_pieces,size_max,insert_array[i].color_id,insert_array[i].qr_code,insert_array[i].current_stock]);
+                                        const sizeresult = await client.query(`INSERT INTO "tbl_item_sizes"("trans_no","start_size","end_size","total_set","size_id","color_id","qr_code","current_stock","created_date","settype") values ($1, $2, $3, $4,$5,$6,$7,$8,CURRENT_TIMESTAMP,$9) `, [trans_no, insert_array[i].starting_size, insert_array[i].ending_size, insert_array[i].total_pieces,size_max,insert_array[i].color_id,insert_array[i].qr_code,insert_array[i].current_stock,insert_array[i].settype]);
                                         let size_code = sizeresult && sizeresult.rowCount ? sizeresult.rowCount : 0;
-                                        console.log(size_code)
                                     }
                                 }
                             }
