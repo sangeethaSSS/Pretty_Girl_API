@@ -46,8 +46,7 @@ module.exports.itemgroupList = async (req) => {
           else{
               status = ` a.status_id = ` + status_id
           }
-        const itemgroup_Result = await client.query(`select a.item_id,a.item_name ,short_item_name,
-        (SELECT count(item_code) from tbl_item_management where item_code = a.item_id)  as noofitem,(select user_name from tbl_user where user_id =	(select user_id from tbl_userlog  where autonum = a.maker_id limit 1)) as employeename,(select coalesce(to_char(log_date,'DD-MM-YYYY HH12:MI PM'),'') from tbl_userlog where autonum = a.maker_id limit 1) as createddate from tbl_def_item as a order by  a.item_id desc`);
+        const itemgroup_Result = await client.query(`SELECT * FROM (select a.item_id,a.item_name ,short_item_name,(SELECT count(item_code) from tbl_item_management where item_code = a.item_id)  as noofitem,(select user_name from tbl_user where user_id =	(select user_id from tbl_userlog  where autonum = a.maker_id limit 1)) as employeename,(select coalesce(to_char(log_date,'DD-MM-YYYY HH12:MI PM'),'') from tbl_userlog where autonum = a.maker_id limit 1) as createddate,(select log_date  from tbl_userlog where autonum = a.maker_id limit 1) as log_date from tbl_def_item as a order by  a.item_id desc) as dev order by log_date desc`);
         if (client) {
           client.end();
         }

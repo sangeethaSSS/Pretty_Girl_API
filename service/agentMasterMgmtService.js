@@ -126,8 +126,7 @@ module.exports.listAgent = async (req) => {
           else {
             status = ` a.status_id = ` + status_id
           }
-          const agent_Result = await client.query(`select a.agent_code,a.agent_name,a.status_id,b.status_name,a.mobile_no,a.default_column, a.phone_no,a.address,a.city,a.pincode,a.email_id,a.state_code,c.state_name,(select user_name from tbl_user where user_id = (select user_id from tbl_userlog  where autonum = a.maker_id limit 1)) as employeename,(select coalesce(to_char(log_date,'DD-MM-YYYY HH12:MI PM'),'') from tbl_userlog where autonum = a.maker_id limit 1) as createddate from tbl_agent as a  
-          inner join tbl_def_status as b on a.status_id = b.status_id inner join tbl_def_state as c on c.state_id = a.state_code where  `+ status + ` order by a.agent_code desc `);
+          const agent_Result = await client.query(`SELECT * FROM(select a.agent_code,a.agent_name,a.status_id,b.status_name,a.mobile_no,a.default_column, a.phone_no,a.address,a.city,a.pincode,a.email_id,a.state_code,c.state_name,(select user_name from tbl_user where user_id = (select user_id from tbl_userlog  where autonum = a.maker_id limit 1)) as employeename,(select coalesce(to_char(log_date,'DD-MM-YYYY HH12:MI PM'),'') from tbl_userlog where autonum = a.maker_id limit 1) as createddate,(select log_date  from tbl_userlog where autonum = a.maker_id limit 1) as log_date from tbl_agent as a inner join tbl_def_status as b on a.status_id = b.status_id inner join tbl_def_state as c on c.state_id = a.state_code where  `+ status + ` order by a.agent_code desc) as dev order by log_date desc`);
           if (client) {
             client.end();
           }

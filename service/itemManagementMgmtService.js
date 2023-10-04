@@ -43,7 +43,7 @@ module.exports.itemManagementList = async (req) => {
                 else {
                     status = ` a.status_id = ` + status_id
                 }
-                const item_Result = await client.query(`select a.item_code,a.trans_no,a.design_id,a.status_id,c.item_name,b.status_name,(select user_name from tbl_user where user_id = (select user_id from tbl_userlog  where autonum = a.maker_id limit 1)) as employeename,(select coalesce(to_char(log_date,'DD-MM-YYYY HH12:MI PM'),'') from tbl_userlog where autonum = a.maker_id limit 1) as createddate from tbl_item_management as a  inner join tbl_def_status as b on a.status_id = b.status_id inner join tbl_def_item as c on a.item_code = c.item_id  where  `+ status + ` order by a.trans_no desc`);
+                const item_Result = await client.query(`SELECT item_code,trans_no,design_id,status_id,item_name,status_name,employeename,createddate FROM (select a.item_code,a.trans_no,a.design_id,a.status_id,c.item_name,b.status_name,(select user_name from tbl_user where user_id = (select user_id from tbl_userlog  where autonum = a.maker_id limit 1)) as employeename,(select coalesce(to_char(log_date,'DD-MM-YYYY HH12:MI PM'),'') from tbl_userlog where autonum = a.maker_id limit 1) as createddate,(select log_date  from tbl_userlog where autonum = a.maker_id limit 1) as log_date from tbl_item_management as a  inner join tbl_def_status as b on a.status_id = b.status_id inner join tbl_def_item as c on a.item_code = c.item_id  where  `+ status + ` order by a.trans_no desc) as dev order by log_date desc`);
 
                 let Lists = item_Result && item_Result.rows ? item_Result.rows : [];
                 let result = [];

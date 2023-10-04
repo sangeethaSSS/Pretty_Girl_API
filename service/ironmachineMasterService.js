@@ -46,11 +46,11 @@
            else{
                status = ` a.status_id = ` + status_id
            }
-         const ironmachine_Result = await client.query(`SELECT machine_id,machine_no,machine_name,status_id,
+         const ironmachine_Result = await client.query(`SELECT * FROM(SELECT machine_id,machine_no,machine_name,status_id,
          (select user_name from tbl_user where user_id =	(select user_id from tbl_userlog  
          where autonum = a.maker_id limit 1)) as employeename,
          (select coalesce(to_char(log_date,'DD-MM-YYYY HH12:MI PM'),'') from tbl_userlog where
-          autonum = a.maker_id limit 1) as createddate FROM tbl_ironmachine_master as a order by machine_id`);
+          autonum = a.maker_id limit 1) as createddate,(select log_date  from tbl_userlog where autonum = a.maker_id limit 1) as log_date FROM tbl_ironmachine_master as a order by machine_id) as dev order by log_date desc`);
          if (client) {
            client.end();
          }

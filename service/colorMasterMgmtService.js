@@ -45,7 +45,7 @@ module.exports.colorList = async (req) => {
         else {
           status = ` a.status_id = ` + status_id
         }
-        const color_Result = await client.query(`select a.color_id,a.color_name,a.status_id,b.status_name,a.color_picker,(select user_name from tbl_user where user_id = (select user_id from tbl_userlog  where autonum = a.maker_id limit 1)) as employeename,(select coalesce(to_char(log_date,'DD-MM-YYYY HH12:MI PM'),'') from tbl_userlog where autonum = a.maker_id limit 1) as createddate from tbl_color as a  inner join tbl_def_status as b on a.status_id = b.status_id where  `+ status + ` order by a.color_id desc `);
+        const color_Result = await client.query(`SELECT * FROM(select a.color_id,a.color_name,a.status_id,b.status_name,a.color_picker,(select user_name from tbl_user where user_id = (select user_id from tbl_userlog  where autonum = a.maker_id limit 1)) as employeename,(select coalesce(to_char(log_date,'DD-MM-YYYY HH12:MI PM'),'') from tbl_userlog where autonum = a.maker_id limit 1) as createddate,(select log_date  from tbl_userlog where autonum = a.maker_id limit 1) as log_date from tbl_color as a  inner join tbl_def_status as b on a.status_id = b.status_id where  `+ status + ` order by a.color_id desc) as dev order by log_date desc `);
         if (client) {
           client.end();
         }
