@@ -611,7 +611,8 @@ module.exports.editOrderTaking = async (req) => {
         if (Lists.length > 0) {
 
           for (let i = 0; i < Lists.length; i++) {
-            const order_item_Result = await client.query(`select a.order_no,a.item_code,a.design_code as design_id,a.color_id,a.item_size,a.qty,b.item_name,c.color_name,a.size_id,e.start_size,e.size_id,e.end_size,e.total_set,e.qr_code,a.old_qty from tbl_order_taking_items as a inner join tbl_def_item as b on a.item_code = b.item_id left join tbl_color as c on a.color_id = c.color_id inner join tbl_item_sizes as e on a.size_id = e.size_id where lower (a.order_no)  = lower($1)`, [Lists[i].order_no]);
+            const order_item_Result = await client.query(`select a.order_no,a.item_code,a.design_code as design_id,a.color_id,a.item_size,a.qty,b.item_name,c.color_name,a.size_id,e.start_size,e.size_id,e.end_size,e.total_set,e.qr_code,a.old_qty,coalesce((SELECT sum(dispatch_set) as dispatch_set 
+            FROM tbl_dispatch_details where order_no = a.order_no and size_id =a.size_id  and status_flag = 1),0) as dispatch_set from tbl_order_taking_items as a inner join tbl_def_item as b on a.item_code = b.item_id left join tbl_color as c on a.color_id = c.color_id inner join tbl_item_sizes as e on a.size_id = e.size_id where lower (a.order_no)  = lower($1)`, [Lists[i].order_no]);
             let Order_ListArray = order_item_Result && order_item_Result.rows ? order_item_Result.rows : [];
             let obj = Lists[i]
             obj['Order_ItemList'] = Order_ListArray

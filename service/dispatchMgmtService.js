@@ -479,8 +479,9 @@ module.exports.dispatchList = async (req) => {
         }
         if(process == 'excel') { 
           // const item_exec_Result = await client.query(`SELECT dispatch_id, coalesce(order_set,0) as order_set,coalesce(dispatch_set,0) as dispatch_set ,a.user_id,dispatch_no,to_char(dispatch_date, 'dd-MM-YYYY') as dispatch_date,b.qr_code,a.order_no,d.customer_name  from tbl_dispatch_details a inner join tbl_item_sizes as b ON b.size_id = a.size_id inner join tbl_item_management as c on c.trans_no=b.trans_no inner join tbl_customer as d ON d.customer_code = a.customer_code inner join tbl_agent as e on d.agent_code = e.agent_code where a.dispatch_type = '${filter_type}' and a.status_flag = 1 and ${dispatch_date} and ${design_code} and ${customer_code} and ${itemcategarycode} and ${agentcode} order by dispatch_id desc ` ); 
-          const item_exec_Result = await client.query(`SELECT dispatch_id,dispatch_no,to_char(dispatch_date, 'YYYY-MM-dd') as dispatch_date,coalesce(to_char(created_at,'HH12:MI PM'),'') as dispatch_time,sum(coalesce(order_set,0)) as order_set,sum(order_set*coalesce(b.total_set,'0')::Integer)  as order_pieces,sum(coalesce(dispatch_set,0)) as dispatch_set ,sum(coalesce(dispatch_pieces,0)) as dispatch_pieces,a.user_id,string_agg(distinct customer_name, ',') as customer_name from tbl_dispatch_details a inner join tbl_item_sizes as b ON b.size_id = a.size_id inner join tbl_item_management as c on c.trans_no=b.trans_no inner join tbl_customer as d on                    a.customer_code = d.customer_code inner join tbl_agent as e on d.agent_code = e.agent_code  where 
-          a.dispatch_type = '${filter_type}' and a.status_flag = 1 and  ${dispatch_date} and ${design_code} and ${customer_code} and ${itemcategarycode} and ${agentcode} group by dispatch_id,a.user_id,dispatch_no,dispatch_date,created_at order by dispatch_id desc` ); 
+          const item_exec_Result = await client.query(`SELECT dispatch_id,dispatch_no,dispatch_date,dispatch_time,sum(order_set) as order_set,sum(order_pieces) as order_pieces,sum(dispatch_set) as dispatch_set,sum(dispatch_pieces) as dispatch_pieces, user_id,string_agg(distinct customer_name, ',') as customer_name FROM (SELECT dispatch_id,dispatch_no,to_char(dispatch_date, 'YYYY-MM-dd') as dispatch_date,coalesce(to_char(created_at,'HH12:MI PM'),'') as dispatch_time,sum(coalesce(order_set,0)) as order_set,sum(order_set*coalesce(b.total_set,'0')::Integer)  as order_pieces,sum(coalesce(dispatch_set,0)) as dispatch_set ,sum(coalesce(dispatch_pieces,0)) as dispatch_pieces,a.user_id,string_agg(distinct customer_name, ',') as customer_name from tbl_dispatch_details a inner join tbl_item_sizes as b ON b.size_id = a.size_id inner join tbl_item_management as c on c.trans_no=b.trans_no inner join tbl_customer as d on                    a.customer_code = d.customer_code inner join tbl_agent as e on d.agent_code = e.agent_code  where 
+          a.dispatch_type = '${filter_type}' and a.status_flag = 1 and  ${dispatch_date} and ${design_code} and ${customer_code} and ${itemcategarycode} and ${agentcode} group by dispatch_id,a.user_id,dispatch_no,dispatch_date,created_at order by dispatch_id desc ) 
+          as dev group by dispatch_id,user_id,dispatch_no,dispatch_date,dispatch_time order by dispatch_id desc` ); 
           let dispatch_array = item_exec_Result && item_exec_Result.rows ? item_exec_Result.rows : []; 
           const company_Result = await client.query(`SELECT * from tbl_print_setting`);
           let Company_Array = company_Result && company_Result.rows ? company_Result.rows : []; 
@@ -489,12 +490,14 @@ module.exports.dispatchList = async (req) => {
             // const item_total_Result = await client.query(`SELECT count(dispatch_id) as totalcount   from tbl_dispatch_details where dispatch_type ='${filter_type}' and status_flag = 1 and ${dispatch_date} ` ); 
                //  group by dispatch_id
             // let dispatch_total = item_total_Result && item_total_Result.rows.length > 0 ? item_total_Result.rows[0].totalcount : 0;
-            const item_total_Result = await client.query(`SELECT dispatch_id,sum(coalesce(order_set,0)) as order_set,sum(coalesce(dispatch_set,0)) as dispatch_set ,a.user_id,dispatch_no,to_char(dispatch_date, 'dd-MM-YYYY') as dispatch_date,coalesce(to_char(created_at,'HH12:MI PM'),'') as dispatch_time  from tbl_dispatch_details a inner join tbl_item_sizes as b ON b.size_id = a.size_id inner join tbl_item_management as c on c.trans_no=b.trans_no inner join tbl_customer as d on a.customer_code = d.customer_code inner join tbl_agent as e on d.agent_code = e.agent_code where a.dispatch_type = '${filter_type}' and a.status_flag = 1 and  ${dispatch_date} and ${design_code} and ${customer_code} and ${itemcategarycode} and ${agentcode} group by dispatch_id,a.user_id,dispatch_no,dispatch_date,created_at order by dispatch_id desc` );
+            const item_total_Result = await client.query(`SELECT dispatch_id,dispatch_no,dispatch_date,dispatch_time,sum(order_set) as order_set,sum(dispatch_set) as dispatch_set,user_id FROM (SELECT dispatch_id,sum(coalesce(order_set,0)) as order_set,sum(coalesce(dispatch_set,0)) as dispatch_set ,a.user_id,dispatch_no,to_char(dispatch_date, 'dd-MM-YYYY') as dispatch_date,coalesce(to_char(created_at,'HH12:MI PM'),'') as dispatch_time  from tbl_dispatch_details a inner join tbl_item_sizes as b ON b.size_id = a.size_id inner join tbl_item_management as c on c.trans_no=b.trans_no inner join tbl_customer as d on a.customer_code = d.customer_code inner join tbl_agent as e on d.agent_code = e.agent_code where a.dispatch_type = '${filter_type}' and a.status_flag = 1 and  ${dispatch_date} and ${design_code} and ${customer_code} and ${itemcategarycode} and ${agentcode} group by dispatch_id,a.user_id,dispatch_no,dispatch_date,created_at order by dispatch_id desc ) 
+            as dev group by dispatch_id,user_id,dispatch_no,dispatch_date,dispatch_time order by dispatch_id desc` );
          
             let dispatch_total = item_total_Result && item_total_Result.rowCount ? item_total_Result.rowCount : 0;
             
             // rowCount
-            const item_exec_Result = await client.query(`SELECT dispatch_id,sum(coalesce(order_set,0)) as order_set,sum(coalesce(dispatch_set,0)) as dispatch_set ,a.user_id,dispatch_no,to_char(dispatch_date, 'dd-MM-YYYY') as dispatch_date,coalesce(to_char(created_at,'HH12:MI PM'),'') as dispatch_time  from tbl_dispatch_details a inner join tbl_item_sizes as b ON b.size_id = a.size_id inner join tbl_item_management as c on c.trans_no=b.trans_no inner join tbl_customer as d on a.customer_code = d.customer_code inner join tbl_agent as e on d.agent_code = e.agent_code where a.dispatch_type = '${filter_type}' and a.status_flag = 1 and  ${dispatch_date} and ${design_code} and ${customer_code} and ${itemcategarycode} and ${agentcode} group by dispatch_id,a.user_id,dispatch_no,dispatch_date,created_at order by dispatch_id desc  ${get_limit}`); 
+            const item_exec_Result = await client.query(`SELECT dispatch_id,dispatch_no,dispatch_date,dispatch_time,sum(order_set) as order_set,sum(dispatch_set) as dispatch_set,user_id FROM (SELECT dispatch_id,sum(coalesce(order_set,0)) as order_set,sum(coalesce(dispatch_set,0)) as dispatch_set ,a.user_id,dispatch_no,to_char(dispatch_date, 'dd-MM-YYYY') as dispatch_date,coalesce(to_char(created_at,'HH12:MI PM'),'') as dispatch_time  from tbl_dispatch_details a inner join tbl_item_sizes as b ON b.size_id = a.size_id inner join tbl_item_management as c on c.trans_no=b.trans_no inner join tbl_customer as d on a.customer_code = d.customer_code inner join tbl_agent as e on d.agent_code = e.agent_code where a.dispatch_type = '${filter_type}' and a.status_flag = 1 and  ${dispatch_date} and ${design_code} and ${customer_code} and ${itemcategarycode} and ${agentcode} group by dispatch_id,a.user_id,dispatch_no,dispatch_date,created_at order by dispatch_id desc ) 
+            as dev group by dispatch_id,user_id,dispatch_no,dispatch_date,dispatch_time order by dispatch_id desc  ${get_limit}`); 
             let dispatch_array = item_exec_Result && item_exec_Result.rows ? item_exec_Result.rows : []; 
             let result = [];
             if (dispatch_array.length > 0) {
@@ -690,12 +693,35 @@ module.exports.printItemCustomerWiseDispatch = async (req) => {
       var responseData = {}
       const decoded = await commonService.jwtVerify(req.jwtToken);  
       if (decoded) { 
-       const {process,dispatch_id} = decoded.data
+       const {process,dispatch_id, designcode, customercode, itemcategary_code, agent_code} = decoded.data
        let item_exec_Result  = ''      
        let result = [];
+       let design_code = '1=1';
+       let customer_code = '1=1';
+       let itemcategarycode = '1=1'
+       let agentcode = '1=1'
+       
+       if(designcode && designcode != "" && designcode != "0" ){
+        const design_code_val = designcode ? '\'' + designcode.split(',').join('\',\'') + '\'' : ''
+        design_code = `c.design_id in (` + design_code_val + `) `
+      }
+      if(customercode && customercode != "" && customercode != "0"  && process === 'customerwise'){
+        const customer_code_val = customercode ? '\'' + customercode.split(',').join('\',\'') + '\'' : ''
+        customer_code = `a.customer_code in (` + customer_code_val + `) `
+      }
+      if(itemcategary_code && itemcategary_code != "" && itemcategary_code != "0"){
+        const itemcategory_code_val = Number(itemcategary_code)
+        itemcategarycode = `c.item_code = ` + itemcategory_code_val + ``
+      }
+      if(agent_code && agent_code != "" && agent_code != "0"){
+        const agent_code_val = Number(agent_code)
+        agentcode = `d.agent_code = ` + agent_code_val + ` `
+      }
        if(process == 'itemwise'){
         item_exec_Result = await client.query(`SELECT a.dispatch_id,a.size_id,qr_code,dispatch_no FROm tbl_dispatch_details as a inner join tbl_item_sizes as b on a.size_id=b.size_id 
-        where dispatch_type = '${process}' and dispatch_id=${dispatch_id} and status_flag = 1 group by a.dispatch_id,a.size_id,qr_code,dispatch_no`)
+        inner join tbl_item_management as c on b.trans_no=c.trans_no
+        inner join tbl_customer as e on e.customer_code =a.customer_code
+        where dispatch_type = '${process}' and dispatch_id=${dispatch_id} and status_flag = 1 and ${customer_code} and ${design_code} and ${agentcode} and ${itemcategarycode} group by a.dispatch_id,a.size_id,qr_code,dispatch_no`)
          let dispatch_array = item_exec_Result && item_exec_Result.rows ? item_exec_Result.rows : [];      
          result = [];
          
@@ -705,8 +731,12 @@ module.exports.printItemCustomerWiseDispatch = async (req) => {
              const item_Result = await client.query(` SELECT a.dispatch_id,a.order_no,(SELECT order_date FROM tbl_order_taking where order_no = a.order_no ) as order_date, a.customer_code,a.order_set,a.dispatch_set,coalesce(a.dispatch_pieces, 0 ) as dispatch_pieces,a.size_id,qr_code,
              (SELECT customer_name from tbl_customer where customer_code = a.customer_code) as customer_name,
              (SELECT mobile_no from tbl_customer where customer_code = a.customer_code) as mobile_no
-             FROm tbl_dispatch_details as a inner join tbl_item_sizes as b on a.size_id=b.size_id  where a.dispatch_type = '${process}' and a.status_flag = 1 and dispatch_id=$1 and a.size_id=$2 group by a.order_no,a.dispatch_id,a.customer_code,a.order_set,a.dispatch_set,a.dispatch_pieces,a.size_id,
-             qr_code,created_at order by created_at desc`,[dispatch_array[i].dispatch_id,dispatch_array[i].size_id] );
+             FROm tbl_dispatch_details as a inner join tbl_item_sizes as b on a.size_id=b.size_id 
+             inner join tbl_item_management as c on b.trans_no=c.trans_no
+             inner join tbl_customer as e on e.customer_code =a.customer_code 
+             where a.dispatch_type = '${process}' and a.status_flag = 1 and dispatch_id=$1 and a.size_id=$2
+             and ${customer_code} and ${design_code} and ${agentcode} and ${itemcategarycode} 
+             group by a.order_no,a.dispatch_id,a.customer_code,a.order_set,a.dispatch_set,a.dispatch_pieces,a.size_id,qr_code,created_at order by created_at desc`,[dispatch_array[i].dispatch_id,dispatch_array[i].size_id] );
              let item_Array = item_Result && item_Result.rows ? item_Result.rows : []; 
              let obj = dispatch_array[i]
              obj['ItemArray'] = item_Array
@@ -715,12 +745,18 @@ module.exports.printItemCustomerWiseDispatch = async (req) => {
          }          
        }
        if(process == 'customerwise'){
-        item_exec_Result = await client.query(`SELECT a.dispatch_id,b.customer_code,b.customer_name as customer_name,coalesce(street, '') as street,coalesce(area, '') as area,coalesce(city,'') as city,coalesce(pincode,'') as pincode,coalesce(mobile_no,'') as mobile_no,dispatch_no FROm tbl_dispatch_details as a inner join tbl_customer as b on a.customer_code=b.customer_code where a.dispatch_type = '${process}' and dispatch_id=${dispatch_id} and status_flag = 1 group by a.dispatch_id,b.customer_code,b.customer_name,dispatch_no `)
+        item_exec_Result = await client.query(`SELECT a.dispatch_id,d.customer_code,d.customer_name as customer_name,coalesce(street, '') as street,coalesce(area, '') as area,coalesce(city,'') as city,coalesce(pincode,'') as pincode,coalesce(mobile_no,'') as mobile_no,dispatch_no FROm tbl_dispatch_details as a inner join tbl_customer as d on a.customer_code=d.customer_code
+        inner join tbl_item_sizes as b on a.size_id=b.size_id 
+        inner join tbl_item_management as c on b.trans_no=c.trans_no 
+        where a.dispatch_type = '${process}' and dispatch_id=${dispatch_id} and status_flag = 1 and ${customer_code} and ${design_code} and ${agentcode} and ${itemcategarycode} group by a.dispatch_id,d.customer_code,d.customer_name,dispatch_no `)
         let dispatch_array = item_exec_Result && item_exec_Result.rows ? item_exec_Result.rows : [];          
          
          if (dispatch_array.length > 0) {
            for (let i = 0; i < dispatch_array.length; i++) {
-             const item_Result = await client.query(` SELECT a.dispatch_id,a.order_no,(SELECT order_date FROM tbl_order_taking where order_no = a.order_no ) as order_date,b.customer_code,a.order_set,a.dispatch_set,coalesce(a.dispatch_pieces, 0 ) as dispatch_pieces,a.size_id,(SELECT qr_code from tbl_item_sizes where size_id=a.size_id) as qr_code,b.customer_name,mobile_no FROm tbl_dispatch_details as a inner join tbl_customer as b on a.customer_code = b.customer_code  where a.dispatch_type = '${process}' and a.status_flag = 1 and dispatch_id=$1 and a.customer_code=$2 group by a.order_no,a.dispatch_id,b.customer_code,a.order_set,a.dispatch_set,a.dispatch_pieces,a.size_id,b.customer_name,created_at order by created_at desc`,[dispatch_array[i].dispatch_id,dispatch_array[i].customer_code] );
+             const item_Result = await client.query(` SELECT a.dispatch_id,a.order_no,(SELECT order_date FROM tbl_order_taking where order_no = a.order_no ) as order_date,d.customer_code,a.order_set,a.dispatch_set,coalesce(a.dispatch_pieces, 0 ) as dispatch_pieces,a.size_id,(SELECT qr_code from tbl_item_sizes where size_id=a.size_id) as qr_code,d.customer_name,mobile_no FROm tbl_dispatch_details as a inner join tbl_customer as d on a.customer_code = d.customer_code   
+             inner join tbl_item_sizes as b on a.size_id=b.size_id 
+             inner join tbl_item_management as c on b.trans_no=c.trans_no 
+             where a.dispatch_type = '${process}' and a.status_flag = 1 and dispatch_id=$1 and a.customer_code=$2 and ${design_code} and ${agentcode} and ${itemcategarycode} group by a.order_no,a.dispatch_id,d.customer_code,a.order_set,a.dispatch_set,a.dispatch_pieces,a.size_id,d.customer_name,created_at order by created_at desc`,[dispatch_array[i].dispatch_id,dispatch_array[i].customer_code] );
              let item_Array = item_Result && item_Result.rows ? item_Result.rows : []; 
              let obj = dispatch_array[i]
              obj['ItemArray'] = item_Array
