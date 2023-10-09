@@ -49,10 +49,10 @@ module.exports.getCustomers = async (req) => {
             if(agent_id) {
                 agentid =  'agent_code = ' + agent_id
             }
-            if(customer_code) {
+            if(customer_code && customer_code != "0") {
                 customercode = 'customer_code =' + '\'' + customer_code + '\''
             }
-            const exeQuery = await client.query(`select customer_name, contact_person, mobile_no, alternative_mobile_no,door_no, street, area, city, state, country, pincode, email_id, gstin_no, status_code,customer_code, type, maxrefno, transport_name,agent_code,transport_contact_no, transport_location, user_id,transport_contact_person,(select user_name from tbl_user where user_id = (select user_id from "tbl_userlog" where autonum = maker_id limit 1) limit 1) as employeename,  (select coalesce(to_char(log_date,'DD-MM-YYYY HH12:MI PM'),'') from "tbl_userlog" where autonum = maker_id limit 1) as createddate,(select status_name from "tbl_def_status" where "status_id" = "status_code") as status_name,(select state_name from "tbl_def_state" where "state_id" = "state") as "state_name", coalesce((select agent_name from tbl_agent where agent_code = a.agent_code),'') as agent_name from "tbl_customer" as a where ` +customercode+ ` and ` + statevalue + ` and ` + customerName + ` and ` + status + ` and ` + agentid + ` order by created_date desc`);
+            const exeQuery = await client.query(`select customer_name, contact_person, mobile_no, alternative_mobile_no,door_no, street, area, city, state, country, pincode, email_id, gstin_no, status_code,customer_code, type, maxrefno, transport_name,agent_code,transport_contact_no, transport_location, user_id,transport_contact_person,(select user_name from tbl_user where user_id = (select user_id from "tbl_userlog" where autonum = a.maker_id limit 1) limit 1) as employeename,  (select coalesce(to_char(log_date,'DD-MM-YYYY HH12:MI PM'),'') from "tbl_userlog" where autonum = a.maker_id limit 1) as createddate,(select status_name from "tbl_def_status" where "status_id" = "status_code") as status_name,(select state_name from "tbl_def_state" where "state_id" = "state") as "state_name", coalesce((select agent_name from tbl_agent where agent_code = a.agent_code),'') as agent_name from "tbl_customer" as a where ` +customercode+ ` and ` + statevalue + ` and ` + customerName + ` and ` + status + ` and ` + agentid + ` order by created_date desc`);
 
             const company_Result = await client.query(`SELECT * from tbl_print_setting`);
             let Company_Array = company_Result && company_Result.rows ? company_Result.rows : []; 
@@ -105,7 +105,7 @@ module.exports.saveCustomerManagement = async (req) => {
                 door_no, street, area, city, state, country, pincode, email_id, gstin_no, status_code, type,
                 transport_name, transport_contact_no, transport_location, user_id, agent_code, transport_contact_person } = decoded.data;
                if (decoded) {
-                const exit_count = await client.query(`select count(*) as count FROM tbl_customer where lower(customer_name) = lower('` + customer_name + `') and lower(city) = lower('` + city + `') and lower(customer_code) != lower($1)`, [customer_code])
+                const exit_count = await client.query(`select count(*) as count FROM tbl_customer where lower(customer_name) = lower('` + customer_name.replace(/'/g, "''") + `') and lower(city) = lower('` + city + `') and lower(customer_code) != lower($1)`, [customer_code])
                 var exit_check = exit_count && exit_count.rows[0].count
                 if (exit_check > 0) {
                     return response = { "message": constants.userMessage.CUSTOMER_DUPLICATION, "statusFlag": 2 };
@@ -135,9 +135,9 @@ module.exports.saveCustomerManagement = async (req) => {
                     customer_code, type, maxrefno, maker_id,transport_name, transport_contact_no, transport_location, user_id,transport_contact_person,agent_code,created_date)
                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22,$23,$24, CURRENT_TIMESTAMP)
                     RETURNING customer_code`,
-                    [customer_name, contact_person, mobile_no, alternative_mobile_no, door_no, street, area, city,
-                        state, country_id, pincode, email_id, gstin_no, status_code, customer_code, type, maxrefno,
-                        makerid, transport_name, transport_contact_no, transport_location, user_id, transport_contact_person, agent_code]);
+                    [customer_name.replace(/'/g, "'"), contact_person.replace(/'/g, "'"), mobile_no, alternative_mobile_no, door_no, street.replace(/'/g, "'"), area.replace(/'/g, "'"), city.replace(/'/g, "'"),
+                        state, country_id, pincode, email_id.replace(/'/g, "'"), gstin_no, status_code, customer_code, type, maxrefno,
+                        makerid, transport_name.replace(/'/g, "'"), transport_contact_no, transport_location.replace(/'/g, "'"), user_id, transport_contact_person.replace(/'/g, "'"), agent_code]);
                 return responseData = { "message": 'Customer ' + constants.userMessage.USER_CREATED, "statusFlag": 1, "customer_id": customer_code, "customer_name" : customer_name };
             }
         }
@@ -186,20 +186,21 @@ module.exports.updateCustomer = async (req) => {
                 door_no, street, area, city, state, country, pincode, email_id, gstin_no, status_code,
                 transport_name, transport_contact_no, transport_location, user_id, customer_code, status, transport_contact_person, agent_code } = decoded.data;
             if (decoded) {
-                const exit_count = await client.query(`select count(*) as count FROM tbl_customer where lower(customer_name) = lower('` + customer_name + `') and lower(customer_code) != lower($1)`, [customer_code])
+                
+                const exit_count = await client.query(`select count(*) as count FROM tbl_customer where lower(customer_name) = lower('` + customer_name.replace(/'/g, "''") + `') and lower(customer_code) != lower($1)`, [customer_code])                
                 var exit_check = exit_count && exit_count.rows[0].count
                 if (exit_check > 0) {
                     return response = { "message": constants.userMessage.CUSTOMER_DUPLICATION, "statusFlag": 2 };
                 }
-                else {
+                else {                   
                 var makerid = await commonService.insertLogs(user_id, "Update Customer Management");
                 const exeUserQuerys = await client.query(`UPDATE public.tbl_customer
                 SET customer_name=$1, contact_person=$2, mobile_no=$3, alternative_mobile_no=$4, 
                 door_no=$5, street=$6, area=$7, city=$8, state=$9, country=$10, pincode=$11, email_id=$12, gstin_no=$13,
                 status_code = $14, updated_date=CURRENT_TIMESTAMP, maker_id=$15,  transport_name=$16, transport_contact_no=$17, 
-                transport_location=$18,transport_contact_person=$19,agent_code=$20 WHERE customer_code=$21`, [customer_name, contact_person, mobile_no, alternative_mobile_no,
-                    door_no, street, area, city, state, country, pincode, email_id, gstin_no, status_code, makerid,
-                    transport_name, transport_contact_no, transport_location, transport_contact_person, agent_code, customer_code]);
+                transport_location=$18,transport_contact_person=$19,agent_code=$20 WHERE customer_code=$21`, [customer_name.replace(/'/g, "'"), contact_person.replace(/'/g, "'"), mobile_no, alternative_mobile_no,
+                    door_no, street.replace(/'/g, "'"), area.replace(/'/g, "'"), city.replace(/'/g, "'"), state, country, pincode, email_id.replace(/'/g, "'"), gstin_no, status_code, makerid,
+                    transport_name.replace(/'/g, "'"), transport_contact_no, transport_location.replace(/'/g, "'"), transport_contact_person.replace(/'/g, "'"), agent_code, customer_code]);               
                 return responseData = { "message": 'Customer ' + constants.userMessage.USER_UPDATED, "statusFlag": 1 };
             }
         }

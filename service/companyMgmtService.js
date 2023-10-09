@@ -90,7 +90,7 @@ module.exports.saveCompany = async (req) => {
       const decoded = await commonService.jwtVerify(req.jwtToken);
       const { company_id, company_name, short_name, addressline1, addressline2, area, city_name, pincode, state_id, mobile_number, telephone_number, email_id, gstin, status_id, user_id } = decoded.data;
       if (decoded) {
-        const exit_count = await client.query(`select count(*) as count FROM tbl_company where lower(company_name) = lower('` + company_name + `') and company_id != ` + company_id)
+        const exit_count = await client.query(`select count(*) as count FROM tbl_company where lower(company_name) = lower('` + company_name.replace(/'/g, "''") + `') and company_id != ` + company_id)
         var exit_check = exit_count && exit_count.rows[0].count
         if (exit_check > 0) {
           return response = { "message": constants.userMessage.CUSTOMEREXIT, "statusFlag": 2 };
@@ -100,7 +100,7 @@ module.exports.saveCompany = async (req) => {
             var makerid = await commonService.insertLogs(user_id, "Insert Company");
             const max = await client.query(`select coalesce(max(company_id),0) + 1 as mr FROM tbl_company`)
             var maxcompany = max && max.rows[0].mr;
-            const result = await client.query(`INSERT INTO tbl_company (company_id,company_name,short_name,addressline1,addressline2,area,city,pincode,state_id,mobile_number,telephone_number,email_id,gstin,status_id,user_id,maker_id,created_date) values ($1, $2, $3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,CURRENT_TIMESTAMP) `, [maxcompany, company_name, short_name, addressline1, addressline2, area, city_name, pincode, state_id, mobile_number, telephone_number, email_id, gstin, status_id, user_id, makerid]);
+            const result = await client.query(`INSERT INTO tbl_company (company_id,company_name,short_name,addressline1,addressline2,area,city,pincode,state_id,mobile_number,telephone_number,email_id,gstin,status_id,user_id,maker_id,created_date) values ($1, $2, $3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,CURRENT_TIMESTAMP) `, [maxcompany, company_name.replace(/'/g, "'"), short_name.replace(/'/g, "'"), addressline1.replace(/'/g, "'"), addressline2.replace(/'/g, "'"), area.replace(/'/g, "'"), city_name, pincode, state_id, mobile_number, telephone_number, email_id.replace(/'/g, "'"), gstin, status_id, user_id, makerid]);
             if (client) {
               client.end();
             }
@@ -115,7 +115,7 @@ module.exports.saveCompany = async (req) => {
             const count = await client.query(`select count(*) as count FROM tbl_company where company_id =` + company_id)
             var count_Check = count && count.rows[0].count
             if (count_Check != 0 && count_Check != null && count_Check != undefined && count_Check != "") {
-              const update_result = await client.query(`UPDATE "tbl_company" set company_name=$1,short_name=$2,addressline1=$3,addressline2=$4,area=$5,city=$6,pincode=$7,state_id=$8,mobile_number=$9,telephone_number=$10,email_id=$11,gstin=$12,status_id=$13,user_id=$14,maker_id=$15,updated_date=CURRENT_TIMESTAMP where company_id = $16 `, [company_name, short_name, addressline1, addressline2, area, city_name, pincode, state_id, mobile_number, telephone_number, email_id, gstin, status_id, user_id, makerid, company_id]);
+              const update_result = await client.query(`UPDATE "tbl_company" set company_name=$1,short_name=$2,addressline1=$3,addressline2=$4,area=$5,city=$6,pincode=$7,state_id=$8,mobile_number=$9,telephone_number=$10,email_id=$11,gstin=$12,status_id=$13,user_id=$14,maker_id=$15,updated_date=CURRENT_TIMESTAMP where company_id = $16 `, [company_name.replace(/'/g, "'"), short_name.replace(/'/g, "'"), addressline1.replace(/'/g, "'"), addressline2.replace(/'/g, "'"), area.replace(/'/g, "'"), city_name, pincode, state_id, mobile_number, telephone_number, email_id.replace(/'/g, "'"), gstin, status_id, user_id, makerid, company_id]);
   
               if (client) {
                 client.end();

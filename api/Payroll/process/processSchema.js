@@ -37,6 +37,8 @@ module.exports.saveProcess = Joi.object().keys({
   });
   module.exports.processListjwt = Joi.object().keys({
     user_id: Joi.number().required(),
+    from_date:Joi.string().required(),
+    to_date:Joi.string().required(),
   });
   module.exports.processList = Joi.object().keys({
     jwtToken: Joi.string().required(), 

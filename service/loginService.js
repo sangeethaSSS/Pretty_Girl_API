@@ -40,7 +40,7 @@ module.exports.login = async (req) => {
       const newpwsd_en = await commonService.encryptpassword({ pwd: password });
       if (decoded) {
         var response = {}
-        const count_check = await client.query(`SELECT a.user_id,a.user_name,a.user_code,a.userrole_id,b.userrole_name,a.status_id,(select branch_name from tbl_branch where branch_id = a.branch_id) as branchname,(select branch_id from tbl_branch where branch_id = a.branch_id) as branch_id,coalesce((select string_agg(menu_id::text, ',') from tbl_user_menu_details where user_id=a.user_id),'') as menu_id from tbl_user as a inner join tbl_def_userrole as b on a.userrole_id = b.userrole_id  where lower(a.user_code) = $1 and a.password = $2`, [user_name, newpwsd_en])
+        const count_check = await client.query(`SELECT a.user_id,a.user_name,a.user_code,a.userrole_id,b.userrole_name,a.status_id,(select branch_name from tbl_branch where branch_id = a.branch_id) as branchname,(select branch_id from tbl_branch where branch_id = a.branch_id) as branch_id,coalesce((select string_agg(menu_id::text, ',') from tbl_user_menu_details where user_id=a.user_id),'') as menu_id from tbl_user as a inner join tbl_def_userrole as b on a.userrole_id = b.userrole_id  where lower(a.user_code) = lower($1) and a.password = $2`, [user_name, newpwsd_en])
         if(client){
           client.end();
          }

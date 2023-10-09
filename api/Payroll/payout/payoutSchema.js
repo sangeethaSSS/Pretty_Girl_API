@@ -36,6 +36,8 @@ module.exports.employeeProcessListjwt = Joi.object().keys({
 
   module.exports.payoutListjwt = Joi.object().keys({
     user_id: Joi.number().required(),
+    from_date:Joi.string().required(),
+    to_date:Joi.string().required(),
   });
   module.exports.payoutList = Joi.object().keys({
     jwtToken: Joi.string().required(), 

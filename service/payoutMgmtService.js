@@ -218,11 +218,15 @@
          if (req.jwtToken) {
              var responseData = {}
              const decoded = await commonService.jwtVerify(req.jwtToken);
-             const { } = decoded.data;
+             const { to_date, from_date} = decoded.data;
              if (decoded) {
+                if (from_date && to_date) {
+                    datediff = ` to_char(a.created_date,'YYYY-MM-DD') :: date between to_date('`+from_date+`','YYYY-MM-DD') and to_date('`+to_date+`','YYYY-MM-DD') `;
+                }
+ 
                  const payout_Result = await client.query(`select a.payout_id,b.process_id ,a.from_date,a.to_date,COALESCE(sum(b.payout_amount),0)
                  as payout_amt,count(b.employee_id) as no_of_employee,(select user_name from tbl_user where user_id = (select user_id from tbl_userlog  where autonum = a.maker_id limit 1)) as employeename,(select coalesce(to_char(log_date,'DD-MM-YYYY HH12:MI PM'),'') from tbl_userlog where autonum 
-                  = a.maker_id limit 1) as createddate,(select COALESCE(sum(total_pieces),0) from tbl_job_details where job_id in (select job_id from tbl_salary_process where process_id = b.process_id)) as total_pieces from tbl_payout_details as a inner join tbl_salary_payout as b on a.payout_id = b.payout_id group by a.payout_id,b.process_id,a.from_date,a.to_date order by a.created_date desc`);
+                  = a.maker_id limit 1) as createddate,(select COALESCE(sum(total_pieces),0) from tbl_job_details where job_id in (select job_id from tbl_salary_process where process_id = b.process_id)) as total_pieces from tbl_payout_details as a inner join tbl_salary_payout as b on a.payout_id = b.payout_id where ` + datediff + ` group by a.payout_id,b.process_id,a.from_date,a.to_date order by a.created_date desc`);
                  if (client) {
                      client.end();
                  }

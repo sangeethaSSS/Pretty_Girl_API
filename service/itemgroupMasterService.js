@@ -108,7 +108,7 @@ module.exports.saveItemgroup = async (req) => {
         const exit_count = await client.query(`select count(*) as count FROM tbl_def_item where lower(item_name) = lower('` + itemgroup_name + `') and item_id != ` + itemgroup_id)
         var exit_check = exit_count && exit_count.rows[0].count
 
-        const exit_count1 = await client.query(`select count(*) as count FROM tbl_def_item where lower(short_item_name) = lower('` + short_name + `') and item_id != ` + itemgroup_id)
+        const exit_count1 = await client.query(`select count(*) as count FROM tbl_def_item where lower(short_item_name) = lower('` + short_name.replace(/'/g, "''") + `') and item_id != ` + itemgroup_id)
         var exit_check1 = exit_count1 && exit_count1.rows[0].count
 
         if (exit_check > 0) {
@@ -122,7 +122,7 @@ module.exports.saveItemgroup = async (req) => {
             var makerid = await commonService.insertLogs(user_id, "Insert Item Group");
             const max = await client.query(`select coalesce(max(item_id),0) + 1 as mr FROM tbl_def_item`)
             var maxitemgroup = max && max.rows[0].mr;
-            const result = await client.query(`INSERT INTO tbl_def_item (item_id,item_name,short_item_name,maker_id,created_date) values ($1, UPPER($2), UPPER($3),$4,CURRENT_TIMESTAMP) `, [maxitemgroup, itemgroup_name,  short_name, makerid]);
+            const result = await client.query(`INSERT INTO tbl_def_item (item_id,item_name,short_item_name,maker_id,created_date) values ($1, UPPER($2), UPPER($3),$4,CURRENT_TIMESTAMP) `, [maxitemgroup, itemgroup_name,  short_name.replace(/'/g, "'"), makerid]);
             if (client) {
               client.end();
             }
@@ -137,7 +137,7 @@ module.exports.saveItemgroup = async (req) => {
             const count = await client.query(`select count(*) as count FROM tbl_def_item where item_id =` + itemgroup_id)
             var count_Check = count && count.rows[0].count
             if (count_Check != 0 && count_Check != null && count_Check != undefined && count_Check != "") {
-              const update_result = await client.query(`UPDATE "tbl_def_item" set item_name=UPPER($1),short_item_name=UPPER($2),maker_id=$3 where item_id = $4 `, [itemgroup_name, short_name,  makerid, itemgroup_id]);
+              const update_result = await client.query(`UPDATE "tbl_def_item" set item_name=UPPER($1),short_item_name=UPPER($2),maker_id=$3 where item_id = $4 `, [itemgroup_name, short_name.replace(/'/g, "'"),  makerid, itemgroup_id]);
 
               if (client) {
                 client.end();
