@@ -304,10 +304,12 @@ module.exports.getFGList = async (req) => {
           inner join tbl_user as f on f.user_id=a.user_id where ${fg_date} and ${size_code} and ${machineid}
           group by a.fg_id, a.size_id,e.color_name,c.design_id,d.item_name,start_size,end_size,total_set,ironmachine_id,f.user_name,a.date,b.qr_code,settype,updated_at
           order by updated_at desc,a.fg_id desc ` ); 
+          const boxing_widget = await client.query(`SELECT c.item_code,d.item_name,coalesce(sum(a.no_of_set), 0) as qty, coalesce(sum(a.no_of_pieces),0) as no_of_pieces FROM tbl_fg_items as a inner join tbl_item_sizes as b on a.size_id = b.size_id inner join tbl_item_management as c on b.trans_no = c.trans_no inner join tbl_def_item as d on c.item_code = d.item_id  where ${fg_date} and ${size_code} and ${machineid}  group by  c.item_code,d.item_name`)
+
           let FG_array = item_exec_Result && item_exec_Result.rows ? item_exec_Result.rows : []; 
           const company_Result = await client.query(`SELECT * from tbl_print_setting`);
           let Company_Array = company_Result && company_Result.rows ? company_Result.rows : []; 
-          responseData = { "FGArray": FG_array, "Company_Array":Company_Array }
+          responseData = { "FGArray": FG_array, "Company_Array":Company_Array,"FGWidget":  boxing_widget && boxing_widget.rows ? boxing_widget.rows : [] }
         } else {         
            // const fg_total_Result = await client.query(`SELECT count(fg_id) as totalcount from (SELECT a.fg_id, a.size_id,e.color_name,c.design_id,d.item_name,start_size,end_size,total_set,ironmachine_id,concat(c.design_id,' - ',(SELECT substring(e.color_name for 1))) as designname,(SELECT machine_no || coalesce(' - ' || machine_name,'') FROM tbl_ironmachine_master where machine_id = a.ironmachine_id ) as machine_name,(SELECT machine_no FROM tbl_ironmachine_master where machine_id = a.ironmachine_id ) as machine_no,f.user_name,to_char(date, 'dd-MM-YYYY') as fg_date,sum(a.no_of_set) as qty,b.qr_code,sum(a.no_of_pieces) as no_of_pieces FROM tbl_fg_items as a inner join tbl_item_sizes as b on a.size_id = b.size_id inner join tbl_item_management as c on b.trans_no = c.trans_no inner join tbl_def_item as d on  c.item_code = d.item_id left join tbl_color as e on b.color_id = e.color_id 
         // inner join tbl_user as f on f.user_id=a.user_id where ${fg_date} and ${size_code} and ${machineid}
@@ -319,12 +321,18 @@ module.exports.getFGList = async (req) => {
         order by updated_at desc,a.fg_id desc  ) as dev  ` ); 
         let fg_total = fg_total_Result && fg_total_Result.rows.length > 0 ? fg_total_Result.rows[0].totalcount : 0; 
         // const boxing_Result = await client.query(` select a.size_id,sum(a.no_of_set) as qty,a.user_id,b.qr_code,c.user_name,d.design_id from tbl_fg_items as a  inner join tbl_item_sizes as b on a.size_id=b.size_id   inner join tbl_user as c on c.user_id=a.user_id  inner join tbl_item_management as d on d.trans_no =b.trans_no where ${fg_date} and ${design_code} and ${customer_code} group by a.size_id,a.user_id,b.qr_code,c.user_name,d.design_id  `);
+        const boxing_widget = await client.query(`SELECT c.item_code,d.item_name,coalesce(sum(a.no_of_set), 0) as qty, coalesce(sum(a.no_of_pieces),0) as no_of_pieces FROM tbl_fg_items as a inner join tbl_item_sizes as b on a.size_id = b.size_id inner join tbl_item_management as c on b.trans_no = c.trans_no inner join tbl_def_item as d on c.item_code = d.item_id  where ${fg_date} and ${size_code} and ${machineid}  group by  c.item_code,d.item_name`)
+
+        const boxing_total_set =await client.query(`SELECT coalesce(sum(a.no_of_set),0) as qty,
+        coalesce(sum(a.no_of_pieces),0) as no_of_pieces FROM tbl_fg_items as a inner join tbl_item_sizes 
+        as b on a.size_id = b.size_id inner join tbl_item_management as c on b.trans_no = c.trans_no inner join tbl_def_item as d on c.item_code = d.item_id  where ${fg_date} and ${size_code} and ${machineid}`);
+
         const boxing_Result = await client.query(`SELECT a.fg_id, a.size_id,e.color_name,c.design_id,d.item_name,start_size,end_size,total_set,ironmachine_id,concat(c.design_id,' - ',(SELECT substring(settype for 1))) as designname,(SELECT machine_no || coalesce(' - ' || machine_name,'') FROM tbl_ironmachine_master where machine_id = a.ironmachine_id ) as machine_name,(SELECT machine_no FROM tbl_ironmachine_master where machine_id = a.ironmachine_id ) as machine_no,f.user_name,to_char(date, 'dd-MM-YYYY') as fg_date,sum(a.no_of_set) as qty,b.qr_code,sum(a.no_of_pieces) as no_of_pieces,coalesce(settype,'') as settype,coalesce(to_char(updated_at,'DD-MM-YYYY HH12:MI PM'),'') as fg_date_time FROM tbl_fg_items as a inner join tbl_item_sizes as b on a.size_id = b.size_id inner join tbl_item_management as c on b.trans_no = c.trans_no inner join tbl_def_item as d on
         c.item_code = d.item_id left join tbl_color as e on b.color_id = e.color_id 
         inner join tbl_user as f on f.user_id=a.user_id where ${fg_date} and ${size_code} and ${machineid}
         group by a.fg_id, a.size_id,e.color_name,c.design_id,d.item_name,start_size,end_size,total_set,ironmachine_id,f.user_name,a.date,b.qr_code,settype,updated_at
         order by updated_at desc,a.fg_id desc ${get_limit} `);
-        responseData = { "FGArray": boxing_Result && boxing_Result.rows ? boxing_Result.rows : [],"FG_total":fg_total  }
+         responseData = { "FGArray": boxing_Result && boxing_Result.rows ? boxing_Result.rows : [],"FG_total":fg_total, "FGWidget":  boxing_widget && boxing_widget.rows ? boxing_widget.rows : [], "FGTotalSet" : boxing_total_set && boxing_total_set.rows ? boxing_total_set.rows : []  }
         }
         if (client) {
           client.end();

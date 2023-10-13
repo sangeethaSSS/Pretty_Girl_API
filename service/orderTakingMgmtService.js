@@ -964,7 +964,7 @@ module.exports.sendOrderToWhatsapp = async (req) => {
               b.qty,e.total_set,(b.qty::INTEGER*e.total_set::INTEGER) as total_piece
               from tbl_order_taking  as a inner join tbl_order_taking_items as b 
               on a.order_no = b.order_no inner join tbl_def_item as c on b.item_code = c.item_id 
-              inner join tbl_color as d on b.color_id = d.color_id inner join tbl_item_sizes as 
+              left join tbl_color as d on b.color_id = d.color_id inner join tbl_item_sizes as 
               e on b.size_id = e.size_id where a.ref_no=$1 and a.order_no =$2 and (a.device_code=$3 or a.user_id=$3) order by b.item_code asc) as dev group by order_no,item_code,item_name order by item_code asc`, [order_details[k].ref_no, order_details[k].order_no, order_details[k].user_id]);
               let ItemLists = Order_Item_List && Order_Item_List.rows ? Order_Item_List.rows : [];
               let responseData = {
