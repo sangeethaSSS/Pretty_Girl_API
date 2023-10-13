@@ -112,5 +112,8 @@ module.exports = {
   DispatchMessage:{
     DELETESUCCESS: 'Dispatch item deleted successfully'
   },
+  GoodsReturnMessage:{
+    LISTSUCCESS: 'Listed Successfully'
+  },
 }
 

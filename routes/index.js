@@ -34,6 +34,7 @@ const CustomerManagement = require('../api/OrderManagement/CustomerManagement/cu
 const OrderTaking = require('../api/OrderManagement/OrderTaking/orderTakingRoutes') 
 const Boxing = require('../api/Dispatch/boxing/boxingRoutes')
 const Dispatch = require('../api/Dispatch/dispatch/dispatchRoutes')
+const GoodsReturn = require('../api/Dispatch/goodsReturn/goodsReturnRoutes')
 module.exports = app => {
   app.use('/api/common', common);
   app.use('/api/loginRoutes', login);
@@ -62,6 +63,7 @@ module.exports = app => {
   app.use('/api',sync);
   app.use('/api/dispatch',Boxing);
   app.use('/api/dispatched',Dispatch);
+  app.use('/api/goodsReturn',GoodsReturn);
   
   
   // etc..
