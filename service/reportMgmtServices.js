@@ -667,8 +667,20 @@ module.exports.dashboardList = async (req) => {
 
         const total_order = await client.query(`SELECT coalesce(sum(qty),0) as totalset,coalesce(sum(qty*coalesce(c.total_set,'0')::Integer),0) as totalpiece FROM tbl_order_taking as a inner join tbl_order_taking_items 
         as b on a.order_no = b.order_no inner join tbl_item_sizes as c ON c.size_id = b.size_id where to_char(a.order_date,'YYYY-MM-DD') :: date = to_date('` + date + `','YYYY-MM-DD') and a.status_code = 1`);
+
         const total_order_all = await client.query(`SELECT count(*) as total_order FROM tbl_order_taking as a where to_char(a.order_date,'YYYY-MM-DD') :: date = to_date('` + date + `','YYYY-MM-DD') `);
+
         const total_Cancelled_order = await client.query(`SELECT count(*)  as total_cancel_order FROM tbl_order_taking as a where to_char(a.order_date,'YYYY-MM-DD') :: date = to_date('` + date + `','YYYY-MM-DD') and a.status_code = 2 `);
+
+        const current_Stock = await client.query(`SELECT item_name,item_id,coalesce(sum(current_pieces),0) as current_pieces,coalesce(sum(current_set),0) as current_set,count(item_id) as count from (select d.item_code,coalesce(coalesce(sum(coalesce(no_of_set,0)) +  COALESCE((SELECT sum(goods_return_set) from tbl_goods_return where status_flag = 1 AND  size_id = a.size_id ),0),0) - coalesce((SELECT sum(dispatch_set) from tbl_dispatch_details where status_flag = 1 and size_id = a.size_id ),0),0) as current_set,coalesce(COALESCE(sum(coalesce(no_of_pieces,0)) +  COALESCE((SELECT sum(goods_return_pieces) from tbl_goods_return where status_flag = 1 AND  size_id = a.size_id ),0),0) - (SELECT coalesce(sum(dispatch_pieces),0) from tbl_dispatch_details where status_flag = 1 and size_id = a.size_id )) as current_pieces from tbl_fg_items as a inner join tbl_item_sizes as c on c.size_id=a.size_id
+        inner join tbl_item_management as d on c.trans_no=d.trans_no 
+        left join tbl_color as f on f.color_id =c.color_id group by d.item_code,a.size_id order by d.item_code ) as dev right join tbl_def_item as
+        e on dev.item_code = e.item_id  group by item_name,item_id order by item_id`);
+
+        const total_cancelled_set_order = await client.query(`SELECT coalesce(sum(qty),0) as totalset,coalesce(sum(qty*coalesce(c.total_set,'0')::Integer),0) as totalpiece FROM tbl_order_taking as a inner join tbl_order_taking_items 
+        as b on a.order_no = b.order_no inner join tbl_item_sizes as c ON c.size_id = b.size_id where to_char(a.order_date,'YYYY-MM-DD') :: date = to_date('` + date + `','YYYY-MM-DD') and a.status_code = 2`);
+
+        const total_count_fg = await client.query(`SELECT count(fg_id) as count FROM tbl_fg_items where date = to_date('` + date + `','YYYY-MM-DD')`);
 
         // const top_five_customer_wise_order = await client.query(`SELECT * FROM (SELECT count(a.order_no) as order_count,a.customer_code,c.customer_name,c.city,c.mobile_no FROM tbl_order_taking as a          inner join tbl_customer as c on a.customer_code = c.customer_code where to_char(a.order_date,'YYYY-MM-DD') :: date = to_date('` + date + `','YYYY-MM-DD') and a.status_code = 1
         // group by a.customer_code,c.customer_name,c.city,c.mobile_no ) as dev order by order_count 
@@ -701,7 +713,44 @@ module.exports.dashboardList = async (req) => {
         group by agent_code,agent_name order by order_piece asc limit 2`)
 
 
-        const total_dispatch= await  client.query(`SELECT coalesce(sum(dispatch_set),0) as totalset,coalesce(sum(dispatch_pieces),0) as totalpiece from tbl_dispatch_details where to_char(dispatch_date,'YYYY-MM-DD') :: date = to_date('` + date + `','YYYY-MM-DD')`);
+        const total_dispatch= await  client.query(`SELECT coalesce(sum(dispatch_set),0) as totalset,coalesce(sum(dispatch_pieces),0) as totalpiece from tbl_dispatch_details where status_flag = 1 and to_char(dispatch_date,'YYYY-MM-DD') :: date = to_date('` + date + `','YYYY-MM-DD')`);
+
+        const total_Count_dispatch= await  client.query(`SELECT count(dispatch_id) as count from tbl_dispatch_details where status_flag = 1 and to_char(dispatch_date,'YYYY-MM-DD') :: date = to_date('` + date + `','YYYY-MM-DD')`);
+
+        const total_Cancel_Count_dispatch= await  client.query(`SELECT count(dispatch_id) as count from tbl_dispatch_details where status_flag = 2 and to_char(dispatch_date,'YYYY-MM-DD') :: date = to_date('` + date + `','YYYY-MM-DD')`);
+
+        const total_cancelled_dispatch= await  client.query(`SELECT coalesce(sum(dispatch_set),0) as totalset,coalesce(sum(dispatch_pieces),0) as totalpiece from tbl_dispatch_details where status_flag = 2 and to_char(dispatch_date,'YYYY-MM-DD') :: date = to_date('` + date + `','YYYY-MM-DD')`);
+
+        const total_ready_dispatch_set= await  client.query(`SELECT item_name,item_code,COALESCE(SUM(pending_set),0) AS ready_set ,
+        COALESCE(SUM(pending_pieces),0) AS ready_pieces FROM
+        (SELECT size_id,item_code,SUM(qty) AS qty,SUM(order_pieces) AS order_pieces,SUM(dispatch_set) AS dispatch_set,
+        SUM(dispatch_pieces) AS dispatch_pieces,(SUM(qty) - SUM(dispatch_set)) AS pending_set,
+        (SUM(order_pieces) - SUM(dispatch_pieces)) AS pending_pieces,COALESCE(COALESCE((SELECT SUM(no_of_set) FROM  tbl_fg_items WHERE size_id = t.size_id ),0) + COALESCE((SELECT sum(goods_return_set) from tbl_goods_return where status_flag = 1 AND  size_id = t.size_id ),0),0) AS fg_set,COALESCE(COALESCE((SELECT SUM(no_of_pieces) FROM tbl_fg_items WHERE size_id = t.size_id ),0) + COALESCE((SELECT sum(goods_return_pieces) from tbl_goods_return where status_flag = 1 AND  size_id = t.size_id ),0),0) AS fg_pieces FROM (SELECT b.size_id,d.item_code,SUM(b.qty) AS qty,SUM(qty*COALESCE(c.total_set,'0')::Integer) AS order_pieces,0 AS dispatch_set, 0 AS dispatch_pieces FROM tbl_order_taking AS a INNER JOIN tbl_order_taking_items 
+        AS b ON a.order_no =b.order_no INNER JOIN tbl_item_sizes AS c  ON c.size_id = b.size_id 
+        INNER JOIN tbl_item_management AS d ON d.trans_no=c.trans_no GROUP BY b.size_id,d.item_code
+        UNION ALL
+        SELECT b.size_id,d.item_code,0 AS qty, 0 AS order_pieces,SUM(dispatch_set) AS dispatch_set,
+        SUM(dispatch_pieces) AS dispatch_pieces FROM tbl_dispatch_details AS b INNER JOIN             
+        tbl_order_taking AS a ON a.order_no = b.order_no INNER JOIN tbl_item_sizes AS c ON c.size_id = 
+        b.size_id INNER JOIN tbl_item_management AS d ON d.trans_no=c.trans_no 
+        WHERE status_flag = 1 AND a.status_code = 1 GROUP BY b.size_id,d.item_code) AS t GROUP BY size_id,item_code) 
+        AS derv INNER JOIN tbl_def_item AS df ON df.item_id = derv.item_code WHERE pending_set > 0 AND 
+        ((fg_set) - (dispatch_set)) >= pending_set GROUP BY item_name,item_code ORDER BY item_code`);
+
+        const total_Ready_dispatch_set= await  client.query(`SELECT COALESCE(SUM(pending_set),0) AS ready_set ,COALESCE(SUM(pending_pieces),0) AS ready_pieces FROM
+        (SELECT size_id,item_code,SUM(qty) AS qty,SUM(order_pieces) AS order_pieces,SUM(dispatch_set) AS dispatch_set,
+        SUM(dispatch_pieces) AS dispatch_pieces,(SUM(qty) - SUM(dispatch_set)) AS pending_set,
+        (SUM(order_pieces) - SUM(dispatch_pieces)) AS pending_pieces,COALESCE(COALESCE((SELECT SUM(no_of_set) FROM tbl_fg_items WHERE size_id = t.size_id ),0) + COALESCE((SELECT sum(goods_return_set) from tbl_goods_return where status_flag = 1 AND  size_id = t.size_id ),0),0) AS fg_set,COALESCE(COALESCE((SELECT SUM(no_of_pieces) FROM tbl_fg_items WHERE size_id = t.size_id ),0) + COALESCE((SELECT sum(goods_return_pieces) from tbl_goods_return where status_flag = 1 AND  size_id = t.size_id ),0),0) AS fg_pieces FROM (SELECT b.size_id,d.item_code,SUM(b.qty) AS qty,SUM(qty*COALESCE(c.total_set,'0')::Integer) AS order_pieces,0 AS dispatch_set, 0 AS dispatch_pieces FROM tbl_order_taking AS a INNER JOIN tbl_order_taking_items 
+        AS b ON a.order_no =b.order_no INNER JOIN tbl_item_sizes AS c  ON c.size_id = b.size_id 
+        INNER JOIN tbl_item_management AS d ON d.trans_no=c.trans_no GROUP BY b.size_id,d.item_code
+        UNION ALL
+        SELECT b.size_id,d.item_code,0 AS qty, 0 AS order_pieces,SUM(dispatch_set) AS dispatch_set,
+        SUM(dispatch_pieces) AS dispatch_pieces FROM tbl_dispatch_details AS b INNER JOIN             
+        tbl_order_taking AS a ON a.order_no = b.order_no INNER JOIN tbl_item_sizes AS c ON c.size_id = 
+        b.size_id INNER JOIN tbl_item_management AS d ON d.trans_no=c.trans_no 
+        WHERE status_flag = 1 AND a.status_code = 1 GROUP BY b.size_id,d.item_code) AS t GROUP BY size_id,item_code) 
+        AS derv INNER JOIN tbl_def_item AS df ON df.item_id = derv.item_code WHERE pending_set > 0 AND 
+        ((fg_set) - (dispatch_set)) >= pending_set`);
 
         const total_fg = await client.query(`SELECT coalesce(sum(no_of_set),0) as totalset,coalesce(sum(no_of_pieces),0) as totalpiece FROM tbl_fg_items where to_char(date,'YYYY-MM-DD') :: date = 
         to_date('` + date + `','YYYY-MM-DD') `);
@@ -725,10 +774,60 @@ module.exports.dashboardList = async (req) => {
         const total_jobCard_categorywise = await client.query(`SELECT d.item_id,INITCAP(item_name) as item_name,coalesce(sum(coalesce(number_set,0)),0) as total_set,coalesce(sum(coalesce(total_pieces,0)),0) as total_piece
         from tbl_job_details  as a inner join tbl_item_sizes as b ON a.size_id = b.size_id inner join tbl_item_management as c on b.trans_no = c.trans_no inner join tbl_def_item as d on c.item_code = d.item_id where to_char(job_date,'YYYY-MM-DD') :: date = to_date('` + date + `','YYYY-MM-DD') group by d.item_id,item_name`)
 
-        var Total_Order = total_order && total_order.rows ? total_order.rows : []
+        const total_jobCard_Employeewise_Top = await client.query(`SELECT * FROM (SELECT a.employee_id, employee_name,sum(number_set) as set , sum(total_pieces) as 
+        pieces FROM tbl_job_details AS a INNER JOIN tbl_employee_details AS b on a.employee_id = b.employee_id
+        WHERE a.status_id = 3 AND to_char(a.completed_date,'YYYY-MM-DD') :: date = to_date('` + date + `','YYYY-MM-DD') 
+                 GROUP BY a.employee_id, employee_name) AS DERV ORDER BY pieces DESC limit 5`)
+
+        const total_jobCard_Employeewise_Least = await client.query(`SELECT * FROM (SELECT a.employee_id, employee_name,sum(number_set) as set , sum(total_pieces) as 
+        pieces FROM tbl_job_details AS a INNER JOIN tbl_employee_details AS b on a.employee_id = b.employee_id
+        WHERE a.status_id = 3 AND to_char(a.completed_date,'YYYY-MM-DD') :: date = to_date('` + date + `','YYYY-MM-DD') 
+                GROUP BY a.employee_id, employee_name) AS DERV ORDER BY pieces ASC limit 5`)
+
+        const pendingCount = await client.query(`select count(*) as pending_job,coalesce(sum(coalesce(number_set,0)),0) as total_set,coalesce(sum(coalesce(total_pieces,0)),0) as total_piece from tbl_job_details  as a inner join tbl_employee_details as b on a.employee_id = b.employee_id inner join tbl_def_item as c on a.item_id = c.item_id inner join tbl_machine as d on a.machine_id = d.machine_id 
+        left join tbl_item_sizes as f on f.size_id = a.design_id inner join tbl_def_status as g on g.status_id =  a.status_id left join tbl_color as h on h.color_id = a.color_id   
+        inner join tbl_def_jobtype as k on a.jobtype_id = k.jobtype_id 
+        inner join tbl_def_salary_status as l on a.salary_status_id = l.salary_status_id where to_char(a.completed_date,'YYYY-MM-DD') :: date = to_date('` + date + `','YYYY-MM-DD') and a.status_id = 4`);
+
+        const completedCount = await client.query(`select count(*) as completed_job,coalesce(sum(coalesce(number_set,0)),0) as total_set,coalesce(sum(coalesce(total_pieces,0)),0) as total_piece  from tbl_job_details  as a inner join tbl_employee_details as b on a.employee_id = b.employee_id inner join tbl_def_item as c on a.item_id = c.item_id inner join tbl_machine as d on a.machine_id = d.machine_id 
+        left join tbl_item_sizes as f on f.size_id = a.design_id inner join tbl_def_status as g on g.status_id =  a.status_id left join tbl_color as h on h.color_id = a.color_id   
+        inner join tbl_def_jobtype as k on a.jobtype_id = k.jobtype_id 
+        inner join tbl_def_salary_status as l on a.salary_status_id = l.salary_status_id where to_char(a.completed_date,'YYYY-MM-DD') :: date = to_date('` + date + `','YYYY-MM-DD') and a.status_id = 3`);
+
+        const JobCardLeastCount = await client.query(`SELECT * FROM (SELECT sum(number_set) as job_set , sum(total_pieces) as 
+        job_pieces,b.size_id,c.qr_code FROM 
+                 tbl_job_details as b 
+                 inner join tbl_item_sizes as c on b.size_id = c.size_id where to_char(b.completed_date,'YYYY-MM-DD') 
+                 :: date = to_date('` + date + `','YYYY-MM-DD') and status_id = 3 group by b.size_id,c.qr_code ) 
+                 as dev order by job_pieces asc limit 5`);
+
+        const JobCardTopCount = await client.query(`SELECT * FROM (SELECT sum(number_set) as job_set , sum(total_pieces) as 
+        job_pieces,b.size_id,c.qr_code FROM 
+                tbl_job_details as b 
+                inner join tbl_item_sizes as c on b.size_id = c.size_id where to_char(b.completed_date,'YYYY-MM-DD') 
+                :: date = to_date('` + date + `','YYYY-MM-DD') and status_id = 3 group by b.size_id,c.qr_code ) 
+                as dev order by job_pieces desc limit 5`);
+
+         const JobCardCatagories= await client.query(`SELECT b.item_name,b.item_id,sum(number_set) as set , sum(total_pieces) as 
+         pieces FROM tbl_job_details as a inner join tbl_def_item as b on a.item_id = b.item_id
+         where to_char(completed_date,'YYYY-MM-DD') ::date = to_date('` + date + `','YYYY-MM-DD') AND status_id = 3 GROUP BY b.item_name,b.item_id`);
+
+        var Total_Order = total_order && total_order.rows ? total_order.rows : [];
+        var Total_Count_Fg = total_count_fg && total_count_fg.rows[0]['count'] ? total_count_fg.rows[0]['count'] : 0;
+
         var Overall_Total_Order = total_order_all && total_order_all.rows && total_order_all.rows[0].total_order ? total_order_all.rows[0].total_order : 0
         var Total_Cancel_Order = total_Cancelled_order && total_Cancelled_order.rows && total_Cancelled_order.rows[0].total_cancel_order ? total_Cancelled_order.rows[0].total_cancel_order : 0;
+        
+        var Total_Current_Stock_List = current_Stock && current_Stock.rows && current_Stock.rows ? current_Stock.rows : [];
+        var Total_Cancellled_Set_Order = total_cancelled_set_order && total_cancelled_set_order.rows && total_cancelled_set_order.rows ? total_cancelled_set_order.rows : [];
+        
+        var TotalJobCardEmployeewiseTop = total_jobCard_Employeewise_Top && total_jobCard_Employeewise_Top.rows ? total_jobCard_Employeewise_Top.rows : []
+        var TotalJobCardEmployeewiseLeast = total_jobCard_Employeewise_Least && total_jobCard_Employeewise_Least.rows ? total_jobCard_Employeewise_Least.rows : []
+
         var TopFive_customerwiseOrder = top_five_customer_wise_order && top_five_customer_wise_order.rows ? top_five_customer_wise_order.rows : []
+        var JobCardLeastTooltip = JobCardLeastCount && JobCardLeastCount.rows ? JobCardLeastCount.rows : []
+        var JobCardTopTooltip = JobCardTopCount && JobCardTopCount.rows ? JobCardTopCount.rows : []
+        var JobCardCatagoriesList = JobCardCatagories && JobCardCatagories.rows ? JobCardCatagories.rows : []
 
         // result = []; 
         // if (TopFive_customerwiseOrder.length > 0) {
@@ -801,17 +900,35 @@ module.exports.dashboardList = async (req) => {
         // }
         
         var Total_Dispatch = total_dispatch && total_dispatch.rows ? total_dispatch.rows : []
+        var Total_Cancelled_Dispatch = total_cancelled_dispatch && total_cancelled_dispatch.rows ? total_cancelled_dispatch.rows : []
+        var Total_Ready_Dispatch_Catagory = total_ready_dispatch_set && total_ready_dispatch_set.rows ? total_ready_dispatch_set.rows : []
+
+        var Total_Ready_Dispatch = total_Ready_dispatch_set && total_Ready_dispatch_set.rows ? total_Ready_dispatch_set.rows : []
+
+        var Total_Count_Dispatch = total_Count_dispatch && total_Count_dispatch.rows[0]['count'] ? total_Count_dispatch.rows[0]['count'] : []
+        var Total_Cancel_Count_Dispatch = total_Cancel_Count_dispatch && total_Cancel_Count_dispatch.rows[0]['count'] ? total_Cancel_Count_dispatch.rows[0]['count'] : [];
+        
         var Total_FG = total_fg && total_fg.rows ? total_fg.rows : []
         var Total_Job = total_job && total_job.rows ? total_job.rows : []
         var Total_Order_Category_Wise = total_order_categorywise && total_order_categorywise.rows ? total_order_categorywise.rows : []
         var Total_Dispatch_Category_Wise = total_dispatch_categorywise && total_dispatch_categorywise.rows ? total_dispatch_categorywise.rows : [] 
         var Total_Fg_Category_Wise = total_fg_categorywise && total_fg_categorywise.rows ? total_fg_categorywise.rows : [] 
-        var Total_JobCard_Category_Wise = total_jobCard_categorywise && total_jobCard_categorywise.rows ? total_jobCard_categorywise.rows : [] 
-        
+        var Total_JobCard_Category_Wise = total_jobCard_categorywise && total_jobCard_categorywise.rows ? total_jobCard_categorywise.rows : [];
 
-      
+        var Pending_Job = pendingCount && pendingCount.rows[0].pending_job ? pendingCount.rows[0].pending_job : 0
+        var Pending_Job_Set = pendingCount && pendingCount.rows[0].total_set ? pendingCount.rows[0].total_set : 0
+        var Pending_Job_Pieces = pendingCount && pendingCount.rows[0].total_piece ? pendingCount.rows[0].total_piece : 0
+        var Completed_Job = completedCount && completedCount.rows[0].completed_job ? completedCount.rows[0].completed_job : 0
+        var Completed_Job_Set = completedCount && completedCount.rows[0].total_set ? completedCount.rows[0].total_set : 0
+        var Completed_Job_Pieces = completedCount && completedCount.rows[0].total_piece ? completedCount.rows[0].total_piece : 0
 
-        responseData = { "TotalOrder": Total_Order, "OverallTotalOrder" : Overall_Total_Order, "TotalCancelOrder": Total_Cancel_Order,  "TopFiveCustomerwiseOrder" : TopFive_customerwiseOrder, "LeastFiveCustomerwiseOrder": Leastfive_customerwiseOrder,  "TopFiveItemWiseOrder" : TopFive_itemWiseOrder, "LeastFiveItemWiseOrder": LeastFive_itemWiseOrder,  "TopFiveAgentWiseOrder" : TopFive_agentWiseOrder, "LeastFiveAgentWiseOrder": LeastFive_agentWiseOrder, "TotalDispatch": Total_Dispatch, "TotalFG": Total_FG,  "TotalJob": Total_Job, "TotalOrderCategorywise": Total_Order_Category_Wise, "TotalDispatchCategorywise" : Total_Dispatch_Category_Wise, "TotalFgCategorywise" :Total_Fg_Category_Wise, "TotalJobCardCategorywise" : Total_JobCard_Category_Wise }
+        var responseTotalData = {"PendingJob": Pending_Job, "PendingJobSet": Pending_Job_Set, "PendingJobPiece": Pending_Job_Pieces, "CompletedJob": Completed_Job, "CompletedJobSet": Completed_Job_Set, "CompletedJobPiece": Completed_Job_Pieces}
+
+        responseData = { "TotalOrder": Total_Order, "OverallTotalOrder" : Overall_Total_Order, "TotalCancelOrder": Total_Cancel_Order,
+        "Total_Cancellled_Set_Order": Total_Cancellled_Set_Order, "TotalCurrentStockList":Total_Current_Stock_List, 
+        "TotalCancelDispatch":Total_Cancel_Count_Dispatch,"TopFiveCustomerwiseOrder" : TopFive_customerwiseOrder, "LeastFiveCustomerwiseOrder": Leastfive_customerwiseOrder, "TotalCountDispatch": Total_Count_Dispatch, "TopFiveItemWiseOrder" : TopFive_itemWiseOrder, "LeastFiveItemWiseOrder": LeastFive_itemWiseOrder,  "TopFiveAgentWiseOrder" : TopFive_agentWiseOrder, "LeastFiveAgentWiseOrder": LeastFive_agentWiseOrder, "TotalDispatch": Total_Dispatch,"TotalCancelledDispatch":Total_Cancelled_Dispatch,  
+        "TotalReadyDispatch":Total_Ready_Dispatch, "ReadyToDispatchCategory":Total_Ready_Dispatch_Catagory,"TotalFG": Total_FG,  "TotalJob": Total_Job, "TotalOrderCategorywise": Total_Order_Category_Wise, "TotalDispatchCategorywise" : Total_Dispatch_Category_Wise, "TotalFgCategorywise" :Total_Fg_Category_Wise, "TotalJobCardCategorywise" : Total_JobCard_Category_Wise, "TotalCountFG" : Total_Count_Fg, JobCardList: responseTotalData, "JobCardLeastTooltip": JobCardLeastTooltip, "JobCardTopTooltip": JobCardTopTooltip,   "JobCardCatagoriesList": JobCardCatagoriesList, "TotalJobCardEmployeewiseLeast": TotalJobCardEmployeewiseLeast, "TotalJobCardEmployeewiseTop": TotalJobCardEmployeewiseTop
+       }
         if (responseData) {
           return responseData;
         }

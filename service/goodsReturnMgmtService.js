@@ -177,7 +177,6 @@ module.exports.getDispatchListBasedOnItemCustomer = async (req) => {
                     client.end();
                 }
                 let dispatchedArray = dispatchedList && dispatchedList.rows ? dispatchedList.rows : [];
-                console.log(dispatchedArray, "dispatchedArray")
                 if (dispatchedArray.length > 0) {
                     // let set = Number(item_array[k].goods_return_set)
                     // let pieces = Number(item_array[k].goods_return_pieces)
@@ -197,9 +196,6 @@ module.exports.getDispatchListBasedOnItemCustomer = async (req) => {
                         dispatchedArray[i].goods_return_pieces = pieces >= 0 ? dispatchedArray[i].dispatch_pieces : dispatchedArray[i].dispatch_pieces - Math.abs(pieces)
                         dispatch_no = dispatchedArray[i].dispatch_no
                         final_array.push(dispatchedArray[i])
-                        console.log(dispatch_set, "dispatch_set")
-                        console.log(goods_return_set, "goods_return_set")
-                        console.log(set, "set")
                         if ((set <= 0 && Number(dispatch_set) < Number(goods_return_set)) || (dispatchedArray.length == count && Number(dispatch_set) < Number(goods_return_set))) {
                             responseData = { "dispatchedArray": [], "Message": "Goods return sets should be less than or equal to " + dispatch_set }
                             return responseData;
@@ -308,7 +304,7 @@ module.exports.saveGoodsReturn = async (req) => {
                 if (client) {
                     client.end();
                 }
-                responseData = { "message": "Dispatched successfully", "statusFlag": 1 };
+                responseData = { "message": "Goods returned successfully", "statusFlag": 1 };
                 if (responseData) {
                     return responseData;
                 }

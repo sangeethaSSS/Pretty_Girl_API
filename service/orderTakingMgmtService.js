@@ -149,7 +149,7 @@ module.exports.getCurrentOrderStock = async (req) => {
         const { itemcode, order_date } = decoded.data       
         const order_qty = await client.query(`SELECT coalesce(sum(b.qty),0) as order_qty from tbl_order_taking as a inner join tbl_order_taking_items as b on a.order_no = b.order_no where  to_char(a.order_date,'YYYY-MM-DD') :: date = to_date('${order_date}','YYYY-MM-DD') and b.size_id = ${itemcode}`);
         let orderqty = order_qty && order_qty.rows && order_qty.rows[0] ? order_qty.rows[0].order_qty : 0;
-        const current_stock = await client.query(`SELECT coalesce(sum(coalesce(no_of_set,0))- coalesce((SELECT sum(dispatch_set) from tbl_dispatch_details where status_flag = 1 and size_id = a.size_id ),0),0) as current_set from tbl_fg_items as a inner join tbl_item_sizes as b on b.size_id=a.size_id where a.size_id = ${itemcode}  group by a.size_id`);
+        const current_stock = await client.query(`SELECT coalesce(COALESCE(sum(coalesce(no_of_set,0)) + COALESCE((SELECT sum(goods_return_set) from tbl_goods_return WHERE status_flag = 1 and size_id = a.size_id ),0),0)- coalesce((SELECT sum(dispatch_set) from tbl_dispatch_details where status_flag = 1 and size_id = a.size_id ),0),0) as current_set from tbl_fg_items as a inner join tbl_item_sizes as b on b.size_id=a.size_id where a.size_id = ${itemcode}  group by a.size_id`);
         let currentstock = current_stock && current_stock.rows && current_stock.rows[0] ? current_stock.rows[0].current_set : 0;
         if (client) {
           client.end();
@@ -970,8 +970,7 @@ module.exports.sendOrderToWhatsapp = async (req) => {
               let responseData = {
                 "OrderSlip": order_item_details, "CustomerArray": order_customer_details, "CompanyArray": Company_Array ,"order_id":order_id, "user_mobile_no":user_mobileno,"ItemLists":ItemLists
               } 
-              console.log("Start")
-              await generateOrderPDF(responseData,req, order_details[k]);
+              // await generateOrderPDF(responseData,req, order_details[k]);
             }
           }
          
@@ -1100,14 +1099,14 @@ const generateOrderPDF = async (responseData, req, List) => {
       responseData.CustomerArray['address'] = addr;
 
       let total_pcs_value = 0, short_frock_set = 0, short_frock_pcs = 0, long_frock_set = 0, long_frock_pcs = 0, total_set_value = 0
-      let row = responseData.OrderSlip || []
       let remark = ''
+      let row = responseData.OrderSlip || []
       for (let i = 0; i < row.length; i++) {
-        remark = row[0].remarks
         total_set_value += row[i].qty
         let total_pcs = 0
         total_pcs = row[i].total_set * row[i].qty
         total_pcs_value += total_pcs
+        remark = row[0].remarks
         if (row[i].item_code === 1) {
           short_frock_set += row[i].qty
           short_frock_pcs += row[i].total_set * row[i].qty
