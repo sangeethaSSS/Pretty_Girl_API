@@ -148,4 +148,13 @@ joiSchemaValidation.validateBody(orderTakingSchema.holdOrderTakingJwt),
 orderTakingController.holdOrderTaking
 )
 
+router.post('/updateBlockCustomerJwt',
+joiSchemaValidation.validateBody(orderTakingSchema.updateBlockCustomerJwt),
+orderTakingController.updateBlockCustomerJwt
+)
+router.post('/updateBlockCustomer',
+joiSchemaValidation.validateBody(orderTakingSchema.updateBlockCustomerJwt),
+orderTakingController.updateBlockCustomer
+)
+
 module.exports = router;

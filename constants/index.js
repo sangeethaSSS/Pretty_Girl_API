@@ -91,7 +91,8 @@ module.exports = {
     ALREADY_SYNC : 'Already synced',
     ORDER_HOLD:'Order hold Successfully',
     ORDER_UNHOLD:'Order unhold Successfully',
-    ORDER_STATUS: '1,3'
+    ORDER_STATUS: '1,3',
+    CUSTOMER_BLOCKED:'Customer Blocked Successfully',
   },
   //login message 
   loginmessage:{

@@ -37,7 +37,8 @@ module.exports.ChangeAutoCompanyName = async (req) => {
       if (decoded != null) {
         const { searchvalue } = decoded.data
         if (searchvalue !== "") {
-          const CustomerList = await client.query(`select distinct a.customer_code as value, a.customer_name as label,a.customer_name,a.contact_person,a.mobile_no,a.alternative_mobile_no,a.street,a.area,a.city,a.pincode,a.state,a.gstin_no from tbl_customer as a where a.status_code = 1 and Lower(a.customer_name) like '%'||Lower($1)||'%' order by a.customer_name`, [searchvalue])
+          // const CustomerList = await client.query(`select distinct a.customer_code as value, a.customer_name as label,a.customer_name,a.contact_person,a.mobile_no,a.alternative_mobile_no,a.street,a.area,a.city,a.pincode,a.state,a.gstin_no from tbl_customer as a where a.status_code = 1 and Lower(a.customer_name) like '%'||Lower($1)||'%' order by a.customer_name`, [searchvalue])
+          const CustomerList = await client.query(`select distinct a.customer_code as value, a.customer_name as label,a.customer_name,a.contact_person,a.mobile_no,a.alternative_mobile_no,a.street,a.area,a.city,a.pincode,a.state,a.gstin_no,status_code from tbl_customer as a where a.status_code in (` + constants.userMessage.ORDER_STATUS + `) and Lower(a.customer_name) like '%'||Lower($1)||'%' order by a.customer_name`, [searchvalue])
           if (client) { client.end(); }
           let List_Array = CustomerList && CustomerList.rows ? CustomerList.rows : [];
           var response = {}
@@ -1364,6 +1365,72 @@ module.exports.holdOrderTaking = async (req) => {
             client.end();
           }
          
+        }
+      }
+      else {
+        if (client) { client.end(); }
+      }
+    } else {
+      if (client) { client.end(); }
+      throw new Error(constants.userMessage.TOKEN_MISSING);
+    }
+  } catch (error) {
+    if (client) { client.end(); }
+    throw new Error(error);
+  }
+  finally {
+    if (client) { client.end(); }// always close the resource
+  }
+}
+
+//Customer Block jwt 
+module.exports.updateBlockCustomerJwt = async (req) => {
+  try {
+    const token = await commonService.jwtCreate(req);
+    return { token };
+  } catch (error) {
+    throw new Error(error);
+  }
+}
+
+//Hold Order Taking service
+module.exports.updateBlockCustomer = async (req) => {
+  const client = new Client({
+    user: connectionString.user,
+    host: connectionString.host,
+    database: connectionString.database,
+    password: connectionString.password,
+    port: connectionString.port,
+  });
+  await client.connect();
+  try {
+    if (req.jwtToken) {
+      var responseData = {}
+      const decoded = await commonService.jwtVerify(req.jwtToken);
+      const { user_id, customer_code } = decoded.data;
+      if (decoded) {
+        const taking_Count = await client.query(`select count(*) as count FROM tbl_customer where lower(customer_code) = lower($1)`, [customer_code])
+        var count_Check = taking_Count && taking_Count.rows[0].count;
+        if (count_Check != 0 && count_Check != null && count_Check != undefined && count_Check != "") {
+
+          var maker_id = await commonService.insertLogs(user_id, "Block Customer");
+
+          const block_customer_result = await client.query(`Update tbl_customer set "status_code"=$1 ,"maker_id" = $2 where lower(customer_code) = lower($3) `, [3, maker_id, customer_code]);
+
+          let blockcustomerresultcode = block_customer_result && block_customer_result.rowCount ? block_customer_result.rowCount : 0;
+          if (client) {
+            client.end();
+          }
+          if (blockcustomerresultcode == 1) {
+            responseData = { "message": constants.userMessage.CUSTOMER_BLOCKED, "statusFlag": 1 }
+            if (responseData) {
+              return responseData;
+            }
+            else {
+              return '';
+            }
+          }
+          else { return '' }
         }
       }
       else {

@@ -487,3 +487,33 @@ module.exports.holdOrderTaking = async (req, res) => {
   }
   return res.send(response);
 }
+
+//Update Customer Block Jwt Module
+module.exports.updateBlockCustomerJwt = async (req, res) => {
+  let response = {};
+  try {
+    const responseFromService = await orderTakingMgmtService.updateBlockCustomerJwt(req.body);
+    if (!responseFromService.token) {
+      response.status = 200;
+    }
+    response.body = responseFromService;
+  } catch (error) {
+    response.message = error.message;
+  }
+  return res.send(response);
+}
+
+//Update Customer Block Module
+module.exports.updateBlockCustomer = async (req, res) => {
+  let response = {};
+  try {
+    const responseFromService = await orderTakingMgmtService.updateBlockCustomer(req.body);
+    if (!responseFromService.token) {
+      response.status = 200;
+    }
+    response.body = responseFromService;
+  } catch (error) {
+    response.message = error.message;
+  }
+  return res.send(response);
+}

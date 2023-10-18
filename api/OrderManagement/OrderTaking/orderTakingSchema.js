@@ -145,4 +145,9 @@ module.exports.holdOrderTakingJwt = Joi.object().keys({
   status_code:Joi.number().required(),
   jwtToken: Joi.string().allow(''), 
 });
+module.exports.updateBlockCustomerJwt = Joi.object().keys({
+  user_id: Joi.number().required(),
+  customer_code:Joi.string().required(),
+  jwtToken: Joi.string().allow(''), 
+});
 
