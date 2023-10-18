@@ -9,6 +9,15 @@ module.exports.ChangeAutoCompanyName = Joi.object().keys({
     jwtToken: Joi.string().required(), 
 });
 
+module.exports.ShowCustomerOrdersjwt = Joi.object().keys({
+  user_id: Joi.number().required(),
+  customer_code:Joi.string().required().allow(''),
+});
+
+module.exports.ShowCustomerOrders = Joi.object().keys({
+  jwtToken: Joi.string().required(), 
+});
+
 module.exports.ChangeAutoItemCodejwt = Joi.object().keys({
     user_id: Joi.number().required(),
     itemcode:Joi.number().required(),
@@ -17,7 +26,6 @@ module.exports.ChangeAutoItemCodejwt = Joi.object().keys({
 module.exports.ChangeAutoItemCode = Joi.object().keys({
     jwtToken: Joi.string().required(), 
 });
-
 module.exports.getCurrentOrderStockJwt = Joi.object().keys({
   user_id: Joi.number().required(),
   itemcode:Joi.number().required(),
@@ -60,6 +68,7 @@ module.exports.orderTakingListjwt = Joi.object().keys({
     user_id: Joi.number().required(),
     from_date:Joi.string().required(),
     to_date: Joi.string().required(),
+    status_id: Joi.number().required(),
   });
   module.exports.orderTakingList = Joi.object().keys({
     jwtToken: Joi.string().required(), 
@@ -130,3 +139,10 @@ module.exports.sendOrderToWhatsappJwt = Joi.object().keys({
 module.exports.sendOrderToWhatsapp = Joi.object().keys({ 
   jwtToken: Joi.string().required(), 
 });
+module.exports.holdOrderTakingJwt = Joi.object().keys({
+  user_id: Joi.number().required(),
+  order_no:Joi.string().required(),
+  status_code:Joi.number().required(),
+  jwtToken: Joi.string().allow(''), 
+});
+

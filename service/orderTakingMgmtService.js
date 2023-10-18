@@ -69,6 +69,67 @@ module.exports.ChangeAutoCompanyName = async (req) => {
   }
 }
 
+module.exports.ShowCustomerOrdersjwt = async (req) => {
+  try {
+    const token = await commonService.jwtCreate(req);
+    return { token };
+
+  } catch (error) {
+    throw new Error(error);
+  }
+}
+
+module.exports.ShowCustomerOrders = async (req) => {
+  const client = new Client({
+    user: connectionString.user,
+    host: connectionString.host,
+    database: connectionString.database,
+    password: connectionString.password,
+    port: connectionString.port,
+  });
+  await client.connect();
+  try {
+    if (req.jwtToken) {
+      const decoded = await commonService.jwtVerify(req.jwtToken);
+      if (decoded != null) {
+        const { customer_code } = decoded.data
+        if (customer_code !== "") {
+          const CustomerList = await client.query(`SELECT to_char(a.order_date,'DD-MM-YYYY') as order_date,a.order_no, a.customer_code,d.customer_name, coalesce(sum(qty),0) as totalset,coalesce(sum(qty*coalesce(c.total_set,'0')::Integer),0) as totalpiece FROM tbl_order_taking as a inner join tbl_order_taking_items 
+          as b on a.order_no = b.order_no inner join tbl_item_sizes as c ON c.size_id = b.size_id inner join tbl_customer as d on d.customer_code = a.customer_code where a.customer_code = $1 and a.status_code = 3 group by
+      a.customer_code, d.customer_name, a.order_date,a.order_no`, [customer_code])
+          if (client) { client.end(); }
+          let List_Array = CustomerList && CustomerList.rows ? CustomerList.rows : [];
+          var response = {}
+          response = { "CustomerList": List_Array }
+          if (response) {
+            return response
+          }
+          else {
+            return response
+          }
+        }
+        else {
+          response = { "CompanyList": [] }
+          return response
+        }
+      } else {
+        if (client) { client.end(); }
+        throw new Error(constants.userMessage.USER_NOT_FOUND);
+      }
+    } else {
+      if (client) { client.end(); }
+      throw new Error(constants.token.INVALID_TOKEN);
+    }
+  } catch (error) {
+    if (client) { client.end(); }
+    throw new Error(error);
+  } finally {
+    if (client) { client.end(); }
+  }
+}
+
+
+
 //Bind Item Code
 module.exports.ChangeAutoItemCodejwt = async (req) => {
   try {
@@ -358,13 +419,17 @@ module.exports.orderTakingList = async (req) => {
   try {
     if (req.jwtToken) {
       const decoded = await commonService.jwtVerify(req.jwtToken);
-      const { from_date, to_date } = decoded.data;
+      const { from_date, to_date, status_id } = decoded.data;
+      var status_code = "1=1";
       if (decoded) {
         if (from_date && to_date) {
           datediff = `to_char(a.order_date,'YYYY-MM-DD') :: date BETWEEN `
             .concat(`to_date('` + from_date + `','YYYY-MM-DD') AND to_date('` + to_date + `','YYYY-MM-DD')`);
         }
-        const order_Result = await client.query(`select a.ref_no,a.order_no,b.customer_code,b.customer_name,b.city,b.contact_person,b.mobile_no,b.gstin_no,b.alternative_mobile_no,(select coalesce(sum(qty),0) from tbl_order_taking_items where order_no= a.order_no) as totalset,a.order_date as order_date,(select user_name from tbl_user where user_id = (select user_id from tbl_userlog  where autonum = a.maker_id limit 1)) as employeename,(select coalesce(to_char(log_date,'DD-MM-YYYY HH12:MI PM'),'') from tbl_userlog where autonum = a.maker_id limit 1) as createddate,a.type, (SELECT count(dispatch_no) FROM tbl_dispatch_details where order_no = a.order_no and status_flag = 1) as dispatch_count from tbl_order_taking as a inner join tbl_customer as b on a.customer_code = b.customer_code where a.status_code = 1 and  ` + datediff + ` order by a.created_date desc`);
+        if (status_id != "0" && status_id != 0) {
+          status_code = `a.status_code='` + status_id + `' `;
+        }
+        const order_Result = await client.query(`select a.ref_no,a.order_no,b.customer_code,b.customer_name,b.city,b.contact_person,b.mobile_no,b.gstin_no,b.alternative_mobile_no,(select coalesce(sum(qty),0) from tbl_order_taking_items where order_no= a.order_no) as totalset,a.order_date as order_date,(select user_name from tbl_user where user_id = (select user_id from tbl_userlog  where autonum = a.maker_id limit 1)) as employeename,(select coalesce(to_char(log_date,'DD-MM-YYYY HH12:MI PM'),'') from tbl_userlog where autonum = a.maker_id limit 1) as createddate,a.type, (SELECT count(dispatch_no) FROM tbl_dispatch_details where order_no = a.order_no and status_flag = 1) as dispatch_count,a.status_code,case when a.status_code=1 then 'Active' else case when a.status_code=3 then 'Hold' else 'Cancelled' end end as statusname from tbl_order_taking as a inner join tbl_customer as b on a.customer_code = b.customer_code where  ` + datediff + `  and ` + status_code + ` order by a.created_date desc`);
 
         let Lists = order_Result && order_Result.rows ? order_Result.rows : [];
 
@@ -1229,3 +1294,90 @@ const generateOrderPDF = async (responseData, req, List) => {
     throw new Error(error);
   }
 } 
+
+//Hold Order Taking jwt 
+module.exports.holdOrderTakingJwt = async (req) => {
+  try {
+    const token = await commonService.jwtCreate(req);
+    return { token };
+  } catch (error) {
+    throw new Error(error);
+  }
+}
+
+//Hold Order Taking service
+module.exports.holdOrderTaking = async (req) => {
+  const client = new Client({
+    user: connectionString.user,
+    host: connectionString.host,
+    database: connectionString.database,
+    password: connectionString.password,
+    port: connectionString.port,
+  });
+  await client.connect();
+  try {
+    if (req.jwtToken) {
+      var responseData = {}
+      const decoded = await commonService.jwtVerify(req.jwtToken);
+      const { user_id, order_no, status_code } = decoded.data;
+      if (decoded) {
+        const taking_Count = await client.query(`select count(*) as count FROM tbl_order_taking where lower(order_no) = lower($1)`, [order_no])
+        var count_Check = taking_Count && taking_Count.rows[0].count;
+        if (count_Check != 0 && count_Check != null && count_Check != undefined && count_Check != "") {
+          
+          if (status_code === 1) {
+            var maker_id = await commonService.insertLogs(user_id, "Hold Order Taking");
+          
+            await client.query(`Update tbl_order_taking_items set "status_code"=$1 ,"maker_id" = $2 where lower(order_no) = lower($3) `, [3, maker_id, order_no]);
+            const hold_unhold_result = await client.query(`Update tbl_order_taking set "status_code"=$1 ,"maker_id" = $2 where lower(order_no) = lower($3) `, [3, maker_id, order_no]);
+            let holdunholdresultcode = hold_unhold_result && hold_unhold_result.rowCount ? hold_unhold_result.rowCount : 0;
+            if (holdunholdresultcode == 1) {
+              responseData = { "message": constants.userMessage.ORDER_HOLD, "statusFlag": 1 }
+              if (responseData) {
+                return responseData;
+              }
+              else {
+                return '';
+              }
+            }
+            else { return '' }
+            
+          }          
+          if (status_code === 3) {
+            var maker_id = await commonService.insertLogs(user_id, "Unhold Order Taking");
+          
+            await client.query(`Update tbl_order_taking_items set "status_code"=$1 ,"maker_id" = $2 where lower(order_no) = lower($3) `, [1, maker_id, order_no]);
+            const hold_unhold_result = await client.query(`Update tbl_order_taking set "status_code"=$1 ,"maker_id" = $2 where lower(order_no) = lower($3) `, [1, maker_id, order_no]);
+            let holdunholdresultcode = hold_unhold_result && hold_unhold_result.rowCount ? hold_unhold_result.rowCount : 0;
+            if (holdunholdresultcode == 1) {
+              responseData = { "message": constants.userMessage.ORDER_UNHOLD, "statusFlag": 1 }
+              if (responseData) {
+                return responseData;
+              }
+              else {
+                return '';
+              }
+            }
+            else { return '' }
+          } 
+          if (client) {
+            client.end();
+          }
+         
+        }
+      }
+      else {
+        if (client) { client.end(); }
+      }
+    } else {
+      if (client) { client.end(); }
+      throw new Error(constants.userMessage.TOKEN_MISSING);
+    }
+  } catch (error) {
+    if (client) { client.end(); }
+    throw new Error(error);
+  }
+  finally {
+    if (client) { client.end(); }// always close the resource
+  }
+}

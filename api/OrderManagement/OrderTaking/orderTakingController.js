@@ -32,6 +32,36 @@ module.exports.ChangeAutoCompanyName = async (req, res) => {
   return res.send(response);
 }
 
+//Change Auto Company Name JWt Module
+module.exports.ShowCustomerOrdersjwt = async (req, res) => {
+  let response = {};
+  try {
+    const responseFromService = await orderTakingMgmtService.ShowCustomerOrdersjwt(req.body);
+    if (!responseFromService.token) {
+      response.status = 200;
+    }
+    response.body = responseFromService;
+  } catch (error) {
+    response.message = error.message;
+  }
+  return res.send(response);
+}
+
+//Change Auto Company Name Module
+module.exports.ShowCustomerOrders = async (req, res) => {
+  let response = {};
+  try {
+    const responseFromService = await orderTakingMgmtService.ShowCustomerOrders(req.body);
+    if (!responseFromService.token) {
+      response.status = 200;
+    }
+    response.body = responseFromService;
+  } catch (error) {
+    response.message = error.message;
+  }
+  return res.send(response);
+}
+
 //Change Auto Design Name JWt Module
 module.exports.ChangeAutoItemCodejwt = async (req, res) => {
   let response = {};
@@ -421,6 +451,35 @@ module.exports.sendOrderToWhatsapp = async (req, res) => {
     if (!responseFromService.token) {
       response.status = 200;
       response.message = constants.success_message.LISTED_SUCCESS;
+    }
+    response.body = responseFromService;
+  } catch (error) {
+    response.message = error.message;
+  }
+  return res.send(response);
+}
+//Hold Order Taking Jwt Module
+module.exports.holdOrderTakingJwt = async (req, res) => {
+  let response = {};
+  try {
+    const responseFromService = await orderTakingMgmtService.holdOrderTakingJwt(req.body);
+    if (!responseFromService.token) {
+      response.status = 200;
+    }
+    response.body = responseFromService;
+  } catch (error) {
+    response.message = error.message;
+  }
+  return res.send(response);
+}
+
+//Hold Order Taking Module
+module.exports.holdOrderTaking = async (req, res) => {
+  let response = {};
+  try {
+    const responseFromService = await orderTakingMgmtService.holdOrderTaking(req.body);
+    if (!responseFromService.token) {
+      response.status = 200;
     }
     response.body = responseFromService;
   } catch (error) {

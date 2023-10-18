@@ -88,8 +88,10 @@ module.exports = {
     IRONMACHINENO_DUPLICATE: 'Iron machine no. already exist',
     CANCEL_SUCCESS: 'Cancelled Successfully',
     CANCEL_FAILED: 'Unable to Cancel',
-    ALREADY_SYNC : 'Already synced'
-
+    ALREADY_SYNC : 'Already synced',
+    ORDER_HOLD:'Order hold Successfully',
+    ORDER_UNHOLD:'Order unhold Successfully',
+    ORDER_STATUS: '1,3'
   },
   //login message 
   loginmessage:{

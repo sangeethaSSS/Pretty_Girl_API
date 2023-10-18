@@ -16,6 +16,15 @@ joiSchemaValidation.validateBody(orderTakingSchema.ChangeAutoCompanyName),
 orderTakingController.ChangeAutoCompanyName
 )
 
+router.post('/ShowCustomerOrdersjwt',
+joiSchemaValidation.validateBody(orderTakingSchema.ShowCustomerOrdersjwt),
+orderTakingController.ShowCustomerOrdersjwt
+)
+router.post('/ShowCustomerOrders',
+joiSchemaValidation.validateBody(orderTakingSchema.ShowCustomerOrders),
+orderTakingController.ShowCustomerOrders
+)
+
 router.post('/ChangeAutoItemCodejwt',
 joiSchemaValidation.validateBody(orderTakingSchema.ChangeAutoItemCodejwt),
 orderTakingController.ChangeAutoItemCodejwt
@@ -130,5 +139,13 @@ orderTakingController.sendOrderToWhatsapp
 )
 
 
+router.post('/holdOrderTakingJwt',
+joiSchemaValidation.validateBody(orderTakingSchema.holdOrderTakingJwt),
+orderTakingController.holdOrderTakingJwt
+)
+router.post('/holdOrderTaking',
+joiSchemaValidation.validateBody(orderTakingSchema.holdOrderTakingJwt),
+orderTakingController.holdOrderTaking
+)
 
 module.exports = router;
