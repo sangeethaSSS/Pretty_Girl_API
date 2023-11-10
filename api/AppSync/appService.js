@@ -1374,3 +1374,63 @@ module.exports.GetDispatchReportList = async (req) => {
     } // always close the resource
   }
 };
+
+//Delete Order Taking
+module.exports.holdOrderTaking = async (req) => {
+  const client = new Client({
+    user: connectionString.user,
+    host: connectionString.host,
+    database: connectionString.database,
+    password: connectionString.password,
+    port: connectionString.port,
+  });
+  await client.connect();
+  try {
+    if (req.jwtToken) {
+      const decoded = await commonService.jwtVerify(req.jwtToken); 
+      const { device_id } = decoded.data;
+      let { jsonOrder } = req; 
+      var response = [] ;
+      if (device_id) {
+        let Lists = jsonOrder.JSonObject;
+        if (Lists && Lists.length > 0) {
+          for (var i = 0; i < Lists.length; i++) {
+            const exeUserQuery = await client.query(`select count(1) as total from tbl_order_taking  where ref_no=$1 and order_no =$2 and device_code=$3`, [Lists[i].ref_no,Lists[i].order_no,Lists[i].device_code]);
+            let totalcount = exeUserQuery?.rows?.[0].total;
+            if (Number(totalcount) > 0) {
+                //Insert User Log
+                var makerid =await commonService.insertLogs(Lists[i].device_code, "Hold Order Taking Via Mobile - " + Lists[i].device_code + " - " + Lists[i].order_no);
+                await client.query(`Update tbl_order_taking_items set "status_code"=$1 ,"maker_id" = $2 where lower(order_no) = lower($3) `, [Lists[i].status_code, makerid, Lists[i].order_no]);
+              const exeQuerys = await client.query(`UPDATE tbl_order_taking set order_date=$1, customer_code=$2, created_date=$3, status_code=$4, sync_date=now(),maker_id=$5 where  ref_no=$6 and order_no=$7 and  device_code=$8  RETURNING order_no`, [Lists[i].order_date, Lists[i].customer_code, Lists[i].created_date, Lists[i].status_code, makerid, Lists[i].ref_no, Lists[i].order_no, Lists[i].device_code]);
+              response.push(exeQuerys.rows[0].order_no);
+            }              
+          }
+        }
+ 
+        if (client) {
+          client.end();
+        } 
+        return {order: response };
+      } else {
+        if (client) {
+          client.end();
+        }
+        return {order: [] };
+      }
+    } else {
+      if (client) {
+        client.end();
+      }
+      throw new Error(constants.userMessage.TOKEN_MISSING);
+    }
+  } catch (error) {
+    if (client) {
+      client.end();
+    }
+    throw new Error(error);
+  } finally {
+    if (client) {
+      client.end();
+    } // always close the resource
+  }
+};
