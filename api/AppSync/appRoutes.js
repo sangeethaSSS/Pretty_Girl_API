@@ -145,5 +145,16 @@ appController.GetDispatchReportList
 )
 
 
+//Hold Order Taking
+router.post('/holdOrderTakingJwt',
+joiSchemaValidation.validateBody(loginSchema.holdOrderSchema),
+appController.createJwtToken
+)
+
+router.post('/holdOrderTaking',
+joiSchemaValidation.validateBody(loginSchema.holdOrderSchema),
+appController.holdOrderTaking
+)
+
 
 module.exports = router;

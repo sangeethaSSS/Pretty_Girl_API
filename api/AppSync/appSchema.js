@@ -77,3 +77,10 @@ module.exports.GetDispatchReportList = Joi.object().keys({
   from_date: Joi.string().required().allow(''),  
   to_date: Joi.string().required().allow(''),   
 });
+
+//Check input schema
+module.exports.holdOrderSchema = Joi.object().keys({
+  device_id: Joi.string().required(),  
+  jsonOrder: Joi.object(), 
+  jwtToken: Joi.string().allow(''), 
+}); 
