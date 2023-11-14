@@ -76,6 +76,7 @@ module.exports = {
     ALREADY_EXITS : 'Already in use',
     CUSTOMEREXIT:"This customer already use",
     INACTIVE_USER:'User inactive',
+    UNAUTHORISED:'You are not authorized to login',
     USER_NAME_CHECK:'Username already in use',
     DEVICE_NAME_CHECK:'Devices ID already in use',
     BOTH_NAME_CHECK:'Username or Devices ID already in use',
@@ -93,6 +94,7 @@ module.exports = {
     ORDER_UNHOLD:'Order unhold Successfully',
     ORDER_STATUS: '1,3',
     CUSTOMER_BLOCKED:'Customer Blocked Successfully',
+    ITEMSUBGROUP_DUPLICATION: 'Item sub category already exist for this item category',
   },
   //login message 
   loginmessage:{

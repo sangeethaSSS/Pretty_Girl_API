@@ -91,7 +91,7 @@ module.exports.fetchcommonData = async (req) => {
 
         const all_agent_Result = await client.query(`select 0 as value, 'All' as label union all select agent_code as value,agent_name as label from tbl_agent where status_id =  1`);
 
-        const menu_Result = await client.query(`select menu_id, menu_name, false as checked from tbl_def_menu_details`);
+        const menu_Result = await client.query(`select menu_id, menu_name, false as checked from tbl_def_menu_details order by menu_id `);
         if (client) {
           client.end();
         }
@@ -242,7 +242,8 @@ module.exports.onchangeMachineData = async (req) => {
         const {searchvalue} = decoded.data
         if(searchvalue !== "")
         {
-          const machineList = await client.query(`select distinct machine_id as value, machine_no as label from tbl_machine where  status_id = 1 and Lower(machine_no) like '%'||$1||'%' order by machine_no`,[searchvalue])
+          const machineList = await client.query(`select distinct machine_id as value, machine_no as label from tbl_machine as a inner join tbl_employee_details as b on a.employee_id = b. employee_id
+          where a.status_id = 1 and b.status_id = 1 and Lower(a.machine_no) like '%'||$1||'%' order by machine_no`,[searchvalue])
           if (client) { client.end(); }
           let List_Array = machineList && machineList.rows ? machineList.rows : [];
             var response = {}
@@ -483,7 +484,7 @@ module.exports.onchangeMachineEmployeeData = async (req) => {
         if(machine_id)
         {
           const EmployeeList = await client.query(`select a.employee_id as value,b.employee_name as label,a.machine_no from tbl_machine as a  inner join tbl_employee_details as b on a.employee_id = b. employee_id
-          where a.status_id = 1 and a.machine_id  =  $1 `,[machine_id])
+          where a.status_id = 1 and b.status_id = 1 and  a.machine_id  =  $1 `,[machine_id])
           if (client) { client.end(); }
           let List_Array = EmployeeList && EmployeeList.rows ? EmployeeList.rows : [];
             var response = {}

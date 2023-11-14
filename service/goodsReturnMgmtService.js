@@ -272,7 +272,10 @@ module.exports.saveGoodsReturn = async (req) => {
             const { user_id, customer_code, item_details, dispatch_details, goodsreturn_date } = decoded.data;
             if (decoded) {
                 if (item_details && item_details.length > 0) {
-                    const id_max = await client.query(`select coalesce (max(goods_return_id),0) + 1 AS goods_return_id FROM tbl_goods_return`)
+                    try {
+                         // Start Transaction                        
+                        await client.query('BEGIN')
+                        const id_max = await client.query(`select coalesce (max(goods_return_id),0) + 1 AS goods_return_id FROM tbl_goods_return`)
                     var goods_return_id = id_max && id_max.rows[0].goods_return_id;
                     const goods_return_number = await client.query(`select   'G'||case when ` + user_id + ` <= 99 then  (select LPAD(` + user_id + `::text,2,'0'))    else (` + user_id + ` ::text) end  || '-' || case when coalesce(max(goods_return_id),0) + 1 <= 9999 then  (select LPAD((SELECT coalesce(max(goods_return_id),0) + 1 from tbl_goods_return)::text,4,'0')) else (select (SELECT coalesce(max(goods_return_id),0) + 1 from tbl_goods_return  )::text)
                     end AS goods_return_id from tbl_goods_return `)
@@ -283,6 +286,10 @@ module.exports.saveGoodsReturn = async (req) => {
                         // var total_pieces = total_set && total_set.rows[0].total_set;
                         // total_pieces = total_pieces * Number(dispatch_details[j].dispatch_qty)
                         var makerid = await commonService.insertLogs(user_id, "Insert Goods return");
+                        
+                        await client.query(`INSERT INTO tbl_stock_transaction(
+                            stock_date, size_id, trans_no, inward_set, outward_set, user_id, created_date, maker_id, inward_pieces, outward_pieces, customer_code, type)
+                           VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP, $7, $8, $9, $10, $11)`, [goodsreturn_date, item_details[i].size_id, goods_return_no, item_details[i].goods_return_set, 0,  user_id,makerid,item_details[i].goods_return_pieces,0,customer_code,'GoodsReturn']);
                         await client.query(`INSERT INTO tbl_goods_return(
                                 goods_return_id, goods_return_no, customer_code, size_id, user_id,
                                created_at, goods_return_date, status_flag, goods_return_set, goods_return_pieces,maker_id)
@@ -299,6 +306,13 @@ module.exports.saveGoodsReturn = async (req) => {
                         }
 
                     }
+                    // Commit Changes                   
+                    await client.query('COMMIT')
+                    } catch (error) {
+                        await client.query('ROLLBACK')
+                        if (client) { client.end(); }
+                        throw new Error(error); 
+                    }                    
                 }
 
                 if (client) {
@@ -521,14 +535,23 @@ module.exports.cancelGoodsReturn = async (req) => {
             const decoded = await commonService.jwtVerify(req.jwtToken);
             const { user_id, goods_return_id } = decoded.data;
             if (decoded) {
-                const taking_Count = await client.query(`select count(*) as count FROM tbl_goods_return where goods_return_id = $1`, [goods_return_id])
+                try {
+                      // Start Transaction            
+                    await client.query('BEGIN')
+                    const taking_Count = await client.query(`SELECT count(goods_return_no) as count,goods_return_no FROM tbl_goods_return WHERE goods_return_id = $1 GROUP BY goods_return_no`, [goods_return_id])
                 var count_Check = taking_Count && taking_Count.rows[0].count;
+                var goodsreturnno = taking_Count && taking_Count.rows[0].goods_return_no;
                 if (count_Check != 0 && count_Check != null && count_Check != undefined && count_Check != "") {
                     var maker_id = await commonService.insertLogs(user_id, "Cancel Goods Return");
-
+                   
+                    await client.query(`DELETE FROM tbl_stock_transaction where lower(trans_no) = lower($1)`, [goodsreturnno]) 
+                    
                     await client.query(`UPDATE tbl_goods_return_dispatch SET status_flag=$1 ,maker_id = $2 WHERE goods_return_id = $3 `, [2, maker_id, goods_return_id]);
+                    
                     const delete_result = await client.query(`UPDATE tbl_goods_return SET status_flag=$1 ,maker_id = $2 WHERE goods_return_id = $3  `, [2, maker_id, goods_return_id]);
-
+                
+                    // Commit Changes
+                    await client.query('COMMIT')
                     if (client) {
                         client.end();
                     }
@@ -544,6 +567,12 @@ module.exports.cancelGoodsReturn = async (req) => {
                     }
                     else { return '' }
                 }
+                    
+                } catch (error) {
+                    await client.query('ROLLBACK')
+                    if (client) { client.end(); }
+                    throw new Error(error);
+                }                
             }
             else {
                 if (client) { client.end(); }

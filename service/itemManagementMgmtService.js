@@ -43,7 +43,7 @@ module.exports.itemManagementList = async (req) => {
                 else {
                     status = ` a.status_id = ` + status_id
                 }
-                const item_Result = await client.query(`SELECT item_code,trans_no,design_id,status_id,item_name,status_name,employeename,createddate FROM (select a.item_code,a.trans_no,a.design_id,a.status_id,c.item_name,b.status_name,(select user_name from tbl_user where user_id = (select user_id from tbl_userlog  where autonum = a.maker_id limit 1)) as employeename,(select coalesce(to_char(log_date,'DD-MM-YYYY HH12:MI PM'),'') from tbl_userlog where autonum = a.maker_id limit 1) as createddate,(select log_date  from tbl_userlog where autonum = a.maker_id limit 1) as log_date from tbl_item_management as a  inner join tbl_def_status as b on a.status_id = b.status_id inner join tbl_def_item as c on a.item_code = c.item_id  where  `+ status + ` order by a.trans_no desc) as dev order by log_date desc`);
+                const item_Result = await client.query(`SELECT item_code,trans_no,design_id,status_id,item_name,status_name,employeename,createddate FROM (select a.item_code,a.trans_no,a.design_id,a.status_id,c.item_name,b.status_name,(select user_name from tbl_user where user_id = (select user_id from tbl_userlog  where autonum = a.maker_id limit 1)) as employeename,(select coalesce(to_char(log_date,'DD-MM-YYYY HH12:MI PM'),'') from tbl_userlog where autonum = a.maker_id limit 1) as createddate, (select log_date from tbl_userlog where autonum = a.maker_id limit 1) as log_date from tbl_item_management as a  inner join tbl_def_status as b on a.status_id = b.status_id inner join tbl_def_item as c on a.item_code = c.item_id  where  `+ status + ` order by a.trans_no desc) as dev order by log_date :: date desc`);
 
                 let Lists = item_Result && item_Result.rows ? item_Result.rows : [];
                 let result = [];
@@ -172,8 +172,7 @@ module.exports.saveItemManagement = async (req) => {
                         var makerid = await commonService.insertLogs(user_id, "Update Item Management");
                         const count = await client.query(`select count(*) as count FROM tbl_item_management where trans_no =` + trans_no)
                         var count_Check = count && count.rows[0].count
-                        if (count_Check != 0 && count_Check != null && count_Check != undefined && count_Check != "") {
-
+                        if (count_Check != 0 && count_Check != null && count_Check != undefined && count_Check != "") {                          
                             const update_result = await client.query(`UPDATE "tbl_item_management" set item_code=$1,design_id=$2,status_id=$3,user_id=$4,maker_id=$5,updated_date=CURRENT_TIMESTAMP where trans_no = $6 `, [item_id, design_id, status_id, user_id, makerid,trans_no]);
                         
                             if (size_array && size_array.length > 0) {
@@ -182,6 +181,7 @@ module.exports.saveItemManagement = async (req) => {
                                  for (let i = 0; i < delete_array.length; i++) {
                                    const Delete_size = await client.query(`DELETE FROM tbl_item_sizes where size_id=` + delete_array[i].size_id) 
                                    let Delete_code = Delete_size && Delete_size.rowCount ? Delete_size.rowCount : 0;
+                                     console.log(Delete_code)
                                 }  
                                }
                                 let insert_array = size_array.filter(e => e.isaddflag == 1)
@@ -191,6 +191,7 @@ module.exports.saveItemManagement = async (req) => {
                                         var size_max = size && size.rows[0].mr;
                                         const sizeresult = await client.query(`INSERT INTO "tbl_item_sizes"("trans_no","start_size","end_size","total_set","size_id","color_id","qr_code","current_stock","created_date","settype") values ($1, $2, $3, $4,$5,$6,$7,$8,CURRENT_TIMESTAMP,$9) `, [trans_no, insert_array[i].starting_size, insert_array[i].ending_size, insert_array[i].total_pieces,size_max,insert_array[i].color_id,insert_array[i].qr_code,insert_array[i].current_stock,insert_array[i].settype]);
                                         let size_code = sizeresult && sizeresult.rowCount ? sizeresult.rowCount : 0;
+                                        console.log(size_code)
                                     }
                                 }
                             }
@@ -358,11 +359,14 @@ module.exports.deleteItemManagement = async (req) => {
             const decoded = await commonService.jwtVerify(req.jwtToken);
             const { user_id, trans_no } = decoded.data;
             if (decoded) {
-                const item_Count_date = await client.query(`select count(*) from tbl_order_taking_items where size_id in (select size_id from tbl_item_sizes where trans_no = $1)`, [trans_no])
+                const item_Count_date = await client.query(`select count(*) as count from tbl_order_taking_items where size_id in (select size_id from tbl_item_sizes where trans_no = $1)`, [trans_no])
                 var order_item_Check = item_Count_date && item_Count_date.rows[0].count;
 
-                const itemsize_Count_date = await client.query(`select count(*) from tbl_job_details where design_id in (select size_id from tbl_item_sizes where trans_no = $1)`, [trans_no])
+                const itemsize_Count_date = await client.query(`select count(*) as count from tbl_job_details where design_id in (select size_id from tbl_item_sizes where trans_no = $1)`, [trans_no])
                 var order_item_Check1 = itemsize_Count_date && itemsize_Count_date.rows[0].count || 0;
+
+                const itemsize_Count_data_job_cutting = await client.query(`select count(*) as count from tbl_job_cutting_items where size_id in (select size_id from tbl_item_sizes where trans_no = $1)`, [trans_no])
+                var item_Check1 = itemsize_Count_data_job_cutting && itemsize_Count_data_job_cutting.rows[0].count || 0;
 
                 const itemsize_Count_Stock_Transaction = await client.query(`SELECT count(*) as count FROM tbl_stock_transaction where size_id in (select size_id from tbl_item_sizes where trans_no = $1)`, [trans_no])
                 var stock_item_Check1 = itemsize_Count_Stock_Transaction && itemsize_Count_Stock_Transaction.rows[0].count || 0;
@@ -371,16 +375,23 @@ module.exports.deleteItemManagement = async (req) => {
                 var dispatch_item_Check1 = itemsize_Count_Dispatch && itemsize_Count_Dispatch.rows[0].count || 0;
                 
                 const itemsize_Count_FG = await client.query(`select count(*) as count from tbl_fg_items where size_id in (select size_id from tbl_item_sizes where trans_no = $1)`, [trans_no])
-                var fg_item_Check1 = itemsize_Count_FG && itemsize_Count_FG.rows[0].count || 0;
-
+                var fg_item_Check1 = itemsize_Count_FG && itemsize_Count_FG.rows[0].count || 0;                
                 const itemsize_Sync_Count = await client.query(`SELECT count(*) as count FROM tbl_item_management where trans_no = $1 and created_date <
                 (SELECT syncdate from  tbl_sync_details  where syncfile = 'itemManagement'
                 order by syncdate desc limit 1
                 )`, [trans_no])
                 var item_sync_count = itemsize_Sync_Count && itemsize_Sync_Count.rows[0].count || 0;
-                
                 if (order_item_Check1 > 0) {
                     responseData = { "message": constants.userMessage.ALREADY_USE +" in job card", "statusFlag": 2 }
+                    if (responseData) {
+                      return responseData;
+                    }
+                    else {
+                      return '';
+                    }
+                }
+                if (item_Check1 > 0) {
+                    responseData = { "message": constants.userMessage.ALREADY_USE +" in job cutting", "statusFlag": 2 }
                     if (responseData) {
                       return responseData;
                     }

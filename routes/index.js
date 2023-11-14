@@ -26,6 +26,8 @@ const jobcard = require('../api/Production/jobcard/jobcardRoutes')
 const ratecard = require('../api/Production/ratecard/ratecardRoutes')
 const salaryprocess = require('../api/Payroll/process/processRoutes')
 const salarypayout = require('../api/Payroll/payout/payoutRoutes')
+const JobCuttingsalaryprocess = require('../api/Payroll/jobcuttingprocess/processRoutes')
+const JobCuttingsalarypayout = require('../api/Payroll/jobcuttingpayout/payoutRoutes')
 const report = require('../api/Report/report/reportRoutes')
 const order_report = require('../api/Report/orderManagement/orderRoutes')
 const sync = require('../api/AppSync/appRoutes')
@@ -35,6 +37,8 @@ const OrderTaking = require('../api/OrderManagement/OrderTaking/orderTakingRoute
 const Boxing = require('../api/Dispatch/boxing/boxingRoutes')
 const Dispatch = require('../api/Dispatch/dispatch/dispatchRoutes')
 const GoodsReturn = require('../api/Dispatch/goodsReturn/goodsReturnRoutes')
+const itemSubGroupMaster = require('../api/Master/itemsubcategory/itemsubcategoryMasterRoutes')
+const jobCutting = require('../api/Production/jobcutting/jobcuttingRoutes')
 module.exports = app => {
   app.use('/api/common', common);
   app.use('/api/loginRoutes', login);
@@ -54,6 +58,8 @@ module.exports = app => {
   app.use('/api/production/ratecard', ratecard);
   app.use('/api/payroll/process', salaryprocess);
   app.use('/api/payroll/payout',salarypayout);
+  app.use('/api/payroll/jobcutting/process', JobCuttingsalaryprocess);
+  app.use('/api/payroll/jobcutting/payout',JobCuttingsalarypayout);
   app.use('/api/report',report);
   app.use('/api/orderManagement/itemManagement',ItemManagement);
   app.use('/api/orderManagement/orderTaking', OrderTaking);
@@ -64,8 +70,8 @@ module.exports = app => {
   app.use('/api/dispatch',Boxing);
   app.use('/api/dispatched',Dispatch);
   app.use('/api/goodsReturn',GoodsReturn);
-  
-  
+  app.use('/api/master/itemsubgroup', itemSubGroupMaster);
+  app.use('/api/production/jobcutting', jobCutting);  
   // etc..
 }
 

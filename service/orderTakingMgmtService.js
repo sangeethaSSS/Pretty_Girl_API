@@ -130,7 +130,6 @@ module.exports.ShowCustomerOrders = async (req) => {
 }
 
 
-
 //Bind Item Code
 module.exports.ChangeAutoItemCodejwt = async (req) => {
   try {
@@ -184,6 +183,7 @@ module.exports.ChangeAutoItemCode = async (req) => {
     if (client) { client.end(); }
   }
 }
+
 module.exports.getCurrentOrderStockJwt = async (req) => {
   try {
     const token = await commonService.jwtCreate(req);
@@ -192,7 +192,7 @@ module.exports.getCurrentOrderStockJwt = async (req) => {
   } catch (error) {
     throw new Error(error);
   }
-} 
+}
 
 module.exports.getCurrentOrderStock = async (req) => {
   const client = new Client({
@@ -208,14 +208,14 @@ module.exports.getCurrentOrderStock = async (req) => {
       var responseData = {}
       const decoded = await commonService.jwtVerify(req.jwtToken);
       if (decoded != null) {
-        const { itemcode, order_date } = decoded.data       
+        const { itemcode, order_date } = decoded.data
         const order_qty = await client.query(`SELECT coalesce(sum(b.qty),0) as order_qty from tbl_order_taking as a inner join tbl_order_taking_items as b on a.order_no = b.order_no where  to_char(a.order_date,'YYYY-MM-DD') :: date = to_date('${order_date}','YYYY-MM-DD') and b.size_id = ${itemcode}`);
         let orderqty = order_qty && order_qty.rows && order_qty.rows[0] ? order_qty.rows[0].order_qty : 0;
         const current_stock = await client.query(`SELECT coalesce(COALESCE(sum(coalesce(no_of_set,0)) + COALESCE((SELECT sum(goods_return_set) from tbl_goods_return WHERE status_flag = 1 and size_id = a.size_id ),0),0)- coalesce((SELECT sum(dispatch_set) from tbl_dispatch_details where status_flag = 1 and size_id = a.size_id ),0),0) as current_set from tbl_fg_items as a inner join tbl_item_sizes as b on b.size_id=a.size_id where a.size_id = ${itemcode}  group by a.size_id`);
         let currentstock = current_stock && current_stock.rows && current_stock.rows[0] ? current_stock.rows[0].current_set : 0;
         if (client) {
           client.end();
-          responseData = { "Order_Qty": orderqty, "Current_Stock": currentstock}
+          responseData = { "Order_Qty": orderqty, "Current_Stock": currentstock }
           if (responseData) {
             return responseData;
           }
@@ -270,8 +270,8 @@ module.exports.saveOrderTaking = async (req) => {
               const total_qty = await client.query(`select coalesce(sum(current_stock),0) as stock  from tbl_item_sizes where size_id = $1 `, [item_array[i].size_id])
               var current_stock = total_qty && total_qty.rows[0].stock;
               if (current_stock > 0 && (order_id == '0' || order_id == 0)) {
-                const CheckQty = await client.query(`select count(1) from (select coalesce(current_stock,0) + (select coalesce(sum(inward),0) - coalesce(sum(outward),0) from tbl_stock_transaction where size_id = $1 ) as current_stock from tbl_item_sizes where size_id = $1) as dev where current_stock >= $2`, [item_array[i].size_id, item_array[i].qty])
-
+                // const CheckQty = await client.query(`select count(1) from (select coalesce(current_stock,0) + (select coalesce(sum(inward_set),0) - coalesce(sum(outward_set),0) from tbl_stock_transaction where type!='Order' and size_id = $1 ) as current_stock from tbl_item_sizes where size_id = $1) as dev where current_stock >= $2`, [item_array[i].size_id, item_array[i].qty])
+                const CheckQty = await client.query(`select count(1) from (select (select coalesce(sum(inward_set),0) - coalesce(sum(outward_set),0) from tbl_stock_transaction where type!='Order' and size_id = $1 ) as current_stock from tbl_item_sizes where size_id = $1) as dev where current_stock >= $2`, [item_array[i].size_id, item_array[i].qty])
                 let Stock_count = CheckQty && CheckQty.rows[0].count;
                 if (Number(Stock_count) === 0) {
                   let text_message = item_array[i].item_name + " / " + item_array[i].qr_code
@@ -279,14 +279,17 @@ module.exports.saveOrderTaking = async (req) => {
                 }
               }
               if (current_stock > 0 && order_id) {
-                const total_qty = await client.query(`select distinct b.size_id,(sum(coalesce(inward,0))+
-                coalesce(b.current_stock,0)-sum(coalesce(outward,0))) as currentstock 
-                from tbl_stock_transaction as  a right join  tbl_item_sizes 
-                as b on a.size_id=b.size_id where b.size_id = $1  group by b.size_id`, [item_array[i].size_id])
+                // const total_qty = await client.query(`select distinct b.size_id,(sum(coalesce(inward_set,0))+
+                // coalesce(b.current_stock,0)-sum(coalesce(outward_set,0))) as currentstock 
+                // from tbl_stock_transaction as  a right join  tbl_item_sizes 
+                // as b on a.size_id=b.size_id where b.size_id = $1  group by b.size_id`, [item_array[i].size_id])
+
+                const total_qty = await client.query(`select distinct b.size_id,(select coalesce(sum(inward_set),0) - coalesce(sum(outward_set),0) from tbl_stock_transaction where type!='Order' and size_id = $1 ) as current_stock from  tbl_item_sizes 
+                as b where b.size_id = $1  group by b.size_id`, [item_array[i].size_id])
 
                 var currentstock = total_qty && total_qty.rows[0].currentstock;
 
-                const CheckQty = await client.query(`select coalesce(sum(inward),0) - coalesce(sum(outward),0) as old_qty from tbl_stock_transaction where size_id = $1 and lower(trans_no) = lower($2)`, [item_array[i].size_id, order_id])
+                const CheckQty = await client.query(`select coalesce(sum(inward_set),0) - coalesce(sum(outward_set),0) as old_qty from tbl_stock_transaction where size_id = $1 and lower(trans_no) = lower($2)`, [item_array[i].size_id, order_id])
                 let old_Stock = CheckQty && CheckQty.rows[0].old_qty;
                 let now_stock = (Number(currentstock) + Number(old_Stock)) - Number(item_array[i].qty);
                 if (now_stock < Number(item_array[i].qty)) {
@@ -300,32 +303,40 @@ module.exports.saveOrderTaking = async (req) => {
         }
 
         if (order_id == '0') {
-          const id_max = await client.query(`select case when coalesce(max(ref_no),0) + 1 <= 9999 then  (select LPAD((SELECT coalesce(max(ref_no),0) + 1 from tbl_order_taking where type = 'Portal' )::text,4,'0')) else (select (SELECT coalesce(max(ref_no),0) + 1 from tbl_order_taking where type = 'Portal' )::text) end as order_number from tbl_order_taking where type = 'Portal' `)
+          try {
+            // Start Transaction
+            await client.query('BEGIN')
+            const id_max = await client.query(`select case when coalesce(max(ref_no),0) + 1 <= 9999 then  (select LPAD((SELECT coalesce(max(ref_no),0) + 1 from tbl_order_taking where type = 'Portal' )::text,4,'0')) else (select (SELECT coalesce(max(ref_no),0) + 1 from tbl_order_taking where type = 'Portal' )::text) end as order_number from tbl_order_taking where type = 'Portal' `)
           var order_max = id_max && id_max.rows[0].order_number;
 
-          const user_max = await client.query(`select case when `+ user_id + ` <= 99 then  (select LPAD(`+ user_id + `::text,2,'0'))  else (`+ user_id + ` ::text) end as userid`)
+          const user_max = await client.query(`select case when ` + user_id + ` <= 99 then  (select LPAD(` + user_id + `::text,2,'0'))  else (` + user_id + ` ::text) end as userid`)
 
           var userid = user_max && user_max.rows[0].userid;
 
           var makerid = await commonService.insertLogs(user_id, "Insert Order Taking");
 
           var order_number = 'P' + userid + '-' + order_max
-          const order_taking_result = await client.query(`INSERT INTO "tbl_order_taking"("ref_no","order_no","order_date","customer_code","status_code","type","maker_id","user_id","created_date",remarks) values ($1, $2, $3, $4, $5, $6,$7,$8,CURRENT_TIMESTAMP,$9) `, [order_max, order_number, order_date, customer_id, status_id, type, makerid, user_id,remarks]);
+          const order_taking_result = await client.query(`INSERT INTO "tbl_order_taking"("ref_no","order_no","order_date","customer_code","status_code","type","maker_id","user_id","created_date",remarks) values ($1, $2, $3, $4, $5, $6,$7,$8,CURRENT_TIMESTAMP,$9) `, [order_max, order_number, order_date, customer_id, status_id, type, makerid, user_id, remarks]);
 
           if (item_array && item_array.length > 0) {
             for (let i = 0; i < item_array.length; i++) {
               const item_size = item_array[i].start_size + '-' + item_array[i].end_size
-              const Item_list = await client.query(`INSERT INTO "tbl_order_taking_items"("order_no","item_code","design_code","item_size","color_id","qty","size_id","user_id","status_code","old_qty","created_date") values ($1, $2, $3, $4,$5,$6,$7,$8,$9,$10,CURRENT_TIMESTAMP) `, [order_number, item_array[i].item_code, item_array[i].design_id, item_size, item_array[i].color_id, item_array[i].qty, item_array[i].size_id, user_id, 1, item_array[i].qty]);
-              let normal_code = Item_list && Item_list.rowCount ? Item_list.rowCount : 0;
-              console.log(normal_code)
+              let total_set =  await client.query(`SELECT total_set::INTEGER FROM tbl_item_sizes where size_id = `+item_array[i].size_id+``)
+                var total_pieces = total_set && total_set.rows[0].total_set;
+                total_pieces = total_pieces * Number(item_array[i].qty)
 
-              const Stock_list = await client.query(`INSERT INTO "tbl_stock_transaction"("stock_date","size_id","trans_no","inward","outward","user_id","created_date") values ($1, $2, $3, $4,$5,$6,CURRENT_TIMESTAMP) `, [order_date, item_array[i].size_id, order_number, 0, item_array[i].qty, user_id]);
+              const Item_list = await client.query(`INSERT INTO "tbl_order_taking_items"("order_no","item_code","design_code","item_size","color_id","qty","size_id","user_id","status_code","old_qty","created_date","pending_dispatch") values ($1, $2, $3, $4,$5,$6,$7,$8,$9,$10,CURRENT_TIMESTAMP,$11) `, [order_number, item_array[i].item_code, item_array[i].design_id, item_size, item_array[i].color_id, item_array[i].qty, item_array[i].size_id, user_id, 1, item_array[i].qty,item_array[i].qty]);
+              let normal_code = Item_list && Item_list.rowCount ? Item_list.rowCount : 0;
+              console.log(normal_code)              
+
+              const Stock_list = await client.query(`INSERT INTO "tbl_stock_transaction"("stock_date","size_id","trans_no","inward_set","outward_set","user_id","created_date","inward_pieces","outward_pieces","customer_code","type","maker_id") values ($1, $2, $3, $4,$5,$6,CURRENT_TIMESTAMP,$7,$8,$9,$10,$11) `, [order_date, item_array[i].size_id, order_number, 0, item_array[i].qty, user_id,0,total_pieces,customer_id,'Order',makerid]);
               let stock_code = Stock_list && Stock_list.rowCount ? Stock_list.rowCount : 0;
               console.log(stock_code)
 
             }
           }
-
+          // Commit Changes
+          await client.query('COMMIT')
           if (client) {
             client.end();
           }
@@ -334,18 +345,26 @@ module.exports.saveOrderTaking = async (req) => {
             return response = { "message": constants.userMessage.USER_CREATED, "statusFlag": 1 };
           }
           else { return '' }
+          }  catch (error) {
+            await client.query('ROLLBACK')
+            if (client) { client.end(); }
+            throw new Error(error);
+          } 
         }
         else {
-          var makerid = await commonService.insertLogs(user_id, "Update Order Taking");
+          try {
+            // Start Transaction
+            await client.query('BEGIN')
+            var makerid = await commonService.insertLogs(user_id, "Update Order Taking");
           const count = await client.query(`select count(*) as count FROM tbl_order_taking where lower(order_no) = lower($1)`, [order_id])
           var count_Check = count && count.rows[0].count
           if (count_Check != 0 && count_Check != null && count_Check != undefined && count_Check != "") {
 
-            const update_result = await client.query(`UPDATE "tbl_order_taking" set ref_no=$1,order_date=$2,customer_code=$3,status_code=$4,maker_id = $5,"user_id"= $6,updated_date=CURRENT_TIMESTAMP,remarks=$8 where order_no = $7 `, [ref_no, order_date, customer_id, status_id, makerid, user_id, order_id,remarks]);
+            const update_result = await client.query(`UPDATE "tbl_order_taking" set ref_no=$1,order_date=$2,customer_code=$3,status_code=$4,maker_id = $5,"user_id"= $6,updated_date=CURRENT_TIMESTAMP,remarks=$8 where order_no = $7 `, [ref_no, order_date, customer_id, status_id, makerid, user_id, order_id, remarks]);
 
             const delete_result = await client.query(`DELETE FROM tbl_order_taking_items where lower(order_no) = lower($1)`, [order_id])
             var deleteresult = delete_result && delete_result.rowCount;
-            const delete_stock =  await client.query(`DELETE FROM tbl_stock_transaction where lower(trans_no) = lower($1) and user_id = $2`, [order_id, user_id])
+            const delete_stock = await client.query(`DELETE FROM tbl_stock_transaction where lower(trans_no) = lower($1) and user_id = $2`, [order_id, user_id])
             var deletestock = delete_stock && delete_stock.rowCount;
             if (item_array && item_array.length > 0) {
               for (let i = 0; i < item_array.length; i++) {
@@ -355,19 +374,29 @@ module.exports.saveOrderTaking = async (req) => {
                 } else {
                   item_size = item_array[i].item_size
                 }
-                if(deleteresult > 0) {
-                const Item_list = await client.query(`INSERT INTO "tbl_order_taking_items"("order_no","item_code","design_code","item_size","color_id","qty","size_id","user_id","status_code","old_qty","created_date") values ($1, $2, $3, $4,$5,$6,$7,$8,$9,$10,CURRENT_TIMESTAMP) `, [order_id, item_array[i].item_code, item_array[i].design_id, item_size, item_array[i].color_id, item_array[i].qty, item_array[i].size_id, user_id, 1, item_array[i].qty]);
-                let normal_code = Item_list && Item_list.rowCount ? Item_list.rowCount : 0;
-                console.log(normal_code)
+                let total_set =  await client.query(`SELECT total_set::INTEGER FROM tbl_item_sizes where size_id = `+item_array[i].size_id+``)
+                var total_pieces = total_set && total_set.rows[0].total_set;
+                total_pieces = total_pieces * Number(item_array[i].qty)
+                if (deleteresult > 0) {
+                  const Item_list = await client.query(`INSERT INTO "tbl_order_taking_items"("order_no","item_code","design_code","item_size","color_id","qty","size_id","user_id","status_code","old_qty","created_date","pending_dispatch") values ($1, $2, $3, $4,$5,$6,$7,$8,$9,$10,CURRENT_TIMESTAMP,$11) `, [order_id, item_array[i].item_code, item_array[i].design_id, item_size, item_array[i].color_id, item_array[i].qty, item_array[i].size_id, user_id, 1, item_array[i].qty,item_array[i].qty]);
+                  let normal_code = Item_list && Item_list.rowCount ? Item_list.rowCount : 0;
+                  console.log(normal_code)
                 }
-                if(deletestock > 0){
-                const Stock_list = await client.query(`INSERT INTO "tbl_stock_transaction"("stock_date","size_id","trans_no","inward","outward","user_id","created_date") values ($1, $2, $3, $4,$5,$6,CURRENT_TIMESTAMP) `, [order_date, item_array[i].size_id, order_id, 0, item_array[i].qty, user_id]);
-                let stock_code = Stock_list && Stock_list.rowCount ? Stock_list.rowCount : 0;
-                console.log(stock_code)
+
+
+                if (deletestock > 0) {
+                  // const Stock_list = await client.query(`INSERT INTO "tbl_stock_transaction"("stock_date","size_id","trans_no","inward_set","outward_set","user_id","created_date") values ($1, $2, $3, $4,$5,$6,CURRENT_TIMESTAMP) `, [order_date, item_array[i].size_id, order_id, 0, item_array[i].qty, user_id]);
+                  
+              const Stock_list = await client.query(`INSERT INTO "tbl_stock_transaction"("stock_date","size_id","trans_no","inward_set","outward_set","user_id","created_date","inward_pieces","outward_pieces","customer_code","type","maker_id","updated_at") values ($1, $2, $3, $4,$5,$6,CURRENT_TIMESTAMP,$7,$8,$9,$10,$11,CURRENT_TIMESTAMP) `, [order_date, item_array[i].size_id, order_id, 0, item_array[i].qty, user_id,0,total_pieces,customer_id,'Order',makerid]);
+                  let stock_code = Stock_list && Stock_list.rowCount ? Stock_list.rowCount : 0;
+                  console.log(stock_code)
                 }
+
 
               }
             }
+            // Commit Changes
+          await client.query('COMMIT')
             if (client) {
               client.end();
             }
@@ -377,6 +406,11 @@ module.exports.saveOrderTaking = async (req) => {
             }
             else { return '' }
           }
+          } catch (error) {
+            await client.query('ROLLBACK')
+            if (client) { client.end(); }
+            throw new Error(error);
+          }          
         }
       }
       else {
@@ -430,7 +464,7 @@ module.exports.orderTakingList = async (req) => {
         if (status_id != "0" && status_id != 0) {
           status_code = `a.status_code='` + status_id + `' `;
         }
-        const order_Result = await client.query(`select a.ref_no,a.order_no,b.customer_code,b.customer_name,b.city,b.contact_person,b.mobile_no,b.gstin_no,b.alternative_mobile_no,(select coalesce(sum(qty),0) from tbl_order_taking_items where order_no= a.order_no) as totalset,a.order_date as order_date,(select user_name from tbl_user where user_id = (select user_id from tbl_userlog  where autonum = a.maker_id limit 1)) as employeename,(select coalesce(to_char(log_date,'DD-MM-YYYY HH12:MI PM'),'') from tbl_userlog where autonum = a.maker_id limit 1) as createddate,a.type, (SELECT count(dispatch_no) FROM tbl_dispatch_details where order_no = a.order_no and status_flag = 1) as dispatch_count,a.status_code,case when a.status_code=1 then 'Active' else case when a.status_code=3 then 'Hold' else 'Cancelled' end end as statusname from tbl_order_taking as a inner join tbl_customer as b on a.customer_code = b.customer_code where  ` + datediff + `  and ` + status_code + ` order by a.created_date desc`);
+        const order_Result = await client.query(`select a.ref_no,a.order_no,b.customer_code,b.customer_name,b.city,b.contact_person,b.mobile_no,b.gstin_no,b.alternative_mobile_no,(select coalesce(sum(qty),0) from tbl_order_taking_items where order_no= a.order_no) as totalset,a.order_date as order_date,(select user_name from tbl_user where user_id = (select user_id from tbl_userlog  where autonum = a.maker_id limit 1)) as employeename,(select coalesce(to_char(log_date,'DD-MM-YYYY HH12:MI PM'),'') from tbl_userlog where autonum = a.maker_id limit 1) as createddate,a.type, (SELECT count(dispatch_no) FROM tbl_dispatch_details where order_no = a.order_no and status_flag = 1) as dispatch_count,a.status_code,case when a.status_code=1 then 'Active' else case when a.status_code=3 then 'Hold' else 'Cancelled' end end as statusname from tbl_order_taking as a inner join tbl_customer as b on a.customer_code = b.customer_code where ` + datediff + ` and ` + status_code + ` order by a.created_date desc`);
 
         let Lists = order_Result && order_Result.rows ? order_Result.rows : [];
 
@@ -491,10 +525,10 @@ module.exports.orderToWhatsappList = async (req) => {
         if (date) {
           datediff = `to_char(a.order_date,'YYYY-MM-DD') :: date = to_date('` + date + `','YYYY-MM-DD')`;
         }
-        if (ordertype && ordertype != 'All'){
-          order_type = ' a.type =' + '\'' + ordertype + '\''          
+        if (ordertype && ordertype != 'All') {
+          order_type = ' a.type =' + '\'' + ordertype + '\''
         }
-        const order_Result = await client.query(`select a.ref_no,a.order_no,b.customer_code,b.customer_name,b.city,b.contact_person,b.mobile_no,b.gstin_no,b.alternative_mobile_no,(select coalesce(sum(qty),0) from tbl_order_taking_items where order_no= a.order_no) as totalset,a.order_date as order_date,(select user_name from tbl_user where user_id = (select user_id from tbl_userlog  where autonum = a.maker_id limit 1)) as employeename,(select coalesce(to_char(log_date,'DD-MM-YYYY HH12:MI PM'),'') from tbl_userlog where autonum = a.maker_id limit 1) as createddate,'yes' as enableagent,'yes' as enablecompany,'yes' as enableAll,CASE WHEN a.user_id is not null then a.user_id else a.device_code end as user_id,a.type from tbl_order_taking as a inner join tbl_customer as b on a.customer_code = b.customer_code where coalesce(a.pdf_sent_status,'')!='sent' and a.status_code = 1 and `+order_type+` and ` + datediff + ` order by a.created_date desc`);
+        const order_Result = await client.query(`select a.ref_no,a.order_no,b.customer_code,b.customer_name,b.city,b.contact_person,b.mobile_no,b.gstin_no,b.alternative_mobile_no,(select coalesce(sum(qty),0) from tbl_order_taking_items where order_no= a.order_no) as totalset,a.order_date as order_date,(select user_name from tbl_user where user_id = (select user_id from tbl_userlog  where autonum = a.maker_id limit 1)) as employeename,(select coalesce(to_char(log_date,'DD-MM-YYYY HH12:MI PM'),'') from tbl_userlog where autonum = a.maker_id limit 1) as createddate,'yes' as enableagent,'yes' as enablecompany,'yes' as enableAll,CASE WHEN a.user_id is not null then a.user_id else a.device_code end as user_id,a.type from tbl_order_taking as a inner join tbl_customer as b on a.customer_code = b.customer_code where coalesce(a.pdf_sent_status,'')!='sent' and a.status_code = 1 and ` + order_type + ` and ` + datediff + ` order by a.created_date desc`);
 
         let Lists = order_Result && order_Result.rows ? order_Result.rows : [];
 
@@ -768,7 +802,7 @@ module.exports.printOrderSlip = async (req) => {
         let ItemLists = Order_Item_List && Order_Item_List.rows ? Order_Item_List.rows : [];
 
         responseData = {
-          "OrderSlip": Lists, "CustomerArray": Customer_array, "CompanyArray": Company_Array, "ItemCount": itemcount,"ItemLists":ItemLists
+          "OrderSlip": Lists, "CustomerArray": Customer_array, "CompanyArray": Company_Array, "ItemCount": itemcount, "ItemLists": ItemLists
         }
 
         if (responseData) {
@@ -824,7 +858,15 @@ module.exports.ChangeAutoDesignName = async (req) => {
           // const DesignList = await client.query(`select distinct b.size_id as value, b.qr_code as label,coalesce(((select sum(coalesce(no_of_set,0)) from tbl_fg_items where size_id=b.size_id) +coalesce(b.current_stock,0))
           // - (select coalesce(sum(coalesce(dispatch_set,0)),0) from tbl_dispatch_details where status_flag = 1 and  size_id=b.size_id ),0) as current_stock , (select coalesce(sum(a.qty),0) as qty from tbl_order_taking_items as a inner join tbl_order_taking as d on a.order_no = d.order_no where d.order_date=CURRENT_DATE and size_id = b.size_id 
           // and d.status_code = 1) as order_qty from tbl_item_sizes  as b where  Lower(b.qr_code) like '%'||$1||'%' limit 50 `, [searchvalue])
-          const DesignList = await client.query(`select distinct b.size_id as value, b.qr_code as label,0 as current_stock , 0 as order_qty from tbl_item_sizes  as b where  Lower(b.qr_code) like '%'||$1||'%'`, [searchvalue])
+          // const DesignList = await client.query(`select distinct b.size_id as value, b.qr_code as label,0 as current_stock , 0 as order_qty from tbl_item_sizes  as b where  Lower(b.qr_code) like '%'||$1||'%'`, [searchvalue])
+          const DesignList = await client.query(`SELECT b.size_id as value, b.qr_code as label,coalesce(sum(current_set),0) as current_set,coalesce(sum(order_qty),0) as order_qty FROM
+          (SELECT size_id,sum(inward_set) - sum(outward_set) as current_set,0 order_qty from
+           tbl_stock_transaction WHERE type!='Order'  GROUP BY size_id
+           union all 
+           select size_id,0 as current_set,coalesce(sum(a.qty),0) as order_qty from 
+           tbl_order_taking_items as a inner join tbl_order_taking as d on a.order_no = d.order_no 
+           where d.order_date=CURRENT_DATE GROUP BY size_id) AS DERV RIGHT JOIN 
+           tbl_item_sizes AS b ON DERV.size_id = b.size_id  WHERE Lower(b.qr_code) like '%'||$1||'%' GROUP BY b.size_id,b.qr_code`, [searchvalue])
           if (client) { client.end(); }
           let List_Array = DesignList && DesignList.rows ? DesignList.rows : [];
           var response = {}
@@ -887,7 +929,7 @@ module.exports.onChangeQty = async (req) => {
         var order_qty = total_qty && total_qty.rows[0].stock;
         if (order_qty > 0) {
           const CheckQty = await client.query(`select count(1) from (select coalesce(current_stock,0) + 
-          (select coalesce(sum(inward),0) - coalesce(sum(outward),0) from tbl_stock_transaction where size_id = $1 ) 
+          (select coalesce(sum(inward_set),0) - coalesce(sum(outward_set),0) from tbl_stock_transaction where type!='Order' and size_id = $1 ) 
           as current_stock from tbl_item_sizes where size_id = $1) as dev where current_stock >= $2`, [size_id, qty])
 
           if (client) { client.end(); }
@@ -1004,27 +1046,27 @@ module.exports.sendOrderToWhatsapp = async (req) => {
         const { order_details } = decoded.data
 
         if (order_details && order_details.length > 0) {
-        
+
           const company_Result = await client.query(`SELECT print_id, company_name, addressline1, addressline2, area, city, gstin, mobile_number, telephone_number, status_id, footer_name from tbl_print_setting`);
           let Company_Array = company_Result && company_Result.rows ? company_Result.rows?.[0] || {} : {};
-          for (let k = 0; k < order_details.length; k++){  
-            const exeUserQuery = await client.query(`select count(1) as total from tbl_order_taking  where ref_no=$1 and order_no =$2 and (device_code=$3 or user_id=$3)and coalesce(pdf_sent_status,'')!='sent'`, [order_details[k].ref_no,order_details[k].order_no,order_details[k].user_id]);
-            let totalcount = exeUserQuery?.rows?.[0].total; 
+          for (let k = 0; k < order_details.length; k++) {
+            const exeUserQuery = await client.query(`select count(1) as total from tbl_order_taking  where ref_no=$1 and order_no =$2 and (device_code=$3 or user_id=$3)and coalesce(pdf_sent_status,'')!='sent'`, [order_details[k].ref_no, order_details[k].order_no, order_details[k].user_id]);
+            let totalcount = exeUserQuery?.rows?.[0].total;
             if (totalcount > 0) {
               const exeQuery1 = await client.query(
-                `select order_no,to_char(order_date, 'dd-MM-YYYY') as orderdate,a.customer_code,UPPER(b.customer_name) as customer_name,b.contact_person,b.mobile_no,coalesce(b.alternative_mobile_no,'') as alternative_mobile_no,coalesce(b.street,'') as street,coalesce(b.area,'') as area,coalesce(b.city,'') as city,coalesce(b.pincode,'') as pincode,coalesce(b.email_id,'') as email_id,coalesce(b.gstin_no,'') as gstin_no,b.country,coalesce(b.transport_name,'') as transport_name,coalesce(b.transport_contact_no,'') as transport_contact_no,coalesce(b.transport_location,'') as transport_location,coalesce(b.transport_contact_person,'') as transport_contact_person,coalesce(b.agent_code,0) as agent_code, (select agent_name from tbl_agent where agent_code=b.agent_code) as agent_name from tbl_order_taking  as a inner join tbl_customer as b on a.customer_code=b.customer_code where ref_no=$1 and order_no =$2 and (a.device_code=$3 or a.user_id=$3) `, [order_details[k].ref_no, order_details[k].order_no, order_details[k].user_id] 
+                `select order_no,to_char(order_date, 'dd-MM-YYYY') as orderdate,a.customer_code,UPPER(b.customer_name) as customer_name,b.contact_person,b.mobile_no,coalesce(b.alternative_mobile_no,'') as alternative_mobile_no,coalesce(b.street,'') as street,coalesce(b.area,'') as area,coalesce(b.city,'') as city,coalesce(b.pincode,'') as pincode,coalesce(b.email_id,'') as email_id,coalesce(b.gstin_no,'') as gstin_no,b.country,coalesce(b.transport_name,'') as transport_name,coalesce(b.transport_contact_no,'') as transport_contact_no,coalesce(b.transport_location,'') as transport_location,coalesce(b.transport_contact_person,'') as transport_contact_person,coalesce(b.agent_code,0) as agent_code, (select agent_name from tbl_agent where agent_code=b.agent_code) as agent_name from tbl_order_taking  as a inner join tbl_customer as b on a.customer_code=b.customer_code where ref_no=$1 and order_no =$2 and (a.device_code=$3 or a.user_id=$3) `, [order_details[k].ref_no, order_details[k].order_no, order_details[k].user_id]
               );
               let order_customer_details = exeQuery1?.rows[0] || {};
               let order_id = exeQuery1?.rows[0]?.order_no || '';
 
-              const exeQuery2= await client.query(
-                `select ROW_NUMBER () OVER (ORDER BY a.order_no) as sno,a.order_no,b.item_code,c.item_name,b.design_code,b.item_size,b.qty,b.color_id,b.size_id,d.color_name,e.total_set,a.order_date,e.total_set::INTEGER*b.qty as total_pcs,remarks from tbl_order_taking  as a inner join tbl_order_taking_items as b on a.order_no = b.order_no inner join tbl_def_item as c on b.item_code = c.item_id left join tbl_color as d on b.color_id = d.color_id inner join tbl_item_sizes as e on b.size_id = e.size_id where a.ref_no=$1 and a.order_no =$2 and (a.device_code=$3 or a.user_id=$3) order by b.item_code asc`, [order_details[k].ref_no, order_details[k].order_no, order_details[k].user_id] 
+              const exeQuery2 = await client.query(
+                `select ROW_NUMBER () OVER (ORDER BY a.order_no) as sno,a.order_no,b.item_code,c.item_name,b.design_code,b.item_size,b.qty,b.color_id,b.size_id,d.color_name,e.total_set,a.order_date,e.total_set::INTEGER*b.qty as total_pcs,remarks from tbl_order_taking  as a inner join tbl_order_taking_items as b on a.order_no = b.order_no inner join tbl_def_item as c on b.item_code = c.item_id left join tbl_color as d on b.color_id = d.color_id inner join tbl_item_sizes as e on b.size_id = e.size_id where a.ref_no=$1 and a.order_no =$2 and (a.device_code=$3 or a.user_id=$3) order by b.item_code asc`, [order_details[k].ref_no, order_details[k].order_no, order_details[k].user_id]
               );
-              let order_item_details = exeQuery2?.rows || []; 
-              const exeQuery3= await client.query(
-                `select coalesce(mobile_no,'') as mobile_no from tbl_user where user_id=$1`, [order_details[k].user_id] 
+              let order_item_details = exeQuery2?.rows || [];
+              const exeQuery3 = await client.query(
+                `select coalesce(mobile_no,'') as mobile_no from tbl_user where user_id=$1`, [order_details[k].user_id]
               );
-              let user_mobileno = exeQuery3?.rows ? exeQuery3?.rows[0].mobile_no: '' || ''; 
+              let user_mobileno = exeQuery3?.rows ? exeQuery3?.rows[0].mobile_no : '' || '';
               const Order_Item_List = await client.query(`SELECT order_no,item_code,item_name,SUM(qty) as qty,
               sum(total_piece) as total_piece from (select a.order_no,b.item_code,c.item_name,
               b.qty,e.total_set,(b.qty::INTEGER*e.total_set::INTEGER) as total_piece
@@ -1034,18 +1076,18 @@ module.exports.sendOrderToWhatsapp = async (req) => {
               e on b.size_id = e.size_id where a.ref_no=$1 and a.order_no =$2 and (a.device_code=$3 or a.user_id=$3) order by b.item_code asc) as dev group by order_no,item_code,item_name order by item_code asc`, [order_details[k].ref_no, order_details[k].order_no, order_details[k].user_id]);
               let ItemLists = Order_Item_List && Order_Item_List.rows ? Order_Item_List.rows : [];
               let responseData = {
-                "OrderSlip": order_item_details, "CustomerArray": order_customer_details, "CompanyArray": Company_Array ,"order_id":order_id, "user_mobile_no":user_mobileno,"ItemLists":ItemLists
-              } 
+                "OrderSlip": order_item_details, "CustomerArray": order_customer_details, "CompanyArray": Company_Array, "order_id": order_id, "user_mobile_no": user_mobileno, "ItemLists": ItemLists
+              }
               // await generateOrderPDF(responseData,req, order_details[k]);
             }
           }
-         
+
         }
         if (client) {
           client.end();
-            // return response = { "Message": "" }
+          // return response = { "Message": "" }
 
-            return response = { "message": "Sent successfully", "statusFlag": 1 }; 
+          return response = { "message": "Sent successfully", "statusFlag": 1 };
 
         }
       } else {
@@ -1064,7 +1106,7 @@ module.exports.sendOrderToWhatsapp = async (req) => {
   }
 }
 //Upload PDF File in S3 Bucket
-module.exports.uploadFile = async (fileName, req) => { 
+module.exports.uploadFile = async (fileName, req) => {
   const client = new Client({
     user: connectionString.user,
     host: connectionString.host,
@@ -1082,7 +1124,7 @@ module.exports.uploadFile = async (fileName, req) => {
     let bucket_name = exeQuery?.rows?.[0]?.bucketname || '';
     let access_key = exeQuery?.rows?.[0]?.accesskey || '';
     let secret_key = exeQuery?.rows?.[0]?.secretkey || '';
-  
+
     if (bucket_name) {
       // Read content from the file
       const fileContent = fs.readFileSync(fileName);
@@ -1119,10 +1161,10 @@ module.exports.uploadFile = async (fileName, req) => {
       }
       return '';
     }
-  } catch (error) {  
+  } catch (error) {
     if (client) {
       client.end();
-    } 
+    }
     throw new Error(error);
   }
 };
@@ -1130,12 +1172,12 @@ module.exports.getTemplateHtml = async () => {
   try {
     const invoicePath = path.resolve('./orderpdf.html');
     return await readFile(invoicePath, 'utf8');
-  } catch (err) { 
+  } catch (err) {
     console.log(err, 'err')
     return Promise.reject("Could not load html template");
   }
 }
-const generateOrderPDF = async (responseData, req, List) => {  
+const generateOrderPDF = async (responseData, req, List) => {
   const client = new Client({
     user: connectionString.user,
     host: connectionString.host,
@@ -1143,7 +1185,7 @@ const generateOrderPDF = async (responseData, req, List) => {
     password: connectionString.password,
     port: connectionString.port,
   });
-  try {  
+  try {
     if (responseData.order_id) {
       let addr = '';
       const space1 = ",";
@@ -1182,8 +1224,8 @@ const generateOrderPDF = async (responseData, req, List) => {
           long_frock_pcs += row[i].total_set * row[i].qty
         }
       }
-      let checkshortfrock = '' , checklongfrock = ''
-      if (short_frock_set > 0 ) {
+      let checkshortfrock = '', checklongfrock = ''
+      if (short_frock_set > 0) {
         checkshortfrock = 'true';
       }
       if (short_frock_set == 0) {
@@ -1191,14 +1233,14 @@ const generateOrderPDF = async (responseData, req, List) => {
       }
       const ImagePath = path.resolve('./pretty_girl_svg.svg');
       responseData = {
-        ...responseData, total_pcs_value: total_pcs_value, short_frock_set: short_frock_set, short_frock_pcs: short_frock_pcs, long_frock_set: long_frock_set, long_frock_pcs: long_frock_pcs, total_set_value: total_set_value, checkshortfrock:checkshortfrock, checklongfrock: checklongfrock, remark : remark, ImagePath: ImagePath
+        ...responseData, total_pcs_value: total_pcs_value, short_frock_set: short_frock_set, short_frock_pcs: short_frock_pcs, long_frock_set: long_frock_set, long_frock_pcs: long_frock_pcs, total_set_value: total_set_value, checkshortfrock: checkshortfrock, checklongfrock: checklongfrock, remark: remark, ImagePath: ImagePath
       }
-      
+
       // launch a new chrome instance 
       const browser = await puppeteer.launch({
         headless: true, args: ['--font-render-hinting=none'],
       });
-    
+
       // create a new page
       const page = await browser.newPage()
       var res = await this.getTemplateHtml();
@@ -1207,7 +1249,7 @@ const generateOrderPDF = async (responseData, req, List) => {
       const resultTemplate = template(responseData);
       // We can use this to add dyamic data to our handlebas template at run time from database or API as per need. you can read the official doc to learn more https://handlebarsjs.com/
       const html = resultTemplate;
-      // await page.setViewport({ width: 0, height: 1000}); 
+      // await page.setViewport({ width: 0, height: 1000});
       await page.setContent(html);
       //Generate PDF
       await page.pdf({
@@ -1240,34 +1282,34 @@ const generateOrderPDF = async (responseData, req, List) => {
         await client.connect();
         const exeQuery_aws = await client.query(`SELECT whatsappurl from tbl_credentials  where credential_type='whatsapp'`);
         let get_whatsappurl = exeQuery_aws?.rows?.[0]?.whatsappurl || '';
-        let get_whatsappdata = get_whatsappurl ;
-        get_whatsappurl = get_whatsappurl.replace("mobile_no", '91'+mobileno);
+        let get_whatsappdata = get_whatsappurl;
+        get_whatsappurl = get_whatsappurl.replace("mobile_no", '91' + mobileno);
         let whatsappurl = get_whatsappurl.replace("pdf_url", pdf_url);
         let usermobile_no = responseData?.user_mobile_no || ''
-        if(List.enablecompany == "yes"){  
+        if (List.enablecompany == "yes") {
           var configURL = {
             method: 'get',
             url: whatsappurl,
             headers: {
               'Content-Type': 'application/json'
             },
-          };   
-          const exeQuery_update = await client.query(`UPDATE tbl_order_taking set whatsappurl = $1 where ref_no=$2 and order_no =$3 and (device_code=$4 or user_id=$4) and coalesce(pdf_sent_status,'')!='sent'`, [whatsappurl,List.ref_no,List.order_no,List.user_id]);
-          if(exeQuery_update.rowCount > 0){
+          };
+          const exeQuery_update = await client.query(`UPDATE tbl_order_taking set whatsappurl = $1 where ref_no=$2 and order_no =$3 and (device_code=$4 or user_id=$4) and coalesce(pdf_sent_status,'')!='sent'`, [whatsappurl, List.ref_no, List.order_no, List.user_id]);
+          if (exeQuery_update.rowCount > 0) {
             await axios(configURL).then(async function (response) {
-                        //  console.log(response,'response SMS SUCCDD')   
-                        await client.query(`UPDATE tbl_order_taking set pdf_sent_status = 'sent' where ref_no=$1 and order_no =$2 and (device_code=$3 or user_id=$3) and coalesce(pdf_sent_status,'')!='sent'`, [List.ref_no,List.order_no,List.user_id]);
-                        if (client) {
-                          client.end();
-                        } 
-              }).catch(function (error) {
-                console.log(error, "error")
-              });
+              await client.query(`UPDATE tbl_order_taking set pdf_sent_status = 'sent' where ref_no=$1 and order_no =$2 and (device_code=$3 or user_id=$3) and coalesce(pdf_sent_status,'')!='sent'`, [List.ref_no, List.order_no, List.user_id]);
+              if (client) {
+                client.end();
+              }
+            }).catch(function (error) {
+              console.log(error, "error")
+            });
           }
-        }    
-        if(List.enableagent == "yes") {
-          if(usermobile_no && usermobile_no.length == 10) {
-            get_whatsappdata = get_whatsappdata.replace("mobile_no", '91'+usermobile_no);
+
+        }
+        if (List.enableagent == "yes") {
+          if (usermobile_no && usermobile_no.length == 10) {
+            get_whatsappdata = get_whatsappdata.replace("mobile_no", '91' + usermobile_no);
             get_whatsappdata = get_whatsappdata.replace("pdf_url", pdf_url);
             var configURL = {
               method: 'get',
@@ -1275,9 +1317,9 @@ const generateOrderPDF = async (responseData, req, List) => {
               headers: {
                 'Content-Type': 'application/json'
               },
-            };        
+            };
             await axios(configURL).then(function (response) {
-                console.log(usermobile_no,'response SMS SUCCDD')   
+              console.log(usermobile_no, 'response SMS SUCCDD')
             }).catch(function (error) {
               console.log(error, "error")
             });
@@ -1288,13 +1330,13 @@ const generateOrderPDF = async (responseData, req, List) => {
     } else {
       return false;
     }
-  } catch (error) {  
+  } catch (error) {
     if (client) {
       client.end();
-    } 
+    }
     throw new Error(error);
   }
-} 
+}
 
 //Hold Order Taking jwt 
 module.exports.holdOrderTakingJwt = async (req) => {
@@ -1325,10 +1367,10 @@ module.exports.holdOrderTaking = async (req) => {
         const taking_Count = await client.query(`select count(*) as count FROM tbl_order_taking where lower(order_no) = lower($1)`, [order_no])
         var count_Check = taking_Count && taking_Count.rows[0].count;
         if (count_Check != 0 && count_Check != null && count_Check != undefined && count_Check != "") {
-          
+
           if (status_code === 1) {
             var maker_id = await commonService.insertLogs(user_id, "Hold Order Taking");
-          
+
             await client.query(`Update tbl_order_taking_items set "status_code"=$1 ,"maker_id" = $2 where lower(order_no) = lower($3) `, [3, maker_id, order_no]);
             const hold_unhold_result = await client.query(`Update tbl_order_taking set "status_code"=$1 ,"maker_id" = $2 where lower(order_no) = lower($3) `, [3, maker_id, order_no]);
             let holdunholdresultcode = hold_unhold_result && hold_unhold_result.rowCount ? hold_unhold_result.rowCount : 0;
@@ -1342,11 +1384,11 @@ module.exports.holdOrderTaking = async (req) => {
               }
             }
             else { return '' }
-            
-          }          
+
+          }
           if (status_code === 3) {
             var maker_id = await commonService.insertLogs(user_id, "Unhold Order Taking");
-          
+
             await client.query(`Update tbl_order_taking_items set "status_code"=$1 ,"maker_id" = $2 where lower(order_no) = lower($3) `, [1, maker_id, order_no]);
             const hold_unhold_result = await client.query(`Update tbl_order_taking set "status_code"=$1 ,"maker_id" = $2 where lower(order_no) = lower($3) `, [1, maker_id, order_no]);
             let holdunholdresultcode = hold_unhold_result && hold_unhold_result.rowCount ? hold_unhold_result.rowCount : 0;
@@ -1360,11 +1402,11 @@ module.exports.holdOrderTaking = async (req) => {
               }
             }
             else { return '' }
-          } 
+          }
           if (client) {
             client.end();
           }
-         
+
         }
       }
       else {

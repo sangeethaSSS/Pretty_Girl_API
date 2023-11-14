@@ -431,7 +431,7 @@ module.exports.currentStockList = async (req) => {
         const stock_count = await client.query(`select count(*) as totalcount  from (select b.size_id   from tbl_stock_transaction as a  right outer join tbl_item_sizes as b on a.size_id=b.size_id inner join tbl_item_management as  c on c.trans_no =b.trans_no   inner join tbl_def_item as d on c.item_code=d.item_id group by b.size_id,d.item_name) as dev    `);
 
 
-        const stock_Result = await client.query(`select coalesce(b.current_stock,0)+sum(coalesce(inward,0)) as inward,b.size_id, sum(coalesce(outward,0)) as outward, coalesce((coalesce(current_stock,0)+sum(coalesce(inward,0)))-sum(coalesce(outward,0)),0) as closingstock,  d.item_name,b.qr_code  from tbl_stock_transaction as a  right outer join tbl_item_sizes as b on a.size_id=b.size_id inner join tbl_item_management as  c on c.trans_no =b.trans_no   inner join tbl_def_item as d on c.item_code=d.item_id group by b.size_id,d.item_name  LIMIT $1 OFFSET $2`, [limit, offset]);
+        const stock_Result = await client.query(`select coalesce(b.current_stock,0)+sum(coalesce(inward_set,0)) as inward,b.size_id, sum(coalesce(outward_set,0)) as outward, coalesce((coalesce(current_stock,0)+sum(coalesce(inward_set,0)))-sum(coalesce(outward_set,0)),0) as closingstock,  d.item_name,b.qr_code  from tbl_stock_transaction as a  right outer join tbl_item_sizes as b on a.size_id=b.size_id inner join tbl_item_management as  c on c.trans_no =b.trans_no   inner join tbl_def_item as d on c.item_code=d.item_id group by b.size_id,d.item_name  LIMIT $1 OFFSET $2`, [limit, offset]);
 
         let Lists = stock_Result && stock_Result.rows ? stock_Result.rows : [];
         let TotalList = stock_count && stock_count.rows ? stock_count.rows[0].totalcount : 0;
