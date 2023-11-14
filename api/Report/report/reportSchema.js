@@ -1,5 +1,10 @@
 const Joi = require('@hapi/joi');
 
+
+module.exports.employeePerformanceFilterListJwt = Joi.object().keys({
+  user_id: Joi.number().required(),
+  jwtToken: Joi.string().allow(""), 
+});
 module.exports.pendingJobReportListjwt = Joi.object().keys({
     user_id: Joi.number().required(),
     item_id:Joi.number().required(),
@@ -14,6 +19,7 @@ module.exports.pendingJobReportListjwt = Joi.object().keys({
     item_id:Joi.number().required(),
     from_date:Joi.string().required(),
     to_date:Joi.string().required(),
+    employee_code:Joi.string().allow(''),
   });
   module.exports.employeePerformanceReportList = Joi.object().keys({
     jwtToken: Joi.string().required(), 
@@ -73,4 +79,32 @@ module.exports.pendingJobReportListjwt = Joi.object().keys({
   module.exports.pendingOrderDropdown = Joi.object().keys({
     jwtToken: Joi.string().required(), 
   });
-  
+  //
+  module.exports.dashboardListJwt = Joi.object().keys({
+    user_id: Joi.number().required(),
+    date:Joi.string().required(),
+    jwtToken: Joi.string().allow(''), 
+  });
+  module.exports.customerRetailReportJwt = Joi.object().keys({
+    user_id: Joi.number().required(),
+    from_date: Joi.string().required(),
+    to_date: Joi.string().required(),
+    customer_name: Joi.string().required(),
+    jwtToken: Joi.string().allow(''), 
+  });
+
+  module.exports.GetCustomerDetailsJwt = Joi.object().keys({
+    user_id: Joi.number().required(),
+    jwtToken: Joi.string().allow('')
+  });
+
+  module.exports.GetDetailedOrdersJwt = Joi.object().keys({
+    user_id: Joi.number().required(),    
+    limit: Joi.number().required(),
+    offset: Joi.number().required(),
+    process: Joi.string().required(),
+    from_date: Joi.string().required(),
+    to_date: Joi.string().required(),
+    customer_name: Joi.string().required(),
+    jwtToken: Joi.string().allow(''),
+  });

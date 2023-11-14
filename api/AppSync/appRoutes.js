@@ -144,7 +144,6 @@ joiSchemaValidation.validateBody(loginSchema.GetDispatchReportList),
 appController.GetDispatchReportList
 )
 
-
 //Hold Order Taking
 router.post('/holdOrderTakingJwt',
 joiSchemaValidation.validateBody(loginSchema.holdOrderSchema),
@@ -155,6 +154,5 @@ router.post('/holdOrderTaking',
 joiSchemaValidation.validateBody(loginSchema.holdOrderSchema),
 appController.holdOrderTaking
 )
-
 
 module.exports = router;

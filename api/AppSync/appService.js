@@ -430,22 +430,21 @@ module.exports.getItemManagement = async (req) => {
            exeQuery2 = await client.query(
              "SELECT  'Insert' as process ,autonum, trans_no, item_code, design_id , created_date, updated_date, maker_id,status_id from tbl_item_management order by created_date "
            );
-         } 
-       
+         }       
          //Get Item Sizes
          const exeQuery_sync1 = await client.query("SELECT count(1) as countval  from tbl_sync_details where device_id=$1 and syncfile='itemSizes' ",[device_id]);
          var exit_check = exeQuery_sync1 && exeQuery_sync1.rows[0].countval ? exeQuery_sync1 && exeQuery_sync1.rows[0].countval : 0;
          let exeQuery3;
          if (exit_check > 0) {
            exeQuery3 = await client.query(
-             " SELECT 'Insert' as process , autonum, trans_no, start_size, end_size, total_set, created_date ,size_id,color_id,qr_code,current_stock,settype from tbl_item_sizes where (select syncdate from tbl_sync_details where device_id=$1 and syncfile='itemSizes' order by syncdate desc limit 1 ) <= created_date   ",[device_id]
+             " SELECT 'Insert' as process , autonum, trans_no, start_size, end_size, total_set, created_date ,size_id,color_id,qr_code,current_stock from tbl_item_sizes where (select syncdate from tbl_sync_details where device_id=$1 and syncfile='itemSizes' order by syncdate desc limit 1 ) <= created_date   ",[device_id]
            );
          } else {
            exeQuery3 = await client.query(
-             "SELECT  'Insert' as process , autonum, trans_no, start_size, end_size, total_set, created_date,size_id,color_id,qr_code,current_stock,settype from tbl_item_sizes order by created_date "
+             "SELECT  'Insert' as process , autonum, trans_no, start_size, end_size, total_set, created_date,size_id,color_id,qr_code,current_stock from tbl_item_sizes order by created_date "
            );
          } 
-      
+       
          //Get Item Master
          const exeQuery_sync2 = await client.query("SELECT count(1) as countval  from tbl_sync_details where device_id=$1 and syncfile='itemMaster' ",[device_id]);
          var exit_check = exeQuery_sync2 && exeQuery_sync2.rows[0].countval ? exeQuery_sync2 && exeQuery_sync2.rows[0].countval : 0;
@@ -550,130 +549,152 @@ module.exports.insertOrderTaking = async (req) => {
       var response = [],response1 = [];
       let totalOrderItemCount = 0
       if (device_id) {
-        let Lists = jsonOrder.JSonObject;
-        if (Lists && Lists.length > 0) {
-          for (var i = 0; i < Lists.length; i++) {
-            const exeUserQuery = await client.query(`select count(1) as total from tbl_order_taking  where ref_no=$1 and order_no =$2 and device_code=$3`, [Lists[i].ref_no,Lists[i].order_no,Lists[i].device_code]);
-            let totalcount = exeUserQuery?.rows?.[0].total;
-            const exeUserOrderQuery = await client.query(`select count(1) as total from tbl_order_taking_items  where order_no=$1 and device_code=$2`, [Lists[i].order_no,Lists[i].device_code]);
-            totalOrderItemCount = exeUserOrderQuery?.rows?.[0].total;
-            if (Number(totalOrderItemCount) > 0) {
-              await client.query(`DELETE FROM tbl_order_taking_items where order_no=$1 and device_code=$2`, [Lists[i].order_no,Lists[i].device_code]);
-            }
-            const exeStockQuery = await client.query(`select count(1) as total from tbl_stock_transaction  where trans_no =$1 and  user_id=$2`, [Lists[i].order_no,Lists[i].device_code ]);
-            let totalstockcount = exeStockQuery?.rows?.[0].total;
-            if (Number(totalstockcount) > 0) {
-              await client.query(`DELETE FROM tbl_stock_transaction where trans_no=$1 and user_id=$2`, [Lists[i].order_no,Lists[i].device_code]);
-            }
-            if (Number(totalcount) == 0) {
-                //Insert User Log
-              var makerid = await commonService.insertLogs(Lists[i].device_code, "Insert Order Taking Via Mobile - " + Lists[i].device_code+" - "+Lists[i].order_no);
-              const exeUserQuerys = await client.query(`INSERT INTO tbl_order_taking(ref_no, order_no, order_date, customer_code, created_date, status_code, device_code,  sync_date,maker_id,type, remarks) values ($1, $2, $3, $4, $5, $6, $7,now() ,$8,'Mobile',$9) RETURNING order_no`, [Lists[i].ref_no, Lists[i].order_no, Lists[i].order_date, Lists[i].customer_code, Lists[i].created_date, Lists[i].status_code, Lists[i].device_code, makerid,Lists[i].remarks]); 
-              response.push(exeUserQuerys.rows[0].order_no);
-            } else {
-                //Insert User Log
-                var makerid = await commonService.insertLogs(Lists[i].device_code, "Update Order Taking Via Mobile - " + Lists[i].device_code+" - "+Lists[i].order_no);
-                const exeUserQuerys = await client.query(`UPDATE tbl_order_taking set order_date=$1, customer_code=$2, created_date=$3, status_code=$4, sync_date=now(),maker_id=$5 , remarks=$9 where  ref_no=$6 and order_no=$7 and  device_code=$8  RETURNING order_no`, [Lists[i].order_date, Lists[i].customer_code, Lists[i].created_date, Lists[i].status_code,makerid, Lists[i].ref_no, Lists[i].order_no, Lists[i].device_code,Lists[i].remarks ]);
+        try {
+          // Start Transaction
+            // await   client.beginTransaction();
+            await client.query('BEGIN')
+          let Lists = jsonOrder.JSonObject;
+          if (Lists && Lists.length > 0) {
+            for (var i = 0; i < Lists.length; i++) {
+              const exeUserQuery = await client.query(`select count(1) as total from tbl_order_taking  where ref_no=$1 and order_no =$2 and device_code=$3`, [Lists[i].ref_no,Lists[i].order_no,Lists[i].device_code]);
+              let totalcount = exeUserQuery?.rows?.[0].total;
+              const exeUserOrderQuery = await client.query(`select count(1) as total from tbl_order_taking_items  where order_no=$1 and device_code=$2`, [Lists[i].order_no,Lists[i].device_code]);
+              totalOrderItemCount = exeUserOrderQuery?.rows?.[0].total;
+              if (Number(totalOrderItemCount) > 0) {
+                await client.query(`DELETE FROM tbl_order_taking_items where order_no=$1 and device_code=$2`, [Lists[i].order_no,Lists[i].device_code]);
+              }
+              const exeStockQuery = await client.query(`select count(1) as total from tbl_stock_transaction  where trans_no =$1 and  user_id=$2`, [Lists[i].order_no,Lists[i].device_code ]);
+              let totalstockcount = exeStockQuery?.rows?.[0].total;
+              if (Number(totalstockcount) > 0) {
+                await client.query(`DELETE FROM tbl_stock_transaction where trans_no=$1 and user_id=$2`, [Lists[i].order_no,Lists[i].device_code]);
+              }
+              if (Number(totalcount) == 0) {
+                  //Insert User Log
+                var makerid = await commonService.insertLogs(Lists[i].device_code, "Insert Order Taking Via Mobile - " + Lists[i].device_code+" - "+Lists[i].order_no);
+                const exeUserQuerys = await client.query(`INSERT INTO tbl_order_taking(ref_no, order_no, order_date, customer_code, created_date, status_code, device_code,  sync_date,maker_id,type, remarks) values ($1, $2, $3, $4, $5, $6, $7,now() ,$8,'Mobile',$9) RETURNING order_no`, [Lists[i].ref_no, Lists[i].order_no, Lists[i].order_date, Lists[i].customer_code, Lists[i].created_date, Lists[i].status_code, Lists[i].device_code, makerid,Lists[i].remarks]); 
                 response.push(exeUserQuerys.rows[0].order_no);
-            }              
-          }
-        }
-
-        //Order Taking Items insert
-        let ListsItems = jsonOrderItems.JSonObject;
-        if (ListsItems && ListsItems.length > 0) {
-          
-          for (var i = 0; i < ListsItems.length; i++) {
-            // const exeUserQuery = await client.query(`select count(1) as total from tbl_order_taking_items  where order_no=$1 and item_code =$2 and design_code=$3 and size_id=$4 and color_id=$5  and device_code=$6`, [ListsItems[i].order_no,ListsItems[i].item_code,ListsItems[i].design_code,ListsItems[i].size_id,ListsItems[i].color,ListsItems[i].device_code]);
-            if (ListsItems[i].color == "" || ListsItems[i].color == "null" || ListsItems[i].color == undefined
-           || ListsItems[i].color == null){
-            ListsItems[i].color = 0
-           }
-                 var makerid = await commonService.insertLogs(ListsItems[i].device_code, "Insert Order Taking Items Via Mobile - " + ListsItems[i].device_code+" - "+ListsItems[i].order_no);
-                //Insert User Log
-              const exeUserQuerys = await client.query(`INSERT INTO tbl_order_taking_items(order_no, item_code, design_code, color_id, item_size, qty, created_date,device_code,status_code,sync_date,maker_id,size_id) values ($1, $2, $3, $4, $5, $6, $7, $8,$9,now(),$10,$11) RETURNING order_no`, [ListsItems[i].order_no, ListsItems[i].item_code, ListsItems[i].design_code, ListsItems[i].color, ListsItems[i].item_size, ListsItems[i].qty, ListsItems[i].created_date, ListsItems[i].device_code, ListsItems[i].status_code, makerid,ListsItems[i].size_id]);
-              response1.push(exeUserQuerys.rows[0].order_no);   
-                      
-            // if (Number(totalcount) == 0) {
-            //     //Insert User Log
-            //   var makerid = await commonService.insertLogs(ListsItems[i].device_code, "Insert Order Taking Items Via Mobile - " + ListsItems[i].device_code+" - "+ListsItems[i].order_no);
-              
-            //   const exeUserQuerys = await client.query(`INSERT INTO tbl_order_taking_items(order_no, item_code, design_code, color_id, item_size, qty, created_date,device_code,status_code,sync_date,maker_id,size_id) values ($1, $2, $3, $4, $5, $6, $7, $8,$9,now(),$10,$11) RETURNING order_no`, [ListsItems[i].order_no, ListsItems[i].item_code, ListsItems[i].design_code, ListsItems[i].color, ListsItems[i].item_size, ListsItems[i].qty, ListsItems[i].created_date, ListsItems[i].device_code, ListsItems[i].status_code, makerid,ListsItems[i].size_id]);
-            //   response1.push(exeUserQuerys.rows[0].order_no);
-            // } else {
-            //     //Update User Log
-            //     var makerid = await commonService.insertLogs(ListsItems[i].device_code, "Update Order Taking Items Via Mobile - " + ListsItems[i].device_code+" - "+ListsItems[i].order_no);
-              
-            //     const exeUserQuerys = await client.query(`Update tbl_order_taking_items set  qty=$1 ,maker_id=$2, status_code=$3,sync_date=now() where order_no=$4 and item_code =$5 and design_code=$6 and size_id=$7 and color_id=$8  and device_code=$9 RETURNING order_no`, [ListsItems[i].qty,makerid,ListsItems[i].status_code,ListsItems[i].order_no,ListsItems[i].item_code,ListsItems[i].design_code,ListsItems[i].size_id,ListsItems[i].color,ListsItems[i].device_code]);
-            //     response1.push(exeUserQuerys.rows[0].order_no);
-            // }
-
-            //Order taking stock transaction
-
-                //Insert User Log
-              var makerid = await commonService.insertLogs(ListsItems[i].device_code, "Insert Stock Order Taking Items Via Mobile - " + ListsItems[i].device_code+" - "+ListsItems[i].order_no);
-              
-               await client.query(`INSERT INTO tbl_stock_transaction(stock_date, size_id, trans_no, inward, outward, user_id, created_date, sync_date, maker_id) values ($1, $2, $3, $4, $5, $6, $7, now(),$8 ) RETURNING size_id`, [ListsItems[i].created_date, ListsItems[i].size_id, ListsItems[i].order_no,'0', ListsItems[i].qty, ListsItems[i].device_code, ListsItems[i].created_date ,makerid ]);
-
-              
-           
-            // const exeStockQuery = await client.query(`select count(1) as total from tbl_stock_transaction  where size_id=$1 and trans_no =$2 and  user_id=$3`, [ListsItems[i].size_id,ListsItems[i].order_no,ListsItems[i].device_code ]);
-            // let totalstockcount = exeStockQuery?.rows?.[0].total;
-            // if (Number(totalstockcount) == 0) {
-            //     //Insert User Log
-            //   var makerid = await commonService.insertLogs(ListsItems[i].device_code, "Insert Stock Order Taking Items Via Mobile - " + ListsItems[i].device_code+" - "+ListsItems[i].order_no);
-              
-            //    await client.query(`INSERT INTO tbl_stock_transaction(stock_date, size_id, trans_no, inward, outward, user_id, created_date, sync_date, maker_id) values ($1, $2, $3, $4, $5, $6, $7, now(),$8 ) RETURNING size_id`, [ListsItems[i].created_date, ListsItems[i].size_id, ListsItems[i].order_no,'0', ListsItems[i].qty, ListsItems[i].device_code, ListsItems[i].created_date ,makerid ]);
-              
-            // } else {
-            //     //Update User Log
-            //     var makerid = await commonService.insertLogs(ListsItems[i].device_code, "Update Stock Order Taking Items Via Mobile - " + ListsItems[i].device_code+" - "+ListsItems[i].order_no);
-              
-            //      await client.query(`Update tbl_stock_transaction set  outward=$1 ,maker_id=$2, sync_date=now() where size_id=$3 and trans_no =$4 and  user_id=$5 `, [ListsItems[i].qty,makerid,ListsItems[i].size_id,ListsItems[i].order_no,ListsItems[i].device_code ]);
-                 
-            // }
-                        
-          }
-        }
-
-        if (Lists && Lists.length > 0) {
-        
-          const company_Result = await client.query(`SELECT print_id, company_name, addressline1, addressline2, area, city, gstin, mobile_number, telephone_number, status_id, footer_name from tbl_print_setting`);
-          let Company_Array = company_Result && company_Result.rows ? company_Result.rows?.[0] || {} : {};
-          for (let k = 0; k < Lists.length; k++){  
-            const exeUserQuery = await client.query(`select count(1) as total from tbl_order_taking  where ref_no=$1 and order_no =$2 and device_code=$3 and coalesce(pdf_sent_status,'')!='sent'`, [Lists[k].ref_no,Lists[k].order_no,Lists[k].device_code]);
-            let totalcount = exeUserQuery?.rows?.[0].total; 
-            if (totalcount > 0) {
-              const exeQuery1 = await client.query(
-                `select order_no,to_char(order_date, 'dd-MM-YYYY') as orderdate,a.customer_code,UPPER(b.customer_name) as customer_name,b.contact_person,b.mobile_no,coalesce(b.alternative_mobile_no,'') as alternative_mobile_no,coalesce(b.street,'') as street,coalesce(b.area,'') as area,coalesce(b.city,'') as city,coalesce(b.pincode,'') as pincode,coalesce(b.email_id,'') as email_id,coalesce(b.gstin_no,'') as gstin_no,b.country,coalesce(b.transport_name,'') as transport_name,coalesce(b.transport_contact_no,'') as transport_contact_no,coalesce(b.transport_location,'') as transport_location,coalesce(b.transport_contact_person,'') as transport_contact_person,coalesce(b.agent_code,0) as agent_code, (select agent_name from tbl_agent where agent_code=b.agent_code) as agent_name from tbl_order_taking  as a inner join tbl_customer as b on a.customer_code=b.customer_code where ref_no=$1 and order_no =$2 and a.device_code=$3 `, [Lists[k].ref_no, Lists[k].order_no, Lists[k].device_code] 
-              );
-              let order_customer_details = exeQuery1?.rows[0] || {};
-              let order_id = exeQuery1?.rows[0]?.order_no || '';
-
-              const exeQuery2= await client.query(
-                `select ROW_NUMBER () OVER (ORDER BY a.order_no) as sno,a.order_no,b.item_code,c.item_name,b.design_code,b.item_size,b.qty,b.color_id,b.size_id,d.color_name,e.total_set,a.order_date,e.total_set::INTEGER*b.qty as total_pcs,remarks from tbl_order_taking  as a inner join tbl_order_taking_items as b on a.order_no = b.order_no inner join tbl_def_item as c on b.item_code = c.item_id left join tbl_color as d on b.color_id = d.color_id inner join tbl_item_sizes as e on b.size_id = e.size_id where a.ref_no=$1 and a.order_no =$2 and a.device_code=$3 order by b.item_code asc`, [Lists[k].ref_no, Lists[k].order_no, Lists[k].device_code] 
-              );
-              let order_item_details = exeQuery2?.rows || []; 
-              const exeQuery3= await client.query(
-                `select coalesce(mobile_no,'') as mobile_no from tbl_user where user_id=$1`, [Lists[k].device_code] 
-              );              
-              let user_mobileno = exeQuery3?.rows ? exeQuery3?.rows[0].mobile_no: '' || ''; 
-              const Order_Item_List = await client.query(`SELECT order_no,item_code,item_name,SUM(qty) as qty,
-              sum(total_piece) as total_piece from (select a.order_no,b.item_code,c.item_name,
-              b.qty,e.total_set,(b.qty::INTEGER*e.total_set::INTEGER) as total_piece
-              from tbl_order_taking  as a inner join tbl_order_taking_items as b 
-              on a.order_no = b.order_no inner join tbl_def_item as c on b.item_code = c.item_id 
-              left join tbl_color as d on b.color_id = d.color_id inner join tbl_item_sizes as 
-              e on b.size_id = e.size_id where a.ref_no=$1 and a.order_no =$2 and (a.device_code=$3 or a.user_id=$3) order by b.item_code asc) as dev group by order_no,item_code,item_name order by item_code asc`, [Lists[k].ref_no, Lists[k].order_no, Lists[k].user_id]);
-              let ItemLists = Order_Item_List && Order_Item_List.rows ? Order_Item_List.rows : [];
-              let responseData = {
-                "OrderSlip": order_item_details, "CustomerArray": order_customer_details, "CompanyArray": Company_Array ,"order_id":order_id, "user_mobile_no":user_mobileno,"ItemLists":ItemLists
-              } 
-              // await generateOrderPDF(responseData,req, Lists[k]);
+              } else {
+                  //Insert User Log
+                  var makerid = await commonService.insertLogs(Lists[i].device_code, "Update Order Taking Via Mobile - " + Lists[i].device_code+" - "+Lists[i].order_no);
+                  const exeUserQuerys = await client.query(`UPDATE tbl_order_taking set order_date=$1, customer_code=$2, created_date=$3, status_code=$4, sync_date=now(),maker_id=$5 , remarks=$9 where  ref_no=$6 and order_no=$7 and  device_code=$8  RETURNING order_no`, [Lists[i].order_date, Lists[i].customer_code, Lists[i].created_date, Lists[i].status_code,makerid, Lists[i].ref_no, Lists[i].order_no, Lists[i].device_code,Lists[i].remarks ]);
+                  response.push(exeUserQuerys.rows[0].order_no);
+              }              
             }
           }
-         
+  
+          //Order Taking Items insert
+          let ListsItems = jsonOrderItems.JSonObject;
+          if (ListsItems && ListsItems.length > 0) {
+            
+            for (var i = 0; i < ListsItems.length; i++) {
+              // const exeUserQuery = await client.query(`select count(1) as total from tbl_order_taking_items  where order_no=$1 and item_code =$2 and design_code=$3 and size_id=$4 and color_id=$5  and device_code=$6`, [ListsItems[i].order_no,ListsItems[i].item_code,ListsItems[i].design_code,ListsItems[i].size_id,ListsItems[i].color,ListsItems[i].device_code]);
+             
+                   var makerid = await commonService.insertLogs(ListsItems[i].device_code, "Insert Order Taking Items Via Mobile - " + ListsItems[i].device_code+" - "+ListsItems[i].order_no);
+                  //Insert User Log
+                const exeUserQuerys = await client.query(`INSERT INTO tbl_order_taking_items(order_no, item_code, design_code, color_id, item_size, qty, created_date,device_code,status_code,sync_date,maker_id,size_id,pending_dispatch) values ($1, $2, $3, $4, $5, $6, $7, $8,$9,now(),$10,$11,$12) RETURNING order_no`, [ListsItems[i].order_no, ListsItems[i].item_code, ListsItems[i].design_code, ListsItems[i].color, ListsItems[i].item_size, ListsItems[i].qty, ListsItems[i].created_date, ListsItems[i].device_code, ListsItems[i].status_code, makerid,ListsItems[i].size_id,ListsItems[i].qty]);
+                response1.push(exeUserQuerys.rows[0].order_no);   
+              
+            
+              // if (Number(totalcount) == 0) {
+              //     //Insert User Log
+              //   var makerid = await commonService.insertLogs(ListsItems[i].device_code, "Insert Order Taking Items Via Mobile - " + ListsItems[i].device_code+" - "+ListsItems[i].order_no);
+                
+              //   const exeUserQuerys = await client.query(`INSERT INTO tbl_order_taking_items(order_no, item_code, design_code, color_id, item_size, qty, created_date,device_code,status_code,sync_date,maker_id,size_id) values ($1, $2, $3, $4, $5, $6, $7, $8,$9,now(),$10,$11) RETURNING order_no`, [ListsItems[i].order_no, ListsItems[i].item_code, ListsItems[i].design_code, ListsItems[i].color, ListsItems[i].item_size, ListsItems[i].qty, ListsItems[i].created_date, ListsItems[i].device_code, ListsItems[i].status_code, makerid,ListsItems[i].size_id]);
+              //   response1.push(exeUserQuerys.rows[0].order_no);
+              // } else {
+              //     //Update User Log
+              //     var makerid = await commonService.insertLogs(ListsItems[i].device_code, "Update Order Taking Items Via Mobile - " + ListsItems[i].device_code+" - "+ListsItems[i].order_no);
+                
+              //     const exeUserQuerys = await client.query(`Update tbl_order_taking_items set  qty=$1 ,maker_id=$2, status_code=$3,sync_date=now() where order_no=$4 and item_code =$5 and design_code=$6 and size_id=$7 and color_id=$8  and device_code=$9 RETURNING order_no`, [ListsItems[i].qty,makerid,ListsItems[i].status_code,ListsItems[i].order_no,ListsItems[i].item_code,ListsItems[i].design_code,ListsItems[i].size_id,ListsItems[i].color,ListsItems[i].device_code]);
+              //     response1.push(exeUserQuerys.rows[0].order_no);
+              // }
+  
+              //Order taking stock transaction
+  
+                  //Insert User Log
+                var makerid = await commonService.insertLogs(ListsItems[i].device_code, "Insert Stock Order Taking Items Via Mobile - " + ListsItems[i].device_code+" - "+ListsItems[i].order_no);
+                
+                //  await client.query(`INSERT INTO tbl_stock_transaction(stock_date, size_id, trans_no, inward_set, outward_set, user_id, created_date, sync_date, maker_id) values ($1, $2, $3, $4, $5, $6, $7, now(),$8 ) RETURNING size_id`, [ListsItems[i].created_date, ListsItems[i].size_id, ListsItems[i].order_no,'0', ListsItems[i].qty, ListsItems[i].device_code, ListsItems[i].created_date ,makerid ]);
+  
+                let total_set =  await client.query(`SELECT total_set::INTEGER FROM tbl_item_sizes where size_id = `+ListsItems[i].size_id+``)
+                var total_pieces = total_set && total_set.rows[0].total_set;
+                total_pieces = total_pieces * Number(ListsItems[i].qty)
+  
+  
+                  await client.query(`INSERT INTO tbl_stock_transaction(stock_date,size_id,trans_no,inward_set,outward_set,user_id,created_date,sync_date,maker_id,inward_pieces,outward_pieces,customer_code,type) values ($1, $2, $3, $4, $5, $6, $7, now(),$8,$9,$10,$11) `, [ListsItems[i].created_date, ListsItems[i].size_id, ListsItems[i].order_no,'0', ListsItems[i].qty, ListsItems[i].device_code, ListsItems[i].created_date ,makerid ,0,total_pieces,customer_id,'Order']);
+  
+                
+             
+              // const exeStockQuery = await client.query(`select count(1) as total from tbl_stock_transaction  where size_id=$1 and trans_no =$2 and  user_id=$3`, [ListsItems[i].size_id,ListsItems[i].order_no,ListsItems[i].device_code ]);
+              // let totalstockcount = exeStockQuery?.rows?.[0].total;
+              // if (Number(totalstockcount) == 0) {
+              //     //Insert User Log
+              //   var makerid = await commonService.insertLogs(ListsItems[i].device_code, "Insert Stock Order Taking Items Via Mobile - " + ListsItems[i].device_code+" - "+ListsItems[i].order_no);
+                
+              //    await client.query(`INSERT INTO tbl_stock_transaction(stock_date, size_id, trans_no, inward, outward, user_id, created_date, sync_date, maker_id) values ($1, $2, $3, $4, $5, $6, $7, now(),$8 ) RETURNING size_id`, [ListsItems[i].created_date, ListsItems[i].size_id, ListsItems[i].order_no,'0', ListsItems[i].qty, ListsItems[i].device_code, ListsItems[i].created_date ,makerid ]);
+                
+              // } else {
+              //     //Update User Log
+              //     var makerid = await commonService.insertLogs(ListsItems[i].device_code, "Update Stock Order Taking Items Via Mobile - " + ListsItems[i].device_code+" - "+ListsItems[i].order_no);
+                
+              //      await client.query(`Update tbl_stock_transaction set  outward=$1 ,maker_id=$2, sync_date=now() where size_id=$3 and trans_no =$4 and  user_id=$5 `, [ListsItems[i].qty,makerid,ListsItems[i].size_id,ListsItems[i].order_no,ListsItems[i].device_code ]);
+                   
+              // }
+                          
+            }
+          }
+  
+          if (Lists && Lists.length > 0) {
+          
+            const company_Result = await client.query(`SELECT print_id, company_name, addressline1, addressline2, area, city, gstin, mobile_number, telephone_number, status_id, footer_name from tbl_print_setting`);
+            let Company_Array = company_Result && company_Result.rows ? company_Result.rows?.[0] || {} : {};
+            for (let k = 0; k < Lists.length; k++){  
+              const exeUserQuery = await client.query(`select count(1) as total from tbl_order_taking  where ref_no=$1 and order_no =$2 and device_code=$3 and coalesce(pdf_sent_status,'')!='sent'`, [Lists[k].ref_no,Lists[k].order_no,Lists[k].device_code]);
+              let totalcount = exeUserQuery?.rows?.[0].total; 
+              if (totalcount > 0) {
+                const exeQuery1 = await client.query(
+                  `select order_no,to_char(order_date, 'dd-MM-YYYY') as orderdate,a.customer_code,UPPER(b.customer_name) as customer_name,b.contact_person,b.mobile_no,coalesce(b.alternative_mobile_no,'') as alternative_mobile_no,coalesce(b.street,'') as street,coalesce(b.area,'') as area,coalesce(b.city,'') as city,coalesce(b.pincode,'') as pincode,coalesce(b.email_id,'') as email_id,coalesce(b.gstin_no,'') as gstin_no,b.country,coalesce(b.transport_name,'') as transport_name,coalesce(b.transport_contact_no,'') as transport_contact_no,coalesce(b.transport_location,'') as transport_location,coalesce(b.transport_contact_person,'') as transport_contact_person,coalesce(b.agent_code,0) as agent_code, (select agent_name from tbl_agent where agent_code=b.agent_code) as agent_name from tbl_order_taking  as a inner join tbl_customer as b on a.customer_code=b.customer_code where ref_no=$1 and order_no =$2 and a.device_code=$3 `, [Lists[k].ref_no, Lists[k].order_no, Lists[k].device_code] 
+                );
+                let order_customer_details = exeQuery1?.rows[0] || {};
+                let order_id = exeQuery1?.rows[0]?.order_no || '';
+  
+                const exeQuery2= await client.query(
+                  `select ROW_NUMBER () OVER (ORDER BY a.order_no) as sno,a.order_no,b.item_code,c.item_name,b.design_code,b.item_size,b.qty,b.color_id,b.size_id,d.color_name,e.total_set,a.order_date,e.total_set::INTEGER*b.qty as total_pcs,remarks  from tbl_order_taking  as a inner join tbl_order_taking_items as b on a.order_no = b.order_no inner join tbl_def_item as c on b.item_code = c.item_id inner join tbl_color as d on b.color_id = d.color_id inner join tbl_item_sizes as e on b.size_id = e.size_id where a.ref_no=$1 and a.order_no =$2 and a.device_code=$3 order by b.item_code asc`, [Lists[k].ref_no, Lists[k].order_no, Lists[k].device_code] 
+                );
+                let order_item_details = exeQuery2?.rows || []; 
+                const exeQuery3= await client.query(
+                  `select coalesce(mobile_no,'') as mobile_no from tbl_user where user_id=$1`, [Lists[k].device_code] 
+                );
+                
+                let user_mobileno = exeQuery3?.rows ? exeQuery3?.rows[0].mobile_no: '' || ''; 
+                const Order_Item_List = await client.query(`SELECT order_no,item_code,item_name,SUM(qty) as qty,
+                sum(total_piece) as total_piece from (select a.order_no,b.item_code,c.item_name,
+                b.qty,e.total_set,(b.qty::INTEGER*e.total_set::INTEGER) as total_piece
+                from tbl_order_taking  as a inner join tbl_order_taking_items as b 
+                on a.order_no = b.order_no inner join tbl_def_item as c on b.item_code = c.item_id 
+                left join tbl_color as d on b.color_id = d.color_id inner join tbl_item_sizes as 
+                e on b.size_id = e.size_id where a.ref_no=$1 and a.order_no =$2 and (a.device_code=$3 or a.user_id=$3) order by b.item_code asc) as dev group by order_no,item_code,item_name order by item_code asc`, [Lists[k].ref_no, Lists[k].order_no, Lists[k].user_id]);
+                let ItemLists = Order_Item_List && Order_Item_List.rows ? Order_Item_List.rows : [];
+                let responseData = {
+                  "OrderSlip": order_item_details, "CustomerArray": order_customer_details, "CompanyArray": Company_Array ,"order_id":order_id, "user_mobile_no":user_mobileno,"ItemLists":ItemLists
+                } 
+                // await generateOrderPDF(responseData,req, Lists[k]);
+              }
+            }
+           
+          }
+           // Commit Changes
+          // await  client.commit();
+          await client.query('COMMIT')
+
+        } catch (error) {
+           // await    client.rollback();
+            await client.query('ROLLBACK')
+            if (client) {
+              client.end();
+            }
         }
+     
 
         if (client) {
           client.end();
@@ -1016,8 +1037,12 @@ module.exports.stockTransactionList = async (req) => {
       const { device_id } = decoded.data;
       var response = {};
       if (device_id) {
+        // const exeQuery = await client.query(
+        //   "select to_char(CURRENT_DATE,'YYYY-MM-DD') as stock_date ,row_number() over(order by b.size_id) as stock_code,  sum(coalesce(inward_set,0))+coalesce(b.current_stock,0)  as inward,sum(coalesce(outward_set,0)) as outward,b.size_id,coalesce(COALESCE((select sum(coalesce(no_of_set,0)) from tbl_fg_items where size_id=b.size_id) + COALESCE((SELECT sum(goods_return_set) from tbl_goods_return WHERE status_flag = 1 and size_id = b.size_id ),0),0) - (select coalesce(sum(coalesce(dispatch_set,0)),0) from tbl_dispatch_details where status_flag = 1 and  size_id=b.size_id ),0)  as current_stock  from tbl_stock_transaction as a right join  tbl_item_sizes as b on a.size_id=b.size_id group by b.size_id " 
+        // );
+
         const exeQuery = await client.query(
-          "select to_char(CURRENT_DATE,'YYYY-MM-DD') as stock_date ,row_number() over(order by b.size_id) as stock_code,  sum(coalesce(inward,0))+coalesce(b.current_stock,0)  as inward,sum(coalesce(outward,0)) as outward,b.size_id,coalesce(COALESCE((select sum(coalesce(no_of_set,0)) from tbl_fg_items where size_id=b.size_id) + COALESCE((SELECT sum(goods_return_set) from tbl_goods_return WHERE status_flag = 1 and size_id = b.size_id ),0),0) - (select coalesce(sum(coalesce(dispatch_set,0)),0) from tbl_dispatch_details where status_flag = 1 and  size_id=b.size_id ),0)  as current_stock  from tbl_stock_transaction as a right join  tbl_item_sizes as b on a.size_id=b.size_id group by b.size_id " 
+          "SELECT to_char(CURRENT_DATE,'YYYY-MM-DD') AS stock_date ,row_number() over(order by b.size_id) AS stock_code,  sum(coalesce(inward_set,0)) AS inward,sum(coalesce(outward_set,0)) AS outward,b.size_id,coalesce((SELECT sum(inward_set) - sum(outward_set) AS current_set from tbl_stock_transaction WHERE type!='Order' AND size_id= b.size_id),0)  AS current_stock FROM tbl_stock_transaction AS a RIGHT JOIN tbl_item_sizes AS b ON a.size_id=b.size_id GROUP BY b.size_id " 
         );
         const exeQuery_Order = await client.query(
           "select to_char(CURRENT_DATE,'YYYY-MM-DD') as order_date,sum(qty) as qty, size_id from tbl_order_taking_items as a inner join tbl_order_taking as b on a.order_no=b.order_no where b.order_date=CURRENT_DATE and b.status_code=1 group by size_id " );
@@ -1211,10 +1236,9 @@ module.exports.GetCurrentStock = async (req) => {
       var responseData = {}
       let { device_id,set_type,design_id,item_id } = req; 
       let designid_val = '1=1';
-      let get_item_code = '1=1';      
+      let get_item_code = '1=1'; 
       let getsettype = '1=1';
       let getset_type = '1=1';
-
       if(design_id && design_id != "" && design_id != "0"){
         const design_code_val = design_id ? '\'' + design_id.split(',').join('\',\'') + '\'' : ''
         designid_val = `d.design_id in (` + design_code_val + `) `
@@ -1322,7 +1346,7 @@ module.exports.GetDispatchReportList = async (req) => {
       let Dispatch_Array = []
       //'da2478e76dc3b67b'
       if (device_id) {
-        let deviceid = '\'' + device_id  + '\''      
+        let deviceid = '\'' + device_id  + '\''
         const view_agent = await client.query(`SELECT coalesce(view_dispatch,'') as dispatchview,devices_id FROM tbl_user where devices_id = `+ deviceid +``);
         if(view_agent && view_agent.rows[0]){
           const view_agent_enable = view_agent && view_agent.rows[0] && view_agent.rows[0].dispatchview ? view_agent.rows[0].dispatchview : '';

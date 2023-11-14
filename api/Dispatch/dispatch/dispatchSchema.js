@@ -5,6 +5,8 @@ module.exports.itemCustomerWiseListJwt = Joi.object().keys({
     process: Joi.string().allow(''), 
     size_id: Joi.string().allow(''), 
     customer_code: Joi.string().allow(''),  
+    limit:Joi.number().required(),   
+    offset:Joi.number().required(),
     jwtToken: Joi.string().allow(''), 
   }); 
   module.exports.designListJwt = Joi.object().keys({
@@ -55,7 +57,7 @@ module.exports.itemCustomerWiseListJwt = Joi.object().keys({
     designcode: Joi.string().required().allow(''),
     customercode: Joi.string().required().allow(''), 
     itemcategary_code: Joi.string().required().allow(''),
-    agent_code: Joi.string().required().allow(''),  
+    agent_code: Joi.string().required().allow(''),    
     jwtToken: Joi.string().allow(''), 
   });
   module.exports.editDispatchDataJwt = Joi.object().keys({
@@ -68,7 +70,7 @@ module.exports.itemCustomerWiseListJwt = Joi.object().keys({
     user_id: Joi.number().required(),   
     dispatch_details: Joi.array().required().allow([]),  
     jwtToken: Joi.string().allow(''), 
-  });
+  }); 
   
 
 

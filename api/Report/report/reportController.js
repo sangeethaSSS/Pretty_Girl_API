@@ -250,3 +250,162 @@ try {
 }
 return res.send(response);
 }
+
+// dashboardListjwt
+
+
+//Create JWt Module
+module.exports.dashboardListJwt = async (req, res) => {
+  let response = {};
+  try {
+    const responseFromService = await reportMgmtServices.dashboardListJwt(req.body); 
+    if(!responseFromService.token) {
+      response.status = 200;
+    }    
+    response.body = responseFromService;
+  } catch (error) {
+    response.message = error.message;
+  }
+  return res.send(response);
+}
+
+//Dashboart List Module
+module.exports.dashboardList = async (req, res) => {
+let response = {};
+try {   
+  const responseFromService = await reportMgmtServices.dashboardList(req.body); 
+  if(!responseFromService.token) {
+    response.status = 200;
+    response.message = constants.success_message.LISTED_SUCCESS;
+  }    
+  response.body = responseFromService;
+} catch (error) {
+  response.message = error.message;
+}
+return res.send(response);
+}
+
+//Create JWt Module
+module.exports.customerRetailReportJwt = async (req, res) => {
+  let response = {};
+  try {
+    const responseFromService = await reportMgmtServices.customerRetailReportJwt(req.body); 
+    if(!responseFromService.token) {
+      response.status = 200;
+    }    
+    response.body = responseFromService;
+  } catch (error) {
+    response.message = error.message;
+  }
+  return res.send(response);
+}
+
+//Dashboart List Module
+module.exports.customerRetailReport = async (req, res) => {
+let response = {};
+try {   
+  const responseFromService = await reportMgmtServices.customerRetailReport(req.body); 
+  if(!responseFromService.token) {
+    response.status = 200;
+    response.message = constants.success_message.LISTED_SUCCESS;
+  }    
+  response.body = responseFromService;
+} catch (error) {
+  response.message = error.message;
+}
+return res.send(response);
+}
+
+//Create JWt Module
+module.exports.GetCustomerDetailsJwt = async (req, res) => {
+  let response = {};
+  try {
+    const responseFromService = await reportMgmtServices.GetCustomerDetailsJwt(req.body); 
+    if(!responseFromService.token) {
+      response.status = 200;
+    }    
+    response.body = responseFromService;
+  } catch (error) {
+    response.message = error.message;
+  }
+  return res.send(response);
+}
+
+//Get Customer Detailed Module
+module.exports.GetCustomerDetails = async (req, res) => {
+let response = {};
+try {   
+  const responseFromService = await reportMgmtServices.GetCustomerDetails(req.body); 
+  if(!responseFromService.token) {
+    response.status = 200;
+    response.message = constants.success_message.LISTED_SUCCESS;
+  }    
+  response.body = responseFromService;
+} catch (error) {
+  response.message = error.message;
+}
+return res.send(response);
+}
+
+//Get Detailed order list JWt Module
+module.exports.GetDetailedOrdersJwt = async (req, res) => {
+  let response = {};
+  try {
+    const responseFromService = await reportMgmtServices.GetDetailedOrdersJwt(req.body); 
+    if(!responseFromService.token) {
+      response.status = 200;
+    }    
+    response.body = responseFromService;
+  } catch (error) {
+    response.message = error.message;
+  }
+  return res.send(response);
+}
+
+//Get Detailed order list Module
+module.exports.GetDetailedOrders = async (req, res) => {
+let response = {};
+try {   
+  const responseFromService = await reportMgmtServices.GetDetailedOrders(req.body); 
+  if(!responseFromService.token) {
+    response.status = 200;
+    response.message = constants.success_message.LISTED_SUCCESS;
+  }    
+  response.body = responseFromService;
+} catch (error) {
+  response.message = error.message;
+}
+return res.send(response);
+}
+
+
+//Get Employee Performance filter list JWt Module
+module.exports.employeePerformanceFilterListJwt = async (req, res) => {
+  let response = {};
+  try {
+    const responseFromService = await reportMgmtServices.employeePerformanceFilterListJwt(req.body); 
+    if(!responseFromService.token) {
+      response.status = 200;
+    }    
+    response.body = responseFromService;
+  } catch (error) {
+    response.message = error.message;
+  }
+  return res.send(response);
+}
+
+//Get Employee Performance filter list Module
+module.exports.employeePerformanceFilterList = async (req, res) => {
+let response = {};
+try {   
+  const responseFromService = await reportMgmtServices.employeePerformanceFilterList(req.body); 
+  if(!responseFromService.token) {
+    response.status = 200;
+    response.message = constants.success_message.LISTED_SUCCESS;
+  }    
+  response.body = responseFromService;
+} catch (error) {
+  response.message = error.message;
+}
+return res.send(response);
+}
