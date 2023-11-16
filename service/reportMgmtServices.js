@@ -542,7 +542,6 @@ module.exports.pendingOrderReportList = async (req) => {
         let dis_customercode_val = '1=1';
         if (customer_code && customer_code != "" && customer_code != "0") {
           const customer_code_val = customer_code ? '\'' + customer_code.split(',').join('\',\'') + '\'' : ''
-          // customercode_val = `  lower(a.customer_code) = lower(${customer_code_val})`
           customercode_val = `  a.customer_code in (${customer_code_val})`
           dis_customercode_val = `  a.customer_code in (${customer_code_val})`
         }
@@ -552,52 +551,19 @@ module.exports.pendingOrderReportList = async (req) => {
           dis_agentcode = `e.agent_code = ` + agent_code_val + ` `
         }
 
-      //   const Order_Pieces_Total = await client.query(`SELECT sum(qty*coalesce(c.total_set,'0')::Integer) as order_pieces FROM tbl_order_taking as a inner join tbl_order_taking_items as b on a.order_no =b.order_no inner join tbl_item_sizes as c ON c.size_id = b.size_id inner join tbl_item_management as d on d.trans_no=c.trans_no inner join tbl_customer as e ON e.customer_code = a.customer_code
-      // where ${order_datediff} and ${customercode_val} and ${sizeid_val}  and ${dis_agentcode} and a.status_code = 1`)
-
-      //   const Order_Set_Total = await client.query(`SELECT sum(b.qty) as qty FROM tbl_order_taking as a inner join tbl_order_taking_items as b on a.order_no =b.order_no inner join tbl_item_sizes as c ON 
-      // c.size_id = b.size_id inner join tbl_item_management as d on d.trans_no=c.trans_no inner 
-      // join tbl_customer as e ON e.customer_code = a.customer_code where ${order_datediff} and ${customercode_val} and ${sizeid_val}  and ${dis_agentcode} and a.status_code = 1`)
-
-      const Order_Total = await client.query(`SELECT sum(b.qty) AS qty,sum(qty*coalesce(c.total_set,'0')::Integer) AS order_pieces,sum(b.pending_dispatch) as pending_set,sum(pending_dispatch*coalesce(c.total_set,'0')::Integer) AS pending_pieces FROM tbl_order_taking AS a INNER JOIN tbl_order_taking_items AS b ON a.order_no =b.order_no INNER JOIN tbl_item_sizes AS c ON c.size_id = b.size_id INNER JOIN tbl_item_management AS d ON d.trans_no=c.trans_no INNER JOIN tbl_customer AS e ON e.customer_code = a.customer_code WHERE ${order_datediff} and ${customercode_val} and ${sizeid_val}  and ${dis_agentcode} and a.status_code = 1`)
-
-        // const Dispatch_Set_Total = await client.query(`SELECT sum(dispatch_set) as dispatch_set from tbl_dispatch_details as b inner join tbl_order_taking as a on a.order_no = b.order_no inner join tbl_item_sizes as c ON c.size_id = b.size_id inner join tbl_item_management as d on d.trans_no=c.trans_no inner join tbl_customer as e ON e.customer_code = a.customer_code where status_flag = 1 and ${datediff} and ${customercode_val} and ${sizeid_val}  and ${dis_agentcode} and a.status_code = 1`)
-
-        // const Dispatch_Pieces_Total = await client.query(`SELECT sum(dispatch_pieces) as dispatch_pieces from tbl_dispatch_details as b inner join tbl_order_taking as a on a.order_no = b.order_no inner join tbl_item_sizes as c ON c.size_id = b.size_id inner join tbl_item_management as d on d.trans_no=c.trans_no inner join tbl_customer as e ON e.customer_code = a.customer_code where status_flag = 1 and ${datediff} and ${customercode_val} and ${sizeid_val}  and ${dis_agentcode} and a.status_code = 1`)
-
-        // var order_total = Order_Total && Order_Total.rows[0].qty ? Order_Total.rows[0].qty : 0
-        // var order_total_pieces = Order_Total && Order_Total.rows[0].order_pieces ? Order_Total.rows[0].order_pieces : 0
-
-        // var dipatch_total = Dispatch_Set_Total && Dispatch_Set_Total.rows[0].dispatch_set ? Dispatch_Set_Total.rows[0].dispatch_set : 0
-        // var dipatch_total_pieces = Dispatch_Pieces_Total && Dispatch_Pieces_Total.rows[0].dispatch_pieces ? Dispatch_Pieces_Total.rows[0].dispatch_pieces : 0
+      const Order_Total = await client.query(`SELECT sum(b.qty) AS qty,sum(qty*coalesce(c.total_set,'0')::Integer) AS order_pieces,sum(b.pending_dispatch) as pending_set,sum(pending_dispatch*coalesce(c.total_set,'0')::Integer) AS pending_pieces FROM tbl_order_taking AS a INNER JOIN tbl_order_taking_items AS b ON a.order_no =b.order_no INNER JOIN tbl_item_sizes AS c ON c.size_id = b.size_id INNER JOIN tbl_item_management AS d ON d.trans_no=c.trans_no INNER JOIN tbl_customer AS e ON e.customer_code = a.customer_code WHERE ${order_datediff} AND ${customercode_val} AND ${sizeid_val}  AND ${dis_agentcode} AND a.status_code = 1 AND (a.close_status != 1 OR a.close_status is null)`)
+        
         var overallPendingTotal_sets = Order_Total && Order_Total.rows[0].pending_set ? Order_Total.rows[0].pending_set : 0  
         var overallPendingTotal_Pieces = Order_Total && Order_Total.rows[0].pending_pieces ? Order_Total.rows[0].pending_pieces : 0  
 
-        const overallOrderTotal = await client.query(`SELECT SUM(order_set) as order_set, sum(order_piece) as order_piece FROM ( select d.item_code, b.size_id, SUM(b.qty) as order_set,SUM((b.qty :: INTEGER * c.total_set :: INTEGER)) as order_piece from tbl_order_taking as a inner join tbl_order_taking_items as b on b.order_no = a.order_no inner join tbl_item_sizes as c on c.size_id=b.size_id inner join tbl_item_management as d on c.trans_no=d.trans_no inner join tbl_customer as e on e.customer_code =a.customer_code where ${order_datediff} and ${customercode_val}  and ${sizeid_val}  and ${dis_agentcode} group by d.item_code,b.size_id, b.qty,c.total_set order by d.item_code ) as dev inner join tbl_def_item as e on dev.item_code = e.item_id`)
+        const overallOrderTotal = await client.query(`SELECT SUM(order_set) as order_set, sum(order_piece) as order_piece FROM ( select d.item_code, b.size_id, SUM(b.qty) as order_set,SUM((b.qty :: INTEGER * c.total_set :: INTEGER)) as order_piece from tbl_order_taking as a inner join tbl_order_taking_items as b on b.order_no = a.order_no inner join tbl_item_sizes as c on c.size_id=b.size_id inner join tbl_item_management as d on c.trans_no=d.trans_no inner join tbl_customer as e on e.customer_code =a.customer_code where ${order_datediff} AND ${customercode_val}  AND ${sizeid_val}  AND ${dis_agentcode} group by d.item_code,b.size_id, b.qty,c.total_set order by d.item_code ) as dev inner join tbl_def_item as e on dev.item_code = e.item_id`)
         var overallTotal_sets = overallOrderTotal && overallOrderTotal.rows[0].order_set ? overallOrderTotal.rows[0].order_set : 0
         var overallTotal_Pieces = overallOrderTotal && overallOrderTotal.rows[0].order_piece ? overallOrderTotal.rows[0].order_piece : 0
 
         const overallPendingTotal = await client.query(`SELECT sum(pending_set) as pending_set,
-        sum(pending_pieces) as pending_pieces FROM (SELECT d.item_code,b.size_id,sum(qty) - coalesce(f.dispatchset, 0 ) as pending_set,(sum(qty) * sum(c.total_set :: INTEGER)) - coalesce(f.dispatch_pieces, 0 ) as pending_pieces from  tbl_order_taking as a  inner join tbl_order_taking_items as b on a.order_no = b.order_no inner join tbl_item_sizes as c ON c.size_id = b.size_id inner join tbl_item_management as d on d.trans_no=c.trans_no inner join tbl_customer as e ON e.customer_code = a.customer_code left join (SELECT customer_code,size_id,order_no, dispatchset ,total_set, dispatchset * total_set as dispatch_pieces from (SELECT customer_code,a.size_id,order_no,sum(dispatch_set) as dispatchset,(total_set :: INTEGER) as total_set from tbl_dispatch_details as a inner join tbl_item_sizes as b on b.size_id=a.size_id where  a.status_flag = 1 and ${dis_customercode_val} and ${dis_sizeid_val} group by order_no,a.size_id,customer_code,total_set order by order_no)
-        as t1) as f on f.order_no = a.order_no and f.size_id = b.size_id where  ${datediff} and ${customercode_val} and ${sizeid_val} and ${agentcode} group by d.item_code,b.size_id,f.dispatchset,f.dispatch_pieces) as dev where (pending_set) > 0 `)
-        // var overallPendingTotal_sets = overallPendingTotal && overallPendingTotal.rows[0].pending_set ? overallPendingTotal.rows[0].pending_set : 0
-        // var overallPendingTotal_Pieces = overallPendingTotal && overallPendingTotal.rows[0].pending_pieces ? overallPendingTotal.rows[0].pending_pieces : 0
-        // const dispatchWidget = await client.query(`SELECT item_name,item_id,SUM(dispatch_set) as dispatch_set, sum(dispatch_piece) as dispatch_piece FROM ( select c.item_code, a.size_id, SUM(a.dispatch_set) as dispatch_set,SUM((a.dispatch_set :: INTEGER * b.total_set :: INTEGER)) as dispatch_piece  from tbl_dispatch_details as a inner join tbl_item_sizes as b on b.size_id=a.size_id  inner join tbl_item_management as c on b.trans_no=c.trans_no inner join tbl_customer as e on e.customer_code =a.customer_code inner join tbl_order_taking as d on d.order_no = a.order_no
-        //    where ${order_datediff} and ${customercode_val} and ${sizeid_val} and ${agentcode}
-        //    group by c.item_code,a.size_id, a.dispatch_set,b.total_set order by c.item_code ) as dev inner join 
-        //   tbl_def_item as e on dev.item_code = e.item_id group by item_name,item_id order by item_id`)
-        // const dispatchWidget = await client.query(` SELECT item_name,item_id,SUM(pending_set) as pending_set, sum(pending_pieces) as pending_pieces  FROM (SELECT d.item_code,b.size_id,sum(qty) - coalesce(f.dispatchset, 0 ) as pending_set,(sum(qty) * sum(c.total_set :: INTEGER)) - coalesce(f.dispatch_pieces, 0 ) as pending_pieces from  tbl_order_taking as a  inner join tbl_order_taking_items as b on a.order_no = b.order_no inner join tbl_item_sizes as c ON c.size_id = b.size_id inner join tbl_item_management as d on d.trans_no=c.trans_no inner join tbl_customer as e ON e.customer_code = a.customer_code left join (SELECT customer_code,size_id,order_no, dispatchset ,total_set, dispatchset * total_set as dispatch_pieces from (SELECT customer_code,a.size_id,order_no,sum(dispatch_set) as dispatchset,(total_set :: INTEGER) as total_set from tbl_dispatch_details as a inner join tbl_item_sizes as b on b.size_id=a.size_id where  a.status_flag = 1 and ${dis_customercode_val} and ${dis_sizeid_val} group by order_no,a.size_id,customer_code,total_set order by order_no) as t1) as f on f.order_no = a.order_no and f.size_id = b.size_id where  ${datediff} and ${customercode_val} and ${sizeid_val} and ${agentcode} group by d.item_code,b.size_id,f.dispatchset,f.dispatch_pieces) as dev inner join tbl_def_item as e on dev.item_code = e.item_id  where (pending_set) > 0 group by item_name,item_id order by item_id`)
-
-
-        // const dispatchWidget = await client.query(`SELECT item_name,item_code,(qty-dispatch_set) as pending_set,(order_pieces-dispatch_pieces) as pending_pieces from (SELECT item_code, sum(qty) as qty,sum(order_pieces) as order_pieces,sum(dispatch_set) as dispatch_set, sum(dispatch_pieces) as dispatch_pieces from (SELECT d.item_code,sum(b.qty) as qty,sum(qty*coalesce(c.total_set,'0')::Integer) as order_pieces,0 as dispatch_set, 0 as dispatch_pieces FROM tbl_order_taking as a inner join tbl_order_taking_items as b on a.order_no =b.order_no inner join tbl_item_sizes as c ON         c.size_id = b.size_id inner join tbl_item_management as d on d.trans_no=c.trans_no inner             join tbl_customer as e ON e.customer_code = a.customer_code where ${order_datediff} and ${customercode_val} and ${sizeid_val}  and ${dis_agentcode} and a.status_code = 1 group by d.item_code
-        //     union all
-        //     SELECT d.item_code,0 as qty, 0 as order_pieces,sum(dispatch_set) as dispatch_set,sum(dispatch_pieces) as dispatch_pieces from tbl_dispatch_details as b 
-        //     inner join tbl_order_taking as a on a.order_no = b.order_no inner join 
-        //     tbl_item_sizes as c ON c.size_id = b.size_id inner join tbl_item_management as d on 
-        //     d.trans_no=c.trans_no inner join tbl_customer as e ON e.customer_code = a.customer_code 
-        //     where status_flag = 1 and ${datediff} and ${customercode_val} and ${sizeid_val}  and ${dis_agentcode} and a.status_code = 1 group by d.item_code) as dev group by item_code
-        //       ) as d1 inner join tbl_def_item as f on d1.item_code = f.item_id  where (qty-dispatch_set) > 0`)
-
+        sum(pending_pieces) as pending_pieces FROM (SELECT d.item_code,b.size_id,sum(qty) - coalesce(f.dispatchset, 0 ) as pending_set,(sum(qty) * sum(c.total_set :: INTEGER)) - coalesce(f.dispatch_pieces, 0 ) as pending_pieces from  tbl_order_taking as a  inner join tbl_order_taking_items as b on a.order_no = b.order_no inner join tbl_item_sizes as c ON c.size_id = b.size_id inner join tbl_item_management as d on d.trans_no=c.trans_no inner join tbl_customer as e ON e.customer_code = a.customer_code left join (SELECT customer_code,size_id,order_no, dispatchset ,total_set, dispatchset * total_set as dispatch_pieces from (SELECT customer_code,a.size_id,order_no,sum(dispatch_set) as dispatchset,(total_set :: INTEGER) as total_set from tbl_dispatch_details as a inner join tbl_item_sizes as b on b.size_id=a.size_id where  a.status_flag = 1 AND ${dis_customercode_val} AND ${dis_sizeid_val} group by order_no,a.size_id,customer_code,total_set order by order_no)
+        as t1) as f on f.order_no = a.order_no AND f.size_id = b.size_id where  ${datediff} AND ${customercode_val} AND ${sizeid_val} AND ${agentcode} group by d.item_code,b.size_id,f.dispatchset,f.dispatch_pieces) as dev where (pending_set) > 0 `)
+        
         const dispatchWidget = await client.query(`SELECT item_code,item_name,sum(pending_set) as pending_set,sum(pending_pieces) AS pending_pieces 
         FROM (SELECT a.order_no,d.item_code,item_name,pending_dispatch AS pending_set ,b.size_id,
             (total_set :: INTEGER * pending_dispatch) AS pending_pieces FROM tbl_order_taking AS a 
@@ -605,23 +571,16 @@ module.exports.pendingOrderReportList = async (req) => {
                   INNER JOIN tbl_item_sizes as c ON c.size_id = b.size_id 
                   INNER JOIN tbl_item_management as d on d.trans_no=c.trans_no 
                   INNER JOIN tbl_customer as e ON e.customer_code = a.customer_code 
-                  left join tbl_color as f on f.color_id =c.color_id
+                  LEFT JOIN tbl_color as f on f.color_id =c.color_id
                   INNER JOIN tbl_def_item as g on d.item_code = g.item_id
-                  WHERE 1=1 AND a.status_code = 1 and ${datediff} and ${customercode_val} and ${sizeid_val}  and ${dis_agentcode} and pending_dispatch > 0) AS DERV
+                  WHERE 1=1 AND a.status_code = 1 AND (a.close_status != 1 OR a.close_status is null) AND ${datediff} AND ${customercode_val} AND ${sizeid_val}  AND ${dis_agentcode} AND pending_dispatch > 0) AS DERV
                   GROUP BY item_code,item_name`)
         var dispatch_Widget = dispatchWidget && dispatchWidget.rows ? dispatchWidget.rows : []
         if (process != 'print') {
           get_limit = `LIMIT ${limit} OFFSET ${offset}`;
         }
         if (process == 'print') {
-          // const Pending_List = await client.query(`SELECT order_no,to_char(order_date,'DD-MM-YYYY') as order_date,customer_code,size_id,qr_code,dispatchset,dispatch_pieces,order_qty,order_pieces,(order_qty -  dispatchset) as pending_set,(order_pieces -  dispatch_pieces) as pending_pieces,
-          // customer_name,mobile_no,city FROM (SELECT a.order_no,a.order_date,a.customer_code,b.size_id,c.qr_code,coalesce(f.dispatchset, 0 ) as dispatchset,sum(qty) as order_qty,sum(qty) * sum(c.total_set :: INTEGER) as order_pieces,e.customer_name,e.mobile_no, coalesce(e.city,'')||' - '|| 
-          // coalesce(e.pincode,'') as city,coalesce(f.dispatch_pieces, 0 ) as dispatch_pieces from             tbl_order_taking as a  inner join tbl_order_taking_items as b on a.order_no = b.order_no inner join tbl_item_sizes as c ON c.size_id = b.size_id inner join tbl_item_management as d on d.trans_no=c.trans_no inner join tbl_customer as e ON e.customer_code = a.customer_code left join (SELECT customer_code,size_id,order_no, dispatchset ,total_set, dispatchset * total_set as
-          // dispatch_pieces from (SELECT customer_code,a.size_id,order_no,sum(dispatch_set) as 
-          // dispatchset,(total_set :: INTEGER) as total_set from tbl_dispatch_details as a inner join 
-          //  tbl_item_sizes as b on b.size_id=a.size_id where  a.status_flag = 1 and 
-          //  ${dis_customercode_val} and ${dis_sizeid_val} group by order_no,a.size_id,customer_code,total_set order by order_no)  as t1) as f on f.order_no = a.order_no and f.customer_code = a.customer_code and f.size_id = b.size_id where a.status_code = 1 and ${datediff} and ${customercode_val} and ${sizeid_val} and ${agentcode} group by a.order_no,a.order_date,a.customer_code,b.size_id,c.qr_code,f.dispatchset,f.dispatch_pieces,e.customer_name,e.mobile_no,e.city,e.pincode,c.total_set order by a.order_date ) as dev where (order_qty -  dispatchset) > 0 `);
-
+          
           const Pending_List = await client.query(`SELECT a.order_no,to_char(order_date,'DD-MM-YYYY') as order_date,a.customer_code,
           e.customer_name,e.mobile_no, coalesce(e.city,'')||' - '|| 
               coalesce(e.pincode,'') as city,b.size_id,c.qr_code
@@ -635,22 +594,15 @@ module.exports.pendingOrderReportList = async (req) => {
               INNER JOIN tbl_item_sizes as c ON c.size_id = b.size_id 
               INNER JOIN tbl_item_management as d on d.trans_no=c.trans_no 
               INNER JOIN tbl_customer as e ON e.customer_code = a.customer_code 
-              left join tbl_color as f on f.color_id =c.color_id
+              LEFT JOIN tbl_color as f on f.color_id =c.color_id
               INNER JOIN tbl_def_item as g on d.item_code = g.item_id
-              WHERE ${datediff} and ${customercode_val} and ${sizeid_val}  and ${dis_agentcode} AND a.status_code = 1 and pending_dispatch > 0 ORDER BY a.order_date`);
+              WHERE ${datediff} AND ${customercode_val} AND ${sizeid_val}  AND ${dis_agentcode} AND a.status_code = 1 AND (a.close_status != 1 OR a.close_status is null) AND pending_dispatch > 0 ORDER BY a.order_date`);
           let Pending_Array = Pending_List && Pending_List.rows ? Pending_List.rows : [];
           const company_Result = await client.query(`SELECT * from tbl_print_setting`);
           let Company_Array = company_Result && company_Result.rows ? company_Result.rows : [];
           responseData = { "PendingOrderList": Pending_Array, "Company_Array": Company_Array, "overallTotal_sets": overallPendingTotal_sets, "overallTotal_Pieces": overallPendingTotal_Pieces, "dispatchWidget": dispatch_Widget, "overallPendingTotal_sets": overallTotal_sets, "overallPendingTotal_Pieces": overallTotal_Pieces }
         } else {
-          // const total_pending_order = await client.query(`SELECT order_no,to_char(order_date,'DD-MM-YYYY') as order_date,customer_code,size_id,qr_code,dispatchset,dispatch_pieces,order_qty,order_pieces,(order_qty -  dispatchset) as pending_set,(order_pieces -  dispatch_pieces) as pending_pieces,
-          // customer_name,mobile_no,city FROM (SELECT a.order_no,a.order_date,a.customer_code,b.size_id,c.qr_code,coalesce(f.dispatchset, 0 ) as dispatchset,sum(qty) as order_qty,sum(qty) * sum(c.total_set :: INTEGER) as order_pieces,e.customer_name,e.mobile_no, coalesce(e.city,'')||' - '|| 
-          // coalesce(e.pincode,'') as city,coalesce(f.dispatch_pieces, 0 ) as dispatch_pieces from             tbl_order_taking as a  inner join tbl_order_taking_items as b on a.order_no = b.order_no inner join tbl_item_sizes as c ON c.size_id = b.size_id inner join tbl_item_management as d on d.trans_no=c.trans_no inner join tbl_customer as e ON e.customer_code = a.customer_code left join (SELECT customer_code,size_id,order_no, dispatchset ,total_set, dispatchset * total_set as
-          // dispatch_pieces from (SELECT customer_code,a.size_id,order_no,sum(dispatch_set) as 
-          // dispatchset,(total_set :: INTEGER) as total_set from tbl_dispatch_details as a inner join 
-          //  tbl_item_sizes as b on b.size_id=a.size_id where  a.status_flag = 1 and 
-          //  ${dis_customercode_val} and ${dis_sizeid_val} group by order_no,a.size_id,customer_code,total_set order by order_no)  as t1) as f on f.order_no = a.order_no and f.customer_code = a.customer_code and f.size_id = b.size_id where a.status_code = 1 and ${datediff} and ${customercode_val} and ${sizeid_val} and ${agentcode} group by a.order_no,a.order_date,a.customer_code,b.size_id,c.qr_code,f.dispatchset,f.dispatch_pieces,e.customer_name,e.mobile_no,e.city,e.pincode,c.total_set order by a.order_date ) as dev where (order_qty -  dispatchset) > 0`);
-
+          
           const total_pending_order = await client.query(` SELECT a.order_no,to_char(order_date,'DD-MM-YYYY') as order_date,a.customer_code,
           e.customer_name,e.mobile_no, coalesce(e.city,'')||' - '|| 
               coalesce(e.pincode,'') as city,b.size_id,c.qr_code
@@ -664,11 +616,11 @@ module.exports.pendingOrderReportList = async (req) => {
               INNER JOIN tbl_item_sizes as c ON c.size_id = b.size_id 
               INNER JOIN tbl_item_management as d on d.trans_no=c.trans_no 
               INNER JOIN tbl_customer as e ON e.customer_code = a.customer_code 
-              left join tbl_color as f on f.color_id =c.color_id
+              LEFT JOIN tbl_color as f on f.color_id =c.color_id
               INNER JOIN tbl_def_item as g on d.item_code = g.item_id
-              WHERE ${datediff} and ${customercode_val} and ${sizeid_val}  and ${dis_agentcode} AND a.status_code = 1 and pending_dispatch > 0 ORDER BY a.order_date`);
+              WHERE ${datediff} AND ${customercode_val} AND ${sizeid_val}  AND ${dis_agentcode} AND a.status_code = 1 AND (a.close_status != 1 OR a.close_status is null) AND pending_dispatch > 0 ORDER BY a.order_date`);
           var total_count = total_pending_order && total_pending_order.rowCount ? total_pending_order.rowCount : 0
-          // const Pending_List = await client.query(`SELECT order_no,to_char(order_date,'DD-MM-YYYY') as order_date,customer_code,size_id,qr_code,dispatchset,order_qty,(order_qty -  dispatchset) as pending_set,customer_name,mobile_no,city FROM (SELECT a.order_no,a.order_date,a.customer_code,b.size_id,c.qr_code,coalesce(f.dispatchset, 0 ) as dispatchset,sum(qty) as order_qty,e.customer_name,e.mobile_no, coalesce(e.city,'')||' - '|| coalesce(e.pincode,'') as city from tbl_order_taking as a  inner join tbl_order_taking_items as b on a.order_no = b.order_no inner join tbl_item_sizes as c ON c.size_id = b.size_id inner join  tbl_item_management as d on d.trans_no=c.trans_no inner join tbl_customer as e ON e.customer_code = a.customer_code left join (SELECT customer_code,size_id,order_no,sum(dispatch_set) as dispatchset from tbl_dispatch_details where status_flag = 1 and  ${dis_customercode_val} and ${dis_sizeid_val} group by order_no,size_id,customer_code order by order_no) as f on f.order_no = a.order_no and f.customer_code = a.customer_code and f.size_id = b.size_id where ${datediff} and ${customercode_val} and ${sizeid_val} and ${agentcode} group by a.order_no,a.order_date,a.customer_code,b.size_id,c.qr_code,f.dispatchset,e.customer_name,e.mobile_no,e.city,e.pincode order by a.order_date ) as dev where (order_qty -  dispatchset) > 0 ${get_limit}`);
+          
           const Pending_List = await client.query(` SELECT a.order_no,to_char(order_date,'DD-MM-YYYY') as order_date,a.customer_code,
           e.customer_name,e.mobile_no, coalesce(e.city,'')||' - '|| 
               coalesce(e.pincode,'') as city,b.size_id,c.qr_code
@@ -682,9 +634,9 @@ module.exports.pendingOrderReportList = async (req) => {
               INNER JOIN tbl_item_sizes as c ON c.size_id = b.size_id 
               INNER JOIN tbl_item_management as d on d.trans_no=c.trans_no 
               INNER JOIN tbl_customer as e ON e.customer_code = a.customer_code 
-              left join tbl_color as f on f.color_id =c.color_id
+              LEFT JOIN tbl_color as f on f.color_id =c.color_id
               INNER JOIN tbl_def_item as g on d.item_code = g.item_id
-              WHERE ${datediff} and ${customercode_val} and ${sizeid_val}  and ${dis_agentcode} AND a.status_code = 1 and pending_dispatch > 0 ORDER BY a.order_date ${get_limit}`)
+              WHERE ${datediff} AND ${customercode_val} AND ${sizeid_val}  AND ${dis_agentcode} AND a.status_code = 1 AND (a.close_status != 1 OR a.close_status is null) AND pending_dispatch > 0 ORDER BY a.order_date ${get_limit}`)
 
           var Pending_Array = Pending_List && Pending_List.rows ? Pending_List.rows : []
 
@@ -1181,6 +1133,8 @@ module.exports.customerRetailReport = async (req) => {
 
         const total_Cancelled_order = await client.query(`SELECT count(order_no) as count FROM tbl_order_taking as a where ${order_datediff} and a.status_code = 2 and a.customer_code = '` + customer_name + `'`);
 
+        const totalCloseOrders = await client.query(`SELECT count(order_no) FROM tbl_order_taking as a where a.status_code = 1 and a.close_status=1 and ${order_datediff} and a.customer_code = '` + customer_name + `'`);
+
 
         // const total_Hold_order = await client.query(`SELECT coalesce(sum(qty),0) as totalset,coalesce(sum(qty*coalesce(c.total_set,'0')::Integer),0) as totalpiece FROM tbl_order_taking as a inner join tbl_order_taking_items as b on a.order_no = b.order_no inner join tbl_item_sizes as c ON c.size_id = b.size_id	 where to_char(a.order_date,'YYYY-MM-DD') :: date BETWEEN to_date('` + from_date + `','YYYY-MM-DD') and to_date('` + to_date + `','YYYY-MM-DD') and a.status_code = 3 and a.customer_code = '` + customer_name + `'`);
 
@@ -1192,7 +1146,9 @@ module.exports.customerRetailReport = async (req) => {
                   UNION ALL
                   SELECT a.order_no,b.size_id,0 as totalset,0 as totalpiece,coalesce(sum(c.dispatch_set),0) as dispatch_set,coalesce(sum(c.dispatch_pieces),0) as dispatch_pieces
                   FROM tbl_order_taking as a inner join tbl_order_taking_items as b 
-                  on a.order_no = b.order_no INNER JOIN tbl_dispatch_details AS c on c.order_no = a.order_no and b.size_id = c.size_id  where  to_char(a.order_date,'YYYY-MM-DD') :: date BETWEEN to_date('` + from_date + `','YYYY-MM-DD') and to_date('` + to_date + `','YYYY-MM-DD') and a.status_code = 3 and a.customer_code = '` + customer_name + `'  GROUP BY a.order_no,b.size_id) AS DERV GROUP BY order_no,size_id) AS DEV`);
+                  on a.order_no = b.order_no INNER JOIN tbl_dispatch_details AS c on c.order_no = a.order_no and b.size_id = c.size_id  where  to_char(a.order_date,'YYYY-MM-DD') :: date BETWEEN to_date('` + from_date + `','YYYY-MM-DD') and to_date('` + to_date + `','YYYY-MM-DD') and a.status_code = 3 and a.customer_code = '` + customer_name + `'  GROUP BY a.order_no,b.size_id) AS DERV GROUP BY order_no,size_id) AS DEV WHERE totalset > 0`);
+
+                  
 
         const total_dispatch_Set = await client.query(`SELECT coalesce(sum(dispatch_set),0) as dispatch_set, coalesce(sum(dispatch_pieces),0) as dispatch_pieces FROM tbl_order_taking  as a inner join  tbl_dispatch_details as
         b on a.order_no=b.order_no where a.status_code in (`+ constants.userMessage.ORDER_STATUS + `) and b.status_flag = 1 and to_char(a.order_date,'YYYY-MM-DD') :: date BETWEEN to_date('` + from_date + `','YYYY-MM-DD') and to_date('` + to_date + `','YYYY-MM-DD') and a.customer_code = '` + customer_name + `'`);
@@ -1215,10 +1171,10 @@ module.exports.customerRetailReport = async (req) => {
                   INNER JOIN tbl_item_sizes as c ON c.size_id = b.size_id 
                   INNER JOIN tbl_item_management as d on d.trans_no=c.trans_no 
                   INNER JOIN tbl_customer as e ON e.customer_code = a.customer_code 
-                  left join tbl_color as f on f.color_id =c.color_id
+                  LEFT JOIN tbl_color as f on f.color_id =c.color_id
                   INNER JOIN tbl_def_item as g on d.item_code = g.item_id
                   WHERE ${order_datediff} 
-			  AND a.status_code = 1 and a.customer_code = '` + customer_name + `'
+			  AND a.status_code = 1 and (a.close_status != 1 OR a.close_status is null) and a.customer_code = '` + customer_name + `'
 			   and pending_dispatch > 0) AS DERV`);
 
        
@@ -1231,13 +1187,25 @@ module.exports.customerRetailReport = async (req) => {
                   INNER JOIN tbl_item_sizes as c ON c.size_id = b.size_id 
                   INNER JOIN tbl_item_management as d on d.trans_no=c.trans_no 
                   INNER JOIN tbl_customer as e ON e.customer_code = a.customer_code 
-                  left join tbl_color as f on f.color_id =c.color_id
+                  LEFT JOIN tbl_color as f on f.color_id =c.color_id
                   INNER JOIN tbl_def_item as g on d.item_code = g.item_id
-                  WHERE ${order_datediff} AND a.status_code = 1 and a.customer_code = '` + customer_name + `'
+                  WHERE ${order_datediff} AND a.status_code = 1 and (a.close_status != 1 OR a.close_status is null) and a.customer_code = '` + customer_name + `'
 			   and pending_dispatch > 0) AS DERV GROUP BY order_no) AS DERV1`);
 
         const Total_dispatch_Orders = await client.query(`SELECT count(dispatch_id) FROM  tbl_dispatch_details where
         status_flag = 1 and customer_code = '` + customer_name + `' and order_no in (select a.order_no from tbl_order_taking as a where a.customer_code = '` + customer_name + `' and ${order_datediff})`);
+
+
+        // 
+
+        const total_close_order = await client.query(`SELECT coalesce(sum(totalset),0) AS totalset,coalesce(sum(totalpiece),0) AS totalpiece FROM (SELECT coalesce(sum(totalset),0) - coalesce(sum(dispatch_set),0) AS totalset,coalesce(sum(totalpiece),0) - coalesce(sum(dispatch_pieces),0) AS totalpiece FROM (
+          SELECT a.order_no,b.size_id,coalesce(sum(qty),0) AS totalset,coalesce(sum(qty*coalesce(c.total_set,'0')::Integer),0) AS totalpiece,0 AS dispatch_set,0 AS dispatch_pieces
+          FROM tbl_order_taking AS a inner join tbl_order_taking_items AS b on a.order_no = b.order_no 
+          inner join tbl_item_sizes AS c ON c.size_id = b.size_id   WHERE to_char(a.order_date,'YYYY-MM-DD') :: date BETWEEN to_date('` + from_date + `','YYYY-MM-DD') AND to_date('` + to_date + `','YYYY-MM-DD') AND a.status_code = 1 AND a.close_status=1 AND a.customer_code = '` + customer_name + `' GROUP BY a.order_no,b.size_id
+          UNION ALL
+          SELECT a.order_no,b.size_id,0 as totalset,0 as totalpiece,coalesce(sum(c.dispatch_set),0) as dispatch_set,coalesce(sum(c.dispatch_pieces),0) as dispatch_pieces
+          FROM tbl_order_taking as a inner join tbl_order_taking_items as b 
+          on a.order_no = b.order_no INNER JOIN tbl_dispatch_details AS c on c.order_no = a.order_no and b.size_id = c.size_id  where  to_char(a.order_date,'YYYY-MM-DD') :: date BETWEEN to_date('` + from_date + `','YYYY-MM-DD') and to_date('` + to_date + `','YYYY-MM-DD') and a.status_code = 1 and a.close_status=1 and a.customer_code = '` + customer_name + `'GROUP BY a.order_no,b.size_id) AS DERV GROUP BY order_no,size_id) AS DEV WHERE totalset > 0`);
       
 
         var TotalOrders = total_orders && total_orders.rows ? total_orders.rows : [];
@@ -1250,10 +1218,12 @@ module.exports.customerRetailReport = async (req) => {
         var TotalDispatchOrders = Total_dispatch_Orders && Total_dispatch_Orders.rows && Total_dispatch_Orders.rows?.[0].count? Total_dispatch_Orders.rows?.[0].count : 0;
         var TotalCancelOrders = totalCancelOrders && totalCancelOrders.rows ? totalCancelOrders.rows : [];
         var TotalHoldOrders = totalHoldOrders && totalHoldOrders.rows && totalHoldOrders.rows?.[0].count ? totalHoldOrders.rows?.[0].count : 0;
+        var Total_Close = total_close_order && total_close_order.rows ? total_close_order.rows : [];
+        var TotalCloseOrders = totalCloseOrders && totalCloseOrders.rows && totalCloseOrders.rows?.[0].count ? totalCloseOrders.rows?.[0].count : 0;
 
         
         responseData = {
-          "TotalOrderCount" : TotalCountOrder, "TotalOrders":TotalOrders, "TotalCancelledOrder": Total_Cancel_Order, "HoldOrder": Total_Hold, "PendingOrderSet": Pending_Order, "TotalDispatch": Total_dispatch, "TotalPendingOrders": TotalPendingOrders, "TotalDispatchOrders": TotalDispatchOrders, "CancelledOrder": TotalCancelOrders, "TotalHoldOrder": TotalHoldOrders
+          "TotalOrderCount" : TotalCountOrder, "TotalOrders":TotalOrders, "TotalCancelledOrder": Total_Cancel_Order, "HoldOrder": Total_Hold, "PendingOrderSet": Pending_Order, "TotalDispatch": Total_dispatch, "TotalPendingOrders": TotalPendingOrders, "TotalDispatchOrders": TotalDispatchOrders, "CancelledOrder": TotalCancelOrders, "TotalHoldOrder": TotalHoldOrders,"CloseOrder": Total_Close,  "TotalCloseOrders": TotalCloseOrders
         }
         if (responseData) {
           return responseData;
@@ -1581,10 +1551,10 @@ module.exports.GetDetailedOrders = async (req) => {
                     INNER JOIN tbl_item_sizes as c ON c.size_id = b.size_id 
                     INNER JOIN tbl_item_management as d on d.trans_no=c.trans_no 
                     INNER JOIN tbl_customer as e ON e.customer_code = a.customer_code   
-                    left join tbl_color as f on f.color_id =c.color_id
+                    LEFT JOIN tbl_color as f on f.color_id =c.color_id
                   INNER JOIN tbl_def_item as g on d.item_code = g.item_id                 
                     WHERE to_char(a.order_date,'YYYY-MM-DD') :: date BETWEEN to_date('`+ from_date + `','YYYY-MM-DD') and to_date('` + to_date + `','YYYY-MM-DD')
-          AND a.status_code = 1 and a.customer_code = '`+ customer_name + `'
+          AND a.status_code = 1 and (a.close_status != 1 OR a.close_status is null) and a.customer_code = '`+ customer_name + `'
            and pending_dispatch > 0 GROUP BY a.order_no,order_date LIMIT ${limit} OFFSET ${offset}`);
           
         //   const pending_Catagory_sets = await client.query(`SELECT item_code,item_name,coalesce(sum(pending_set),0) AS no_of_set,
@@ -1611,10 +1581,10 @@ module.exports.GetDetailedOrders = async (req) => {
                   INNER JOIN tbl_item_sizes as c ON c.size_id = b.size_id 
                   INNER JOIN tbl_item_management as d on d.trans_no=c.trans_no 
                   INNER JOIN tbl_customer as e ON e.customer_code = a.customer_code 
-                  left join tbl_color as f on f.color_id =c.color_id
+                  LEFT JOIN tbl_color as f on f.color_id =c.color_id
                   INNER JOIN tbl_def_item as g on d.item_code = g.item_id
                   WHERE to_char(a.order_date,'YYYY-MM-DD') :: date BETWEEN to_date('` + from_date + `','YYYY-MM-DD') and to_date('` + to_date + `','YYYY-MM-DD')  and ${customercode}
-        AND a.status_code = 1 and pending_dispatch > 0) AS DERV
+        AND a.status_code = 1 and (a.close_status != 1 OR a.close_status is null) and pending_dispatch > 0) AS DERV
                   GROUP BY item_code,item_name`);
           let PendingCatagoryWidget = pending_Catagory_sets && pending_Catagory_sets.rows ? pending_Catagory_sets.rows : [];  
           const overall_total = await client.query(`SELECT a.order_no,to_char(order_date,'DD-MM-YYYY') as order_date,coalesce(sum(pending_dispatch),0) AS no_of_set, coalesce(sum(total_set :: INTEGER * pending_dispatch),0) AS no_of_pieces FROM tbl_order_taking AS a 
@@ -1622,10 +1592,10 @@ module.exports.GetDetailedOrders = async (req) => {
                 INNER JOIN tbl_item_sizes as c ON c.size_id = b.size_id 
                 INNER JOIN tbl_item_management as d on d.trans_no=c.trans_no 
                 INNER JOIN tbl_customer as e ON e.customer_code = a.customer_code   
-                left join tbl_color as f on f.color_id =c.color_id
+                LEFT JOIN tbl_color as f on f.color_id =c.color_id
                   INNER JOIN tbl_def_item as g on d.item_code = g.item_id              
                 WHERE to_char(a.order_date,'YYYY-MM-DD') :: date BETWEEN to_date('`+ from_date + `','YYYY-MM-DD') and to_date('` + to_date + `','YYYY-MM-DD')
-      AND a.status_code = 1 and a.customer_code = '`+ customer_name + `'
+      AND a.status_code = 1 and (a.close_status != 1 OR a.close_status is null) and a.customer_code = '`+ customer_name + `'
        and pending_dispatch > 0 GROUP BY a.order_no,order_date`);
           let overall_Total = overall_total && overall_total.rowCount ? overall_total.rowCount : [];
           let ListOrders = Pending_Orders && Pending_Orders.rows ? Pending_Orders.rows : [];
@@ -1648,7 +1618,7 @@ module.exports.GetDetailedOrders = async (req) => {
             //       AS DERV GROUP BY order_no,size_id,qr_code) AS DEV WHERE pending_set > 0 GROUP BY qr_code`);
             const Itemwise_Orders = await client.query(`SELECT qr_code,size_id,coalesce(sum(pending_set),0) as no_of_set,coalesce(sum(pending_pieces),0) as no_of_pieces FROM (SELECT a.order_no,qr_code,b.size_id,sum(pending_dispatch) AS pending_set,sum(total_set :: INTEGER * pending_dispatch) AS pending_pieces FROM tbl_order_taking AS a INNER JOIN tbl_order_taking_items AS b ON a.order_no = b.order_no
           INNER JOIN tbl_item_sizes as c ON c.size_id = b.size_id INNER JOIN tbl_item_management as d on d.trans_no=c.trans_no INNER JOIN tbl_customer as e ON e.customer_code = a.customer_code 
-          left join tbl_color as f on f.color_id =c.color_id INNER JOIN tbl_def_item as g on d.item_code = g.item_id WHERE a.order_no = '${ListOrders[i]['order_no']}' AND a.status_code = 1 and ${customercode} and pending_dispatch > 0 GROUP BY a.order_no,qr_code,b.size_id) AS DERV GROUP BY qr_code,size_id`);
+          LEFT JOIN tbl_color as f on f.color_id =c.color_id INNER JOIN tbl_def_item as g on d.item_code = g.item_id WHERE a.order_no = '${ListOrders[i]['order_no']}' AND a.status_code = 1 and (a.close_status != 1 OR a.close_status is null)  and ${customercode} and pending_dispatch > 0 GROUP BY a.order_no,qr_code,b.size_id) AS DERV GROUP BY qr_code,size_id`);
 
             ListOrders[i]['ItemArray'] = Itemwise_Orders && Itemwise_Orders.rows ? Itemwise_Orders.rows : [];
           }
@@ -1662,34 +1632,169 @@ module.exports.GetDetailedOrders = async (req) => {
           else {
             return '';
           }
-        } if(process == "excel_download") {
+        } else if (process == "closed") {          
+          
+          const close_Cancel_Orders = await client.query(`SELECT order_no,order_date,sum(no_of_set) as no_of_set,sum(no_of_pieces) as no_of_pieces FROM  (SELECT order_no,order_date,size_id,coalesce(sum(totalset),0) - coalesce(sum(dispatch_set),0) 
+          as no_of_set,coalesce(sum(totalpiece),0) - coalesce(sum(dispatch_pieces),0) as no_of_pieces FROM (
+          SELECT a.order_no,to_char(a.order_date,'DD-MM-YYYY') as order_date,b.size_id,coalesce(sum(qty),0) as totalset,
+          coalesce(sum(qty*coalesce(c.total_set,'0')::Integer),0) as totalpiece,0 as dispatch_set,0 as dispatch_pieces
+          FROM tbl_order_taking as a inner join tbl_order_taking_items as b on a.order_no = b.order_no 
+          inner join tbl_item_sizes as c ON c.size_id = b.size_id  where to_char(a.order_date,'YYYY-MM-DD') :: date BETWEEN to_date('` + from_date + `','YYYY-MM-DD') and to_date('` + to_date + `','YYYY-MM-DD')  and ${customercode} and a.status_code = 1 and a.close_status=1 GROUP BY a.order_no,a.order_date,b.size_id
+                  UNION ALL
+          SELECT a.order_no,to_char(a.order_date,'DD-MM-YYYY') as order_date,b.size_id,0 as totalset,0 as totalpiece,
+          coalesce(sum(c.dispatch_set),0) as dispatch_set,coalesce(sum(c.dispatch_pieces),0) as dispatch_pieces FROM 
+          tbl_order_taking as a inner join tbl_order_taking_items as b on a.order_no = b.order_no INNER JOIN 
+          tbl_dispatch_details AS c on c.order_no = a.order_no and b.size_id = c.size_id where 
+          to_char(a.order_date,'YYYY-MM-DD') :: date BETWEEN to_date('` + from_date + `','YYYY-MM-DD') and to_date('` + to_date + `','YYYY-MM-DD')  and ${customercode} and a.status_code = 1 and a.close_status=1 GROUP BY a.order_no,
+          b.size_id,a.order_date) AS DERV GROUP BY order_no,size_id,order_date) AS DEV WHERE 
+          no_of_set > 0 GROUP BY order_no,order_date LIMIT ${limit} OFFSET ${offset}`);
+
+          
+          const overall_total = await client.query(`SELECT order_no,order_date,sum(no_of_set) as no_of_set,sum(no_of_pieces) as no_of_pieces FROM  (SELECT order_no,order_date,size_id,coalesce(sum(totalset),0) - coalesce(sum(dispatch_set),0) 
+          as no_of_set,coalesce(sum(totalpiece),0) - coalesce(sum(dispatch_pieces),0) as no_of_pieces FROM (
+          SELECT a.order_no,to_char(a.order_date,'DD-MM-YYYY') as order_date,b.size_id,coalesce(sum(qty),0) as totalset,
+          coalesce(sum(qty*coalesce(c.total_set,'0')::Integer),0) as totalpiece,0 as dispatch_set,0 as dispatch_pieces
+          FROM tbl_order_taking as a inner join tbl_order_taking_items as b on a.order_no = b.order_no 
+          inner join tbl_item_sizes as c ON c.size_id = b.size_id  where to_char(a.order_date,'YYYY-MM-DD') :: date BETWEEN to_date('` + from_date + `','YYYY-MM-DD') and to_date('` + to_date + `','YYYY-MM-DD')  and ${customercode} and a.status_code = 1 and a.close_status=1 GROUP BY a.order_no,a.order_date,b.size_id
+                  UNION ALL
+          SELECT a.order_no,to_char(a.order_date,'DD-MM-YYYY') as order_date,b.size_id,0 as totalset,0 as totalpiece,
+          coalesce(sum(c.dispatch_set),0) as dispatch_set,coalesce(sum(c.dispatch_pieces),0) as dispatch_pieces FROM 
+          tbl_order_taking as a inner join tbl_order_taking_items as b on a.order_no = b.order_no INNER JOIN 
+          tbl_dispatch_details AS c on c.order_no = a.order_no and b.size_id = c.size_id where 
+          to_char(a.order_date,'YYYY-MM-DD') :: date BETWEEN to_date('` + from_date + `','YYYY-MM-DD') and to_date('` + to_date + `','YYYY-MM-DD')  and ${customercode} and a.status_code = 1 and a.close_status=1 GROUP BY a.order_no,
+          b.size_id,a.order_date) AS DERV GROUP BY order_no,size_id,order_date) AS DEV WHERE 
+          no_of_set > 0 GROUP BY order_no,order_date`);
+
+          // const hold_Item_sets = await client.query(`SELECT e.item_code,f.item_name
+          // ,sum(qty) as no_of_set,
+          // sum(qty*COALESCE(c.total_set,'0')::Integer) as no_of_pieces 
+          //           FROM tbl_order_taking as a inner join tbl_order_taking_items as b on a.order_no=b.order_no inner join 
+          //           tbl_item_sizes as  c on b.size_id=c.size_id inner join tbl_customer as d on
+          //           d.customer_code=a.customer_code INNER JOIN tbl_item_management as e On e.trans_no = c.trans_no
+          //       INNER JOIN tbl_def_item AS f on f.item_id = e.item_code
+          //       where 
+          //       a.status_code = ${status_flag} and to_char(a.order_date,'YYYY-MM-DD') :: date BETWEEN to_date('` + from_date + `','YYYY-MM-DD') and to_date('` + to_date + `','YYYY-MM-DD')  and ${customercode} group by e.item_code,f.item_name`);
+
+          const close_Item_sets = await client.query(`SELECT item_code,item_name,sum(totalset) as no_of_set,sum(totalpiece) as no_of_pieces FROM (SELECT item_code,item_name,order_no,order_date,size_id,coalesce(sum(totalset),0) - coalesce(sum(dispatch_set),0) as totalset,coalesce(sum(totalpiece),0) - coalesce(sum(dispatch_pieces),0) as totalpiece FROM (
+          SELECT e.item_code,f.item_name,a.order_no,to_char(a.order_date,'DD-MM-YYYY') as order_date,b.size_id,coalesce(sum(qty),0) as totalset,coalesce(sum(qty*coalesce(c.total_set,'0')::Integer),0) as totalpiece,0 as dispatch_set,0 as dispatch_pieces FROM tbl_order_taking as a inner join tbl_order_taking_items as b on a.order_no = b.order_no 
+          inner join tbl_item_sizes as c ON c.size_id = b.size_id  
+          INNER JOIN tbl_item_management as e On e.trans_no = c.trans_no
+          INNER JOIN tbl_def_item AS f on f.item_id = e.item_code where to_char(a.order_date,'YYYY-MM-DD') :: date BETWEEN to_date('` + from_date + `','YYYY-MM-DD') and to_date('` + to_date + `','YYYY-MM-DD')  and ${customercode} and a.status_code = 1 and a.close_status=1 GROUP BY a.order_no,a.order_date,b.size_id,e.item_code,f.item_name
+                  UNION ALL
+          SELECT e.item_code,f.item_name,a.order_no,to_char(a.order_date,'DD-MM-YYYY') as order_date,b.size_id,0 as totalset,0 as totalpiece,
+          coalesce(sum(c.dispatch_set),0) as dispatch_set,coalesce(sum(c.dispatch_pieces),0) as dispatch_pieces FROM tbl_order_taking as a inner join tbl_order_taking_items as b on a.order_no = b.order_no INNER JOIN tbl_dispatch_details AS c on c.order_no = a.order_no and b.size_id = c.size_id 
+            inner join tbl_item_sizes as d ON d.size_id = c.size_id 
+          INNER JOIN tbl_item_management as e On e.trans_no = d.trans_no
+          INNER JOIN tbl_def_item AS f on f.item_id = e.item_code where 
+          to_char(a.order_date,'YYYY-MM-DD') :: date BETWEEN to_date('` + from_date + `','YYYY-MM-DD') and to_date('` + to_date + `','YYYY-MM-DD')  and ${customercode} and a.status_code = 1 and a.close_status=1 GROUP BY a.order_no,b.size_id,a.order_date,e.item_code,f.item_name) AS DERV GROUP BY item_code,item_name,order_no,size_id,order_date) AS DEV WHERE totalset > 0 GROUP BY item_code,item_name`);
+
+          
+
+          let overall_Total = overall_total && overall_total.rows ? overall_total.rows : [];
+          let ListOrders = close_Cancel_Orders && close_Cancel_Orders.rows ? close_Cancel_Orders.rows : [];
+          let Close_catagory_widget = close_Item_sets && close_Item_sets.rows ? close_Item_sets.rows : [];
+
+          for (let i = 0; i < ListOrders.length; i++) {
+            // const Itemwise_Orders = await client.query(`SELECT c.qr_code,b.size_id,sum(qty) as no_of_set,sum(qty*COALESCE(c.total_set,'0')::Integer) as no_of_pieces FROM tbl_order_taking as a inner join tbl_order_taking_items as b on a.order_no=b.order_no inner join tbl_item_sizes as  c on b.size_id=c.size_id inner join tbl_customer as d on d.customer_code=a.customer_code where a.status_code = ${status_flag} and a.order_no = '${ListOrders[i]['order_no']}' and ${customercode} GROUP BY  c.qr_code,b.size_id`);
+            const Itemwise_Orders = await client.query(`SELECT qr_code,size_id,sum(totalset) as no_of_set,sum(totalpiece) as no_of_pieces FROM 
+            (SELECT qr_code,size_id,
+          coalesce(sum(totalset),0) - coalesce(sum(dispatch_set),0) 
+            as totalset,coalesce(sum(totalpiece),0) - coalesce(sum(dispatch_pieces),0) as totalpiece FROM (
+            SELECT c.qr_code,a.order_no,to_char(a.order_date,'DD-MM-YYYY') as order_date,b.size_id,coalesce(sum(qty),0) as totalset,
+            coalesce(sum(qty*coalesce(c.total_set,'0')::Integer),0) as totalpiece,0 as dispatch_set,0 as dispatch_pieces
+            FROM tbl_order_taking as a inner join tbl_order_taking_items as b on a.order_no = b.order_no 
+            inner join tbl_item_sizes as c ON c.size_id = b.size_id  
+            INNER JOIN tbl_item_management as e On e.trans_no = c.trans_no
+            INNER JOIN tbl_def_item AS f on f.item_id = e.item_code where a.order_no = '${ListOrders[i]['order_no']}' and ${customercode} and a.status_code = 1 and a.close_status=1 GROUP BY a.order_no,a.order_date,b.size_id,c.qr_code
+                    UNION ALL
+            SELECT d.qr_code,a.order_no,to_char(a.order_date,'DD-MM-YYYY') as order_date,b.size_id,0 as totalset,0 as totalpiece,
+            coalesce(sum(c.dispatch_set),0) as dispatch_set,coalesce(sum(c.dispatch_pieces),0) as dispatch_pieces FROM 
+            tbl_order_taking as a inner join tbl_order_taking_items as b on a.order_no = b.order_no INNER JOIN 
+            tbl_dispatch_details AS c on c.order_no = a.order_no and b.size_id = c.size_id 
+              inner join tbl_item_sizes as d ON d.size_id = c.size_id 
+            INNER JOIN tbl_item_management as e On e.trans_no = d.trans_no
+            INNER JOIN tbl_def_item AS f on f.item_id = e.item_code where 
+            a.order_no = '${ListOrders[i]['order_no']}' and ${customercode} and a.status_code = 1 and a.close_status=1 GROUP BY a.order_no,b.size_id,a.order_date,d.qr_code) AS DERV GROUP BY qr_code,order_no,size_id,order_date) 
+            AS DEV WHERE totalset > 0 GROUP BY qr_code,size_id`);
+            
+            ListOrders[i]['ItemArray'] = Itemwise_Orders && Itemwise_Orders.rows ? Itemwise_Orders.rows : [];
+          }
+          if (client) {
+            client.end();
+          }
+          responseData = { "OrderList": ListOrders, "CatagorywiseList": Close_catagory_widget, "overallTotal":overall_Total }
+          if (responseData) {
+            return responseData;
+          }
+          else {
+            return '';
+          }
+
+        }else if(process == "excel_download") {
 
           const total_orders = await client.query(`SELECT coalesce(sum(qty),0) as totalset,coalesce(sum(qty*coalesce(c.total_set,'0')::Integer),0) as 
           totalpiece FROM tbl_order_taking as a inner join tbl_order_taking_items as b on a.order_no = b.order_no 
           inner join tbl_item_sizes as c ON c.size_id = b.size_id where to_char(a.order_date,'YYYY-MM-DD') ::
           date BETWEEN to_date('`+from_date+`','YYYY-MM-DD') and
           to_date('`+to_date+`','YYYY-MM-DD') and a.customer_code = '` + customer_name + `'`);
+          
+          var TotalOrders = total_orders && total_orders.rows ? total_orders.rows : [];
   
           const totalCountOrder = await client.query(`SELECT count(order_no) as count FROM tbl_order_taking as a where to_char(a.order_date,'YYYY-MM-DD') ::
           date BETWEEN to_date('`+from_date+`','YYYY-MM-DD') and
           to_date('`+to_date+`','YYYY-MM-DD') and a.customer_code = '` + customer_name + `'`);
-  
-  
+
+          var TotalCountOrder = totalCountOrder && totalCountOrder.rows?.[0].count ? totalCountOrder.rows?.[0].count : 0;
+          
+          /******************* Cancel Order Start *******************/
+   
           const totalCancelOrders = await client.query(`SELECT coalesce(sum(qty),0) as totalset,coalesce(sum(qty*coalesce(c.total_set,'0')::Integer),0) as 
           totalpiece FROM tbl_order_taking as a inner join tbl_order_taking_items as b on a.order_no = b.order_no 
           inner join tbl_item_sizes as c ON c.size_id = b.size_id where a.status_code = 2 and to_char(a.order_date,'YYYY-MM-DD') ::
           date BETWEEN to_date('`+from_date+`','YYYY-MM-DD') and
           to_date('`+to_date+`','YYYY-MM-DD') and a.customer_code = '` + customer_name + `'`);
-          const totalHoldOrders = await client.query(`SELECT count(order_no) FROM tbl_order_taking as a where a.status_code = 3 and to_char(a.order_date,'YYYY-MM-DD') ::
-          date BETWEEN to_date('`+from_date+`','YYYY-MM-DD') and
-          to_date('`+to_date+`','YYYY-MM-DD') and a.customer_code = '` + customer_name + `'`);
-  
+
+          var TotalCancelOrders = totalCancelOrders && totalCancelOrders.rows ? totalCancelOrders.rows : [];
+
           const total_Cancelled_order = await client.query(`SELECT count(order_no) as count FROM tbl_order_taking as a where to_char(a.order_date,'YYYY-MM-DD') ::
           date BETWEEN to_date('`+from_date+`','YYYY-MM-DD') and
           to_date('`+to_date+`','YYYY-MM-DD') and a.status_code = 2 and a.customer_code = '` + customer_name + `'`);
-  
-  
-          // const total_Hold_order = await client.query(`SELECT coalesce(sum(qty),0) as totalset,coalesce(sum(qty*coalesce(c.total_set,'0')::Integer),0) as totalpiece FROM tbl_order_taking as a inner join tbl_order_taking_items as b on a.order_no = b.order_no inner join tbl_item_sizes as c ON c.size_id = b.size_id	 where to_char(a.order_date,'YYYY-MM-DD') :: date BETWEEN to_date('` + from_date + `','YYYY-MM-DD') and to_date('` + to_date + `','YYYY-MM-DD') and a.status_code = 3 and a.customer_code = '` + customer_name + `'`);
+
+          var Total_Cancel_Order = total_Cancelled_order && total_Cancelled_order.rows ? total_Cancelled_order.rows[0].count : 0;
+
+           // Cancelled Item wise
+           const cancelled_Orders = await client.query(`SELECT a.order_no,to_char(a.order_date,'DD-MM-YYYY')  as order_date, c.qr_code,b.size_id,sum(qty) as no_of_set,sum(qty*COALESCE(c.total_set,'0')::Integer) as no_of_pieces 
+           FROM tbl_order_taking as a inner join tbl_order_taking_items as b on a.order_no=b.order_no 
+           inner join tbl_item_sizes as  c on b.size_id=c.size_id inner join tbl_customer as d on 
+           d.customer_code=a.customer_code where a.status_code = 2 and to_char(a.order_date,'YYYY-MM-DD') ::
+           date BETWEEN to_date('`+from_date+`','YYYY-MM-DD') and
+           to_date('`+to_date+`','YYYY-MM-DD')  and ${customercode}
+           group by a.order_no,a.order_date, c.qr_code,b.size_id`);
+ 
+           let Cancelled_Orders = cancelled_Orders && cancelled_Orders.rows ? cancelled_Orders.rows : [];
+
+           const cancel_Item_sets = await client.query(`SELECT e.item_code,f.item_name
+          ,sum(qty) as no_of_set,
+          sum(qty*COALESCE(c.total_set,'0')::Integer) as no_of_pieces 
+                    FROM tbl_order_taking as a inner join tbl_order_taking_items as b on a.order_no=b.order_no inner join 
+                    tbl_item_sizes as  c on b.size_id=c.size_id inner join tbl_customer as d on
+                    d.customer_code=a.customer_code INNER JOIN tbl_item_management as e On e.trans_no = c.trans_no
+                INNER JOIN tbl_def_item AS f on f.item_id = e.item_code
+                where a.status_code = 2 and to_char(a.order_date,'YYYY-MM-DD') :: date BETWEEN to_date('` + from_date + `','YYYY-MM-DD') and to_date('` + to_date + `','YYYY-MM-DD')  and ${customercode} group by e.item_code,f.item_name`);
+          let Cancel_catagory_widget = cancel_Item_sets && cancel_Item_sets.rows ? cancel_Item_sets.rows : [];
+          
+ 
+
+          /******************* Cancel Order End *******************/
+
+          /******************* Hold Order Start *******************/
+
+          const totalHoldOrders = await client.query(`SELECT count(order_no) FROM tbl_order_taking as a where a.status_code = 3 and to_char(a.order_date,'YYYY-MM-DD') ::
+          date BETWEEN to_date('`+from_date+`','YYYY-MM-DD') and
+          to_date('`+to_date+`','YYYY-MM-DD') and a.customer_code = '` + customer_name + `'`);
+
+          var TotalHoldOrders = totalHoldOrders && totalHoldOrders.rows && totalHoldOrders.rows?.[0].count ? totalHoldOrders.rows?.[0].count : 0;  
+
           const total_Hold_order = await client.query(`SELECT coalesce(sum(totalset),0) AS totalset,coalesce(sum(totalpiece),0) as totalpiece FROM (SELECT coalesce(sum(totalset),0) - coalesce(sum(dispatch_set),0) as totalset,coalesce(sum(totalpiece),0) - coalesce(sum(dispatch_pieces),0) as totalpiece FROM (
             SELECT a.order_no,b.size_id,coalesce(sum(qty),0) as totalset,coalesce(sum(qty*coalesce(c.total_set,'0')::Integer),0) as totalpiece,0 as dispatch_set,0 as dispatch_pieces
             FROM tbl_order_taking as a inner join tbl_order_taking_items as b on a.order_no = b.order_no 
@@ -1698,92 +1803,11 @@ module.exports.GetDetailedOrders = async (req) => {
             UNION ALL
             SELECT a.order_no,b.size_id,0 as totalset,0 as totalpiece,coalesce(sum(c.dispatch_set),0) as dispatch_set,coalesce(sum(c.dispatch_pieces),0) as dispatch_pieces
             FROM tbl_order_taking as a inner join tbl_order_taking_items as b 
-            on a.order_no = b.order_no INNER JOIN tbl_dispatch_details AS c on c.order_no = a.order_no and b.size_id = c.size_id  where  to_char(a.order_date,'YYYY-MM-DD') :: date BETWEEN to_date('` + from_date + `','YYYY-MM-DD') and to_date('` + to_date + `','YYYY-MM-DD') and a.status_code = 3 and a.customer_code = '` + customer_name + `'  GROUP BY a.order_no,b.size_id) AS DERV GROUP BY order_no,size_id) AS DEV`);
-          
-          const total_dispatch_Set = await client.query(`SELECT coalesce(sum(dispatch_set),0) as dispatch_set, coalesce(sum(dispatch_pieces),0) as dispatch_pieces FROM tbl_order_taking  as a inner join  tbl_dispatch_details as
-          b on a.order_no=b.order_no where a.status_code in (`+ constants.userMessage.ORDER_STATUS + `) and b.status_flag = 1 and to_char(a.order_date,'YYYY-MM-DD') :: date BETWEEN to_date('` + from_date + `','YYYY-MM-DD') and to_date('` + to_date + `','YYYY-MM-DD') and a.customer_code = '` + customer_name + `'`);
-  
-          // const PendingOrders = await client.query(`SELECT coalesce(sum(pending_set),0) AS pending_set,coalesce(sum(pending_pieces),0) as pending_pieces FROM ( SELECT coalesce(sum(order_qty) - sum(dispatch_set),0) as pending_set,coalesce(sum(order_pieces) - sum(dispatch_pieces),0) AS pending_pieces FROM 
-          // (SELECT a.order_no,b.size_id,sum(qty) as order_qty,sum(qty) * sum(c.total_set :: INTEGER) as order_pieces, 0 AS dispatch_set, 0 AS dispatch_pieces FROM tbl_order_taking AS a INNER JOIN tbl_order_taking_items As b on a.order_no = b.order_no INNER JOIN tbl_item_sizes as c ON c.size_id = b.size_id where to_char(a.order_date,'YYYY-MM-DD') ::
-          // date BETWEEN to_date('`+from_date+`','YYYY-MM-DD') and
-          // to_date('`+to_date+`','YYYY-MM-DD') and 
-          //       a.customer_code = '`+ customer_name + `' AND a.status_code =1 GROUP BY a.order_no,b.size_id              
-          //       UNION ALL
-          // SELECT b.order_no,b.size_id,0 as order_qty,0 AS order_pieces,sum(dispatch_set) as dispatch_set,
-          // sum(dispatch_pieces) as dispatch_pieces FROM tbl_dispatch_details AS b INNER JOIN tbl_order_taking AS a
-          // on a.order_no = b.order_no where a.status_code =1 AND status_flag = 1 AND to_char(a.order_date,'YYYY-MM-DD') ::
-          // date BETWEEN to_date('`+from_date+`','YYYY-MM-DD') and
-          // to_date('`+to_date+`','YYYY-MM-DD') and a.customer_code = '` + customer_name + `' GROUP BY b.order_no,b.size_id) AS DERV GROUP BY order_no,size_id) AS DEV`);
-      
-          const PendingOrders = await client.query(`SELECT coalesce(sum(pending_set),0) as pending_set,coalesce(sum(pending_pieces),0) AS pending_pieces 
-          FROM (SELECT a.order_no,d.item_code,item_name,pending_dispatch AS pending_set ,b.size_id,
-              (total_set :: INTEGER * pending_dispatch) AS pending_pieces FROM tbl_order_taking AS a 
-              INNER JOIN tbl_order_taking_items AS b ON a.order_no = b.order_no
-                    INNER JOIN tbl_item_sizes as c ON c.size_id = b.size_id 
-                    INNER JOIN tbl_item_management as d on d.trans_no=c.trans_no 
-                    INNER JOIN tbl_customer as e ON e.customer_code = a.customer_code 
-                    left join tbl_color as f on f.color_id =c.color_id
-                    INNER JOIN tbl_def_item as g on d.item_code = g.item_id
-                    WHERE to_char(a.order_date,'YYYY-MM-DD') ::
-                    date BETWEEN to_date('`+from_date+`','YYYY-MM-DD') and
-                    to_date('`+to_date+`','YYYY-MM-DD') and a.customer_code = '` + customer_name + `'
-          AND a.status_code = 1 and pending_dispatch > 0) AS DERV`);
-  
-  
-          // const Total_Pending_Orders = await client.query(`SELECT count(order_no) as count FROM 
-          // (SELECT order_no,coalesce(sum(order_qty) - sum(dispatch_set),0) as pending_set, coalesce(sum(order_pieces) - sum(dispatch_pieces),0) AS pending_pieces FROM (SELECT a.order_no,b.size_id,sum(qty) as order_qty,sum(qty) * sum(c.total_set :: INTEGER) as order_pieces, 0 AS dispatch_set, 0 AS dispatch_pieces FROM tbl_order_taking AS a INNER JOIN tbl_order_taking_items As b on a.order_no = b.order_no INNER JOIN tbl_item_sizes as c ON c.size_id = b.size_id where to_char(a.order_date,'YYYY-MM-DD') ::
-          // date BETWEEN to_date('`+from_date+`','YYYY-MM-DD') and
-          // to_date('`+to_date+`','YYYY-MM-DD') and a.customer_code = '`+ customer_name + `' AND a.status_code =1 GROUP BY a.order_no,b.size_id  UNION ALL  SELECT b.order_no,b.size_id,0 as order_qty,0 AS order_pieces,sum(dispatch_set) as dispatch_set,  sum(dispatch_pieces) as dispatch_pieces FROM tbl_dispatch_details AS b INNER JOIN tbl_order_taking AS a  on a.order_no = b.order_no where a.status_code =1 AND status_flag = 1 AND to_char(a.order_date,'YYYY-MM-DD') ::
-          // date BETWEEN to_date('`+from_date+`','YYYY-MM-DD') and
-          // to_date('`+to_date+`','YYYY-MM-DD') and a.customer_code = '` + customer_name + `' GROUP BY b.order_no,b.size_id) AS DERV  GROUP BY order_no) AS DEV WHERE pending_set > 0`);
-          const Total_Pending_Orders = await client.query(`SELECT count(order_no) AS count FROM (SELECT order_no,sum(pending_set) as pending_set,sum(pending_pieces) as pending_pieces   FROM (SELECT a.order_no,d.item_code,item_name,pending_dispatch AS pending_set ,b.size_id,(total_set :: INTEGER * pending_dispatch) AS pending_pieces FROM tbl_order_taking AS a 
-              INNER JOIN tbl_order_taking_items AS b ON a.order_no = b.order_no
-                    INNER JOIN tbl_item_sizes as c ON c.size_id = b.size_id 
-                    INNER JOIN tbl_item_management as d on d.trans_no=c.trans_no 
-                    INNER JOIN tbl_customer as e ON e.customer_code = a.customer_code 
-                    left join tbl_color as f on f.color_id =c.color_id
-                    INNER JOIN tbl_def_item as g on d.item_code = g.item_id
-                    WHERE to_char(a.order_date,'YYYY-MM-DD') ::
-                    date BETWEEN to_date('`+from_date+`','YYYY-MM-DD') and
-                    to_date('`+to_date+`','YYYY-MM-DD') and a.customer_code = '` + customer_name + `' AND a.status_code = 1 and pending_dispatch > 0) AS DERV GROUP BY order_no) AS DERV1`);
-  
-          const Total_dispatch_Orders = await client.query(`SELECT count(dispatch_id) FROM  tbl_dispatch_details where
-          status_flag = 1 and customer_code = '` + customer_name + `' and order_no in (select a.order_no from tbl_order_taking as a where a.customer_code = '` + customer_name + `' and to_char(a.order_date,'YYYY-MM-DD') ::
-          date BETWEEN to_date('`+from_date+`','YYYY-MM-DD') and
-          to_date('`+to_date+`','YYYY-MM-DD') and a.status_code in (`+ constants.userMessage.ORDER_STATUS + `))`);
-        
-  
-          var TotalOrders = total_orders && total_orders.rows ? total_orders.rows : [];
-          var TotalCountOrder = totalCountOrder && totalCountOrder.rows?.[0].count ? totalCountOrder.rows?.[0].count : 0;
-          var Total_Cancel_Order = total_Cancelled_order && total_Cancelled_order.rows ? total_Cancelled_order.rows[0].count : 0;
-          var Total_Hold = total_Hold_order && total_Hold_order.rows ? total_Hold_order.rows : [];
-          var Total_dispatch = total_dispatch_Set && total_dispatch_Set.rows ? total_dispatch_Set.rows : [];
-          var Pending_Order = PendingOrders && PendingOrders.rows ? PendingOrders.rows : [];
-          var TotalPendingOrders = Total_Pending_Orders && Total_Pending_Orders.rows && Total_Pending_Orders.rows?.[0].count? Total_Pending_Orders.rows?.[0].count : 0;
-          var TotalDispatchOrders = Total_dispatch_Orders && Total_dispatch_Orders.rows && Total_dispatch_Orders.rows?.[0].count? Total_dispatch_Orders.rows?.[0].count : 0;
-          var TotalCancelOrders = totalCancelOrders && totalCancelOrders.rows ? totalCancelOrders.rows : [];
-          var TotalHoldOrders = totalHoldOrders && totalHoldOrders.rows && totalHoldOrders.rows?.[0].count ? totalHoldOrders.rows?.[0].count : 0;
-          
+            on a.order_no = b.order_no INNER JOIN tbl_dispatch_details AS c on c.order_no = a.order_no and b.size_id = c.size_id  where  to_char(a.order_date,'YYYY-MM-DD') :: date BETWEEN to_date('` + from_date + `','YYYY-MM-DD') and to_date('` + to_date + `','YYYY-MM-DD') and a.status_code = 3 and a.customer_code = '` + customer_name + `'  GROUP BY a.order_no,b.size_id) AS DERV GROUP BY order_no,size_id) AS DEV WHERE totalset > 0`);
 
-          // Cancelled Item wise
-          const cancelled_Orders = await client.query(`SELECT a.order_no,to_char(a.order_date,'DD-MM-YYYY')  as order_date, c.qr_code,b.size_id,sum(qty) as no_of_set,sum(qty*COALESCE(c.total_set,'0')::Integer) as no_of_pieces 
-          FROM tbl_order_taking as a inner join tbl_order_taking_items as b on a.order_no=b.order_no 
-          inner join tbl_item_sizes as  c on b.size_id=c.size_id inner join tbl_customer as d on 
-          d.customer_code=a.customer_code where a.status_code = 2 and to_char(a.order_date,'YYYY-MM-DD') ::
-          date BETWEEN to_date('`+from_date+`','YYYY-MM-DD') and
-          to_date('`+to_date+`','YYYY-MM-DD')  and ${customercode}
-          group by a.order_no,a.order_date, c.qr_code,b.size_id`);
+            var Total_Hold = total_Hold_order && total_Hold_order.rows ? total_Hold_order.rows : [];
 
-          let Cancelled_Orders = cancelled_Orders && cancelled_Orders.rows ? cancelled_Orders.rows : [];
-
-          // Hold Item wise
-          // const hold_Orders = await client.query(`SELECT a.order_no,to_char(a.order_date,'DD-MM-YYYY')  as order_date, c.qr_code,b.size_id,sum(qty) as no_of_set,sum(qty*COALESCE(c.total_set,'0')::Integer) as no_of_pieces 
-          // FROM tbl_order_taking as a inner join tbl_order_taking_items as b on a.order_no=b.order_no 
-          // inner join tbl_item_sizes as  c on b.size_id=c.size_id inner join tbl_customer as d on 
-          // d.customer_code=a.customer_code where a.status_code = 3 and to_char(a.order_date,'YYYY-MM-DD') ::
-          // date BETWEEN to_date('`+from_date+`','YYYY-MM-DD') and
-          // to_date('`+to_date+`','YYYY-MM-DD')  and ${customercode}
-          // group by a.order_no,a.order_date, c.qr_code,b.size_id`);
+            // Hold Item wise
 
           const hold_Orders = await client.query(`SELECT order_no,order_date,qr_code,size_id,sum(totalset) as no_of_set,sum(totalpiece) as no_of_pieces FROM (SELECT order_no,order_date,qr_code,size_id,        coalesce(sum(totalset),0) - coalesce(sum(dispatch_set),0) as totalset,coalesce(sum(totalpiece),0) - coalesce(sum(dispatch_pieces),0) as totalpiece FROM (SELECT c.qr_code,a.order_no,to_char(a.order_date,'DD-MM-YYYY') as order_date,b.size_id,coalesce(sum(qty),0) as totalset,
           coalesce(sum(qty*coalesce(c.total_set,'0')::Integer),0) as totalpiece,0 as dispatch_set,0 as dispatch_pieces FROM tbl_order_taking as a inner join tbl_order_taking_items as b on a.order_no = b.order_no inner join tbl_item_sizes as c ON c.size_id = b.size_id  INNER JOIN tbl_item_management as e On e.trans_no = c.trans_no INNER JOIN tbl_def_item AS f on f.item_id = e.item_code where 
@@ -1800,50 +1824,6 @@ module.exports.GetDetailedOrders = async (req) => {
 
           let Hold_Orders = hold_Orders && hold_Orders.rows ? hold_Orders.rows : [];
 
-          // Dispatch Item wise
-          const dispatch_Orders = await client.query(`SELECT a.order_no,to_char(a.order_date,'DD-MM-YYYY') as order_date,b.size_id,c.qr_code,sum(dispatch_set) as no_of_set,
-          sum(dispatch_pieces) as no_of_pieces FROM tbl_dispatch_details AS b INNER JOIN tbl_order_taking AS a
-          on a.order_no = b.order_no INNER JOIN tbl_item_sizes as c ON c.size_id = b.size_id  
-          where a.status_code in (`+ constants.userMessage.ORDER_STATUS + `) AND status_flag = 1 and to_char(a.order_date,'YYYY-MM-DD') ::
-          date BETWEEN to_date('`+from_date+`','YYYY-MM-DD') and
-          to_date('`+to_date+`','YYYY-MM-DD')  and ${customercode}
-          group by a.order_no,a.order_date, c.qr_code,b.size_id`);
-
-          let Dispatch_Orders = dispatch_Orders && dispatch_Orders.rows ? dispatch_Orders.rows : [];
-
-          // Dispatch Item wise
-//           const pending_Orders = await client.query(`SELECT order_no, qr_code,to_char(order_date,'DD-MM-YYYY') as order_date,coalesce(sum(pending_set),0) AS no_of_set,
-//           coalesce(sum(pending_pieces),0) as no_of_pieces 
-//           FROM ( SELECT order_date,order_no,qr_code,coalesce(sum(order_qty) - sum(dispatch_set),0) as pending_set,
-//                   coalesce(sum(order_pieces) - sum(dispatch_pieces),0) AS pending_pieces FROM 
-//                   (SELECT a.order_date,a.order_no,b.size_id,c.qr_code,sum(qty) as order_qty,sum(qty) * sum(c.total_set :: INTEGER) as order_pieces,
-//                   0 AS dispatch_set, 0 AS dispatch_pieces FROM tbl_order_taking AS a INNER JOIN tbl_order_taking_items As b on a.order_no = b.order_no INNER JOIN tbl_item_sizes as c ON c.size_id = b.size_id where ${customercode} AND to_char(a.order_date,'YYYY-MM-DD') ::
-// date BETWEEN to_date('`+from_date+`','YYYY-MM-DD') and
-// to_date('`+to_date+`','YYYY-MM-DD') and a.status_code =1 GROUP BY a.order_no,b.size_id,c.qr_code, a.order_date             UNION ALL SELECT a.order_date,b.order_no,b.size_id,c.qr_code,0 as order_qty,0 AS order_pieces,sum(dispatch_set) as dispatch_set, sum(dispatch_pieces) as dispatch_pieces FROM tbl_dispatch_details AS b INNER JOIN tbl_order_taking AS a
-//                   on a.order_no = b.order_no INNER JOIN tbl_item_sizes as c ON c.size_id = b.size_id  
-//                where a.status_code =1 AND status_flag = 1 AND to_char(a.order_date,'YYYY-MM-DD') :: date BETWEEN to_date('`+from_date+`','YYYY-MM-DD') and
-// to_date('`+to_date+`','YYYY-MM-DD') and ${customercode} GROUP BY b.order_no,b.size_id,c.qr_code, a.order_date)  AS DERV GROUP BY order_no,size_id,qr_code, order_date) AS DEV WHERE pending_set > 0 GROUP BY qr_code, order_no, order_date`);
-          const pending_Orders = await client.query(`SELECT order_no,order_date,qr_code,size_id,
-          sum(pending_set) as no_of_set,sum(pending_pieces) as no_of_pieces
-          FROM (SELECT a.order_no,to_char(order_date,'DD-MM-YYYY') as order_date,qr_code,b.size_id,
-          sum(pending_dispatch) AS pending_set,
-          sum(total_set :: INTEGER * pending_dispatch) AS pending_pieces FROM tbl_order_taking AS a 
-          INNER JOIN tbl_order_taking_items AS b ON a.order_no = b.order_no
-          INNER JOIN tbl_item_sizes as c ON c.size_id = b.size_id 
-          INNER JOIN tbl_item_management as d on d.trans_no=c.trans_no 
-          INNER JOIN tbl_customer as e ON e.customer_code = a.customer_code 
-          left join tbl_color as f on f.color_id =c.color_id
-          INNER JOIN tbl_def_item as g on d.item_code = g.item_id
-          WHERE to_char(a.order_date,'YYYY-MM-DD') :: date BETWEEN to_date('`+from_date+`','YYYY-MM-DD') AND to_date('`+to_date+`','YYYY-MM-DD') and ${customercode} AND a.status_code = 1 
-          and pending_dispatch > 0 GROUP BY a.order_no,order_date,qr_code,b.size_id) AS DERV
-          GROUP BY order_no,order_date,qr_code,size_id`);
-          let Pending_Orders = pending_Orders && pending_Orders.rows ? pending_Orders.rows : [];
-
-          const company_details = await client.query(`SELECT  print_id, company_name, addressline1, addressline2, area, city, gstin, mobile_number, telephone_number, status_id, footer_name
-          FROM  tbl_print_setting where  print_id = 1`);
-
-          let company_data = company_details && company_details.rows ? company_details.rows : [];
-
           const hold_Item_sets = await client.query(`SELECT item_code,item_name,sum(totalset) as no_of_set,sum(totalpiece) as no_of_pieces FROM (SELECT item_code,item_name,order_no,order_date,size_id,coalesce(sum(totalset),0) - coalesce(sum(dispatch_set),0) as totalset,coalesce(sum(totalpiece),0) - coalesce(sum(dispatch_pieces),0) as totalpiece FROM (
             SELECT e.item_code,f.item_name,a.order_no,to_char(a.order_date,'DD-MM-YYYY') as order_date,b.size_id,coalesce(sum(qty),0) as totalset,coalesce(sum(qty*coalesce(c.total_set,'0')::Integer),0) as totalpiece,0 as dispatch_set,0 as dispatch_pieces FROM tbl_order_taking as a inner join tbl_order_taking_items as b on a.order_no = b.order_no 
             inner join tbl_item_sizes as c ON c.size_id = b.size_id  
@@ -1856,17 +1836,35 @@ module.exports.GetDetailedOrders = async (req) => {
             INNER JOIN tbl_item_management as e On e.trans_no = d.trans_no
             INNER JOIN tbl_def_item AS f on f.item_id = e.item_code where 
             to_char(a.order_date,'YYYY-MM-DD') :: date BETWEEN to_date('` + from_date + `','YYYY-MM-DD') and to_date('` + to_date + `','YYYY-MM-DD')  and ${customercode} and a.status_code = 3 GROUP BY a.order_no,b.size_id,a.order_date,e.item_code,f.item_name) AS DERV GROUP BY item_code,item_name,order_no,size_id,order_date) AS DEV WHERE totalset > 0 GROUP BY item_code,item_name`);
-          let Hold_catagory_widget = hold_Item_sets && hold_Item_sets.rows ? hold_Item_sets.rows : [];    
+          let Hold_catagory_widget = hold_Item_sets && hold_Item_sets.rows ? hold_Item_sets.rows : []; 
 
-          const cancel_Item_sets = await client.query(`SELECT e.item_code,f.item_name
-          ,sum(qty) as no_of_set,
-          sum(qty*COALESCE(c.total_set,'0')::Integer) as no_of_pieces 
-                    FROM tbl_order_taking as a inner join tbl_order_taking_items as b on a.order_no=b.order_no inner join 
-                    tbl_item_sizes as  c on b.size_id=c.size_id inner join tbl_customer as d on
-                    d.customer_code=a.customer_code INNER JOIN tbl_item_management as e On e.trans_no = c.trans_no
-                INNER JOIN tbl_def_item AS f on f.item_id = e.item_code
-                where a.status_code = 2 and to_char(a.order_date,'YYYY-MM-DD') :: date BETWEEN to_date('` + from_date + `','YYYY-MM-DD') and to_date('` + to_date + `','YYYY-MM-DD')  and ${customercode} group by e.item_code,f.item_name`);
-          let Cancel_catagory_widget = cancel_Item_sets && cancel_Item_sets.rows ? cancel_Item_sets.rows : [];    
+          /******************* Hold Order End *******************/  
+         
+         
+          /******************* Dispatch Start *******************/ 
+
+          const total_dispatch_Set = await client.query(`SELECT coalesce(sum(dispatch_set),0) as dispatch_set, coalesce(sum(dispatch_pieces),0) as dispatch_pieces FROM tbl_order_taking  as a inner join  tbl_dispatch_details as
+          b on a.order_no=b.order_no where a.status_code in (`+ constants.userMessage.ORDER_STATUS + `) and b.status_flag = 1 and to_char(a.order_date,'YYYY-MM-DD') :: date BETWEEN to_date('` + from_date + `','YYYY-MM-DD') and to_date('` + to_date + `','YYYY-MM-DD') and a.customer_code = '` + customer_name + `'`);
+
+          var Total_dispatch = total_dispatch_Set && total_dispatch_Set.rows ? total_dispatch_Set.rows : [];
+
+          const Total_dispatch_Orders = await client.query(`SELECT count(dispatch_id) FROM  tbl_dispatch_details where
+          status_flag = 1 and customer_code = '` + customer_name + `' and order_no in (select a.order_no from tbl_order_taking as a where a.customer_code = '` + customer_name + `' and to_char(a.order_date,'YYYY-MM-DD') ::
+          date BETWEEN to_date('`+from_date+`','YYYY-MM-DD') and
+          to_date('`+to_date+`','YYYY-MM-DD') and a.status_code in (`+ constants.userMessage.ORDER_STATUS + `))`);
+
+          var TotalDispatchOrders = Total_dispatch_Orders && Total_dispatch_Orders.rows && Total_dispatch_Orders.rows?.[0].count? Total_dispatch_Orders.rows?.[0].count : 0;
+
+          // Dispatch Item wise
+          const dispatch_Orders = await client.query(`SELECT a.order_no,to_char(a.order_date,'DD-MM-YYYY') as order_date,b.size_id,c.qr_code,sum(dispatch_set) as no_of_set,
+          sum(dispatch_pieces) as no_of_pieces FROM tbl_dispatch_details AS b INNER JOIN tbl_order_taking AS a
+          on a.order_no = b.order_no INNER JOIN tbl_item_sizes as c ON c.size_id = b.size_id  
+          where a.status_code in (`+ constants.userMessage.ORDER_STATUS + `) AND status_flag = 1 and to_char(a.order_date,'YYYY-MM-DD') ::
+          date BETWEEN to_date('`+from_date+`','YYYY-MM-DD') and
+          to_date('`+to_date+`','YYYY-MM-DD')  and ${customercode}
+          group by a.order_no,a.order_date, c.qr_code,b.size_id`);
+
+          let Dispatch_Orders = dispatch_Orders && dispatch_Orders.rows ? dispatch_Orders.rows : [];
 
           const dispatch_Catagory_sets = await client.query(`SELECT e.item_code,f.item_name,
           sum(dispatch_set) as no_of_set,
@@ -1878,47 +1876,139 @@ module.exports.GetDetailedOrders = async (req) => {
               group by e.item_code,f.item_name`);
           let Dispatch_catagory_widget = dispatch_Catagory_sets && dispatch_Catagory_sets.rows ? dispatch_Catagory_sets.rows : [];    
           
-        //   const pending_Catagory_sets = await client.query(`SELECT item_code,item_name,coalesce(sum(pending_set),0) AS no_of_set,
-        //   coalesce(sum(pending_pieces),0) as no_of_pieces 
-        //   FROM ( SELECT item_code,order_date,order_no,qr_code,coalesce(sum(order_qty) - sum(dispatch_set),0) as pending_set,
-        //           coalesce(sum(order_pieces) - sum(dispatch_pieces),0) AS pending_pieces FROM 
-        //           (SELECT d.item_code,a.order_date,a.order_no,b.size_id,c.qr_code,sum(qty) as order_qty,
-				//    sum(qty) * sum(c.total_set :: INTEGER) as order_pieces,
-        //           0 AS dispatch_set, 0 AS dispatch_pieces FROM tbl_order_taking AS a INNER JOIN 
-				//    tbl_order_taking_items As b on a.order_no = b.order_no INNER JOIN tbl_item_sizes as c 
-				//    ON c.size_id = b.size_id INNER JOIN tbl_item_management as d On d.trans_no = c.trans_no 
-				//    where to_char(a.order_date,'YYYY-MM-DD') :: date BETWEEN to_date('` + from_date + `','YYYY-MM-DD') and to_date('` + to_date + `','YYYY-MM-DD') and ${customercode} and a.status_code =1 GROUP BY d.item_code,a.order_no,b.size_id,
-				//    c.qr_code, a.order_date             
-				//    UNION ALL SELECT d.item_code,a.order_date,b.order_no,b.size_id,c.qr_code,0 as order_qty,0 AS order_pieces,
-				//    sum(dispatch_set) as dispatch_set, sum(dispatch_pieces) as dispatch_pieces FROM tbl_dispatch_details 
-				//    AS b INNER JOIN tbl_order_taking AS a
-        //           on a.order_no = b.order_no INNER JOIN tbl_item_sizes as c ON c.size_id = b.size_id  
-				//    INNER JOIN tbl_item_management as d On d.trans_no = c.trans_no
-        //        where a.status_code =1 AND status_flag = 1 AND to_char(a.order_date,'YYYY-MM-DD') :: date BETWEEN to_date('` + from_date + `','YYYY-MM-DD') and to_date('` + to_date + `','YYYY-MM-DD')  and ${customercode} GROUP BY d.item_code,b.order_no,b.size_id,c.qr_code, a.order_date) 
-				// AS DERV GROUP BY item_code,order_no,size_id,qr_code, order_date) AS DEV 
-				// INNER JOIN tbl_def_item AS f on f.item_id=DEV.item_code WHERE pending_set > 0 
-        // GROUP BY item_code,item_name`);
-        const pending_Catagory_sets = await client.query(`SELECT item_code,item_name,coalesce(sum(pending_set),0) as no_of_set,coalesce(sum(pending_pieces),0) AS no_of_pieces FROM (SELECT a.order_no,d.item_code,item_name,pending_dispatch AS pending_set ,b.size_id,(total_set :: INTEGER * pending_dispatch) AS pending_pieces FROM tbl_order_taking AS a INNER JOIN tbl_order_taking_items AS b ON a.order_no = b.order_no
+
+           /******************* Dispatch End *******************/ 
+  
+          /******************* Pending Dispatch Order Start *******************/ 
+      
+          const PendingOrders = await client.query(`SELECT coalesce(sum(pending_set),0) as pending_set,coalesce(sum(pending_pieces),0) AS pending_pieces 
+          FROM (SELECT a.order_no,d.item_code,item_name,pending_dispatch AS pending_set ,b.size_id,
+              (total_set :: INTEGER * pending_dispatch) AS pending_pieces FROM tbl_order_taking AS a 
+              INNER JOIN tbl_order_taking_items AS b ON a.order_no = b.order_no
+                    INNER JOIN tbl_item_sizes as c ON c.size_id = b.size_id 
+                    INNER JOIN tbl_item_management as d on d.trans_no=c.trans_no 
+                    INNER JOIN tbl_customer as e ON e.customer_code = a.customer_code 
+                    LEFT JOIN tbl_color as f on f.color_id =c.color_id
+                    INNER JOIN tbl_def_item as g on d.item_code = g.item_id
+                    WHERE to_char(a.order_date,'YYYY-MM-DD') ::
+                    date BETWEEN to_date('`+from_date+`','YYYY-MM-DD') and
+                    to_date('`+to_date+`','YYYY-MM-DD') and a.customer_code = '` + customer_name + `'
+          AND a.status_code = 1 and (a.close_status != 1 OR a.close_status is null) and pending_dispatch > 0) AS DERV`);
+
+          var Pending_Order = PendingOrders && PendingOrders.rows ? PendingOrders.rows : [];
+          
+          const Total_Pending_Orders = await client.query(`SELECT count(order_no) AS count FROM (SELECT order_no,sum(pending_set) as pending_set,sum(pending_pieces) as pending_pieces   FROM (SELECT a.order_no,d.item_code,item_name,pending_dispatch AS pending_set ,b.size_id,(total_set :: INTEGER * pending_dispatch) AS pending_pieces FROM tbl_order_taking AS a 
+              INNER JOIN tbl_order_taking_items AS b ON a.order_no = b.order_no
+                    INNER JOIN tbl_item_sizes as c ON c.size_id = b.size_id 
+                    INNER JOIN tbl_item_management as d on d.trans_no=c.trans_no 
+                    INNER JOIN tbl_customer as e ON e.customer_code = a.customer_code 
+                    LEFT JOIN tbl_color as f on f.color_id =c.color_id
+                    INNER JOIN tbl_def_item as g on d.item_code = g.item_id
+                    WHERE to_char(a.order_date,'YYYY-MM-DD') ::
+                    date BETWEEN to_date('`+from_date+`','YYYY-MM-DD') and
+                    to_date('`+to_date+`','YYYY-MM-DD') and a.customer_code = '` + customer_name + `' AND a.status_code = 1 and (a.close_status != 1 OR a.close_status is null)  and pending_dispatch > 0) AS DERV GROUP BY order_no) AS DERV1`);
+
+                    var TotalPendingOrders = Total_Pending_Orders && Total_Pending_Orders.rows && Total_Pending_Orders.rows?.[0].count? Total_Pending_Orders.rows?.[0].count : 0;
+
+        // Pending Item wise
+                    const pending_Orders = await client.query(`SELECT order_no,order_date,qr_code,size_id,
+                    sum(pending_set) as no_of_set,sum(pending_pieces) as no_of_pieces
+                    FROM (SELECT a.order_no,to_char(order_date,'DD-MM-YYYY') as order_date,qr_code,b.size_id,
+                    sum(pending_dispatch) AS pending_set,
+                    sum(total_set :: INTEGER * pending_dispatch) AS pending_pieces FROM tbl_order_taking AS a 
+                    INNER JOIN tbl_order_taking_items AS b ON a.order_no = b.order_no
+                    INNER JOIN tbl_item_sizes as c ON c.size_id = b.size_id 
+                    INNER JOIN tbl_item_management as d on d.trans_no=c.trans_no 
+                    INNER JOIN tbl_customer as e ON e.customer_code = a.customer_code 
+                    LEFT JOIN tbl_color as f on f.color_id =c.color_id
+                    INNER JOIN tbl_def_item as g on d.item_code = g.item_id
+                    WHERE to_char(a.order_date,'YYYY-MM-DD') :: date BETWEEN to_date('`+from_date+`','YYYY-MM-DD') AND to_date('`+to_date+`','YYYY-MM-DD') and ${customercode} AND a.status_code = 1  and (a.close_status != 1 OR a.close_status is null) 
+                    and pending_dispatch > 0 GROUP BY a.order_no,order_date,qr_code,b.size_id) AS DERV
+                    GROUP BY order_no,order_date,qr_code,size_id`);
+                    let Pending_Orders = pending_Orders && pending_Orders.rows ? pending_Orders.rows : [];
+
+                    const pending_Catagory_sets = await client.query(`SELECT item_code,item_name,coalesce(sum(pending_set),0) as no_of_set,coalesce(sum(pending_pieces),0) AS no_of_pieces FROM (SELECT a.order_no,d.item_code,item_name,pending_dispatch AS pending_set ,b.size_id,(total_set :: INTEGER * pending_dispatch) AS pending_pieces FROM tbl_order_taking AS a INNER JOIN tbl_order_taking_items AS b ON a.order_no = b.order_no
         INNER JOIN tbl_item_sizes as c ON c.size_id = b.size_id 
         INNER JOIN tbl_item_management as d on d.trans_no=c.trans_no 
         INNER JOIN tbl_customer as e ON e.customer_code = a.customer_code 
-        left join tbl_color as f on f.color_id =c.color_id
+        LEFT JOIN tbl_color as f on f.color_id =c.color_id
                   INNER JOIN tbl_def_item as g on d.item_code = g.item_id
         WHERE to_char(a.order_date,'YYYY-MM-DD') :: date BETWEEN to_date('` + from_date + `','YYYY-MM-DD') and to_date('` + to_date + `','YYYY-MM-DD')  and ${customercode}
-AND a.status_code = 1 and pending_dispatch > 0) AS DERV
+AND a.status_code = 1 and (a.close_status != 1 OR a.close_status is null) and pending_dispatch > 0) AS DERV
         GROUP BY item_code,item_name`);
-          let Pending_catagory_widget = pending_Catagory_sets && pending_Catagory_sets.rows ? pending_Catagory_sets.rows : [];    
+          let Pending_catagory_widget = pending_Catagory_sets && pending_Catagory_sets.rows ? pending_Catagory_sets.rows : []; 
+
+      /******************* Pending Dispatch Order End *******************/ 
+
+      /******************* Closed Order Start *******************/ 
+
+      const totalCloseOrders = await client.query(`SELECT count(order_no) FROM tbl_order_taking as a where a.status_code = 1 and a.close_status=1 and to_char(a.order_date,'YYYY-MM-DD') ::
+          date BETWEEN to_date('`+from_date+`','YYYY-MM-DD') and
+          to_date('`+to_date+`','YYYY-MM-DD') and a.customer_code = '` + customer_name + `'`);
+
+          var TotalCloseOrders = totalCloseOrders && totalCloseOrders.rows && totalCloseOrders.rows?.[0].count ? totalCloseOrders.rows?.[0].count : 0;  
+
+          const total_Close_order = await client.query(`SELECT coalesce(sum(totalset),0) AS totalset,coalesce(sum(totalpiece),0) as totalpiece FROM (SELECT coalesce(sum(totalset),0) - coalesce(sum(dispatch_set),0) as totalset,coalesce(sum(totalpiece),0) - coalesce(sum(dispatch_pieces),0) as totalpiece FROM (
+            SELECT a.order_no,b.size_id,coalesce(sum(qty),0) as totalset,coalesce(sum(qty*coalesce(c.total_set,'0')::Integer),0) as totalpiece,0 as dispatch_set,0 as dispatch_pieces
+            FROM tbl_order_taking as a inner join tbl_order_taking_items as b on a.order_no = b.order_no 
+            inner join tbl_item_sizes as c ON c.size_id = b.size_id   where 
+            to_char(a.order_date,'YYYY-MM-DD') :: date BETWEEN to_date('` + from_date + `','YYYY-MM-DD') and to_date('` + to_date + `','YYYY-MM-DD') and a.status_code = 1 and a.close_status=1 and a.customer_code = '` + customer_name + `' GROUP BY a.order_no,b.size_id
+            UNION ALL
+            SELECT a.order_no,b.size_id,0 as totalset,0 as totalpiece,coalesce(sum(c.dispatch_set),0) as dispatch_set,coalesce(sum(c.dispatch_pieces),0) as dispatch_pieces
+            FROM tbl_order_taking as a inner join tbl_order_taking_items as b 
+            on a.order_no = b.order_no INNER JOIN tbl_dispatch_details AS c on c.order_no = a.order_no and b.size_id = c.size_id  where  to_char(a.order_date,'YYYY-MM-DD') :: date BETWEEN to_date('` + from_date + `','YYYY-MM-DD') and to_date('` + to_date + `','YYYY-MM-DD') and a.status_code = 1 and a.close_status=1 and a.customer_code = '` + customer_name + `'  GROUP BY a.order_no,b.size_id) AS DERV GROUP BY order_no,size_id) AS DEV WHERE totalset > 0`);
+
+            var Total_Close = total_Close_order && total_Close_order.rows ? total_Close_order.rows : [];
+
+            // Hold Item wise
+
+          const close_Orders = await client.query(`SELECT order_no,order_date,qr_code,size_id,sum(totalset) as no_of_set,sum(totalpiece) as no_of_pieces FROM (SELECT order_no,order_date,qr_code,size_id,        coalesce(sum(totalset),0) - coalesce(sum(dispatch_set),0) as totalset,coalesce(sum(totalpiece),0) - coalesce(sum(dispatch_pieces),0) as totalpiece FROM (SELECT c.qr_code,a.order_no,to_char(a.order_date,'DD-MM-YYYY') as order_date,b.size_id,coalesce(sum(qty),0) as totalset,
+          coalesce(sum(qty*coalesce(c.total_set,'0')::Integer),0) as totalpiece,0 as dispatch_set,0 as dispatch_pieces FROM tbl_order_taking as a inner join tbl_order_taking_items as b on a.order_no = b.order_no inner join tbl_item_sizes as c ON c.size_id = b.size_id  INNER JOIN tbl_item_management as e On e.trans_no = c.trans_no INNER JOIN tbl_def_item AS f on f.item_id = e.item_code where 
+          to_char(a.order_date,'YYYY-MM-DD') :: date BETWEEN to_date('`+from_date+`','YYYY-MM-DD') and
+          to_date('`+to_date+`','YYYY-MM-DD')  and ${customercode} and a.status_code = 1 and a.close_status=1 GROUP BY a.order_no,a.order_date,b.size_id,c.qr_code
+                  UNION ALL
+          SELECT d.qr_code,a.order_no,to_char(a.order_date,'DD-MM-YYYY') as order_date,b.size_id,0 as totalset,0 as totalpiece,coalesce(sum(c.dispatch_set),0) as dispatch_set,coalesce(sum(c.dispatch_pieces),0) as dispatch_pieces FROM tbl_order_taking as a inner join tbl_order_taking_items as b on a.order_no = b.order_no INNER JOIN tbl_dispatch_details AS c on c.order_no = a.order_no and b.size_id = c.size_id 
+            inner join tbl_item_sizes as d ON d.size_id = c.size_id INNER JOIN tbl_item_management as e On e.trans_no = d.trans_no INNER JOIN tbl_def_item AS f on f.item_id = e.item_code where 
+          to_char(a.order_date,'YYYY-MM-DD') :: date BETWEEN to_date('`+from_date+`','YYYY-MM-DD') and
+          to_date('`+to_date+`','YYYY-MM-DD')  and ${customercode} and a.status_code = 1 and a.close_status=1 GROUP BY a.order_no,b.size_id,a.order_date,d.qr_code) AS DERV GROUP BY qr_code,order_no,size_id,order_date) 
+          AS DEV WHERE totalset > 0 GROUP BY order_no,order_date,qr_code,size_id`);
+
           
+
+          let Close_Orders = close_Orders && close_Orders.rows ? close_Orders.rows : [];
+
+          const close_Item_sets = await client.query(`SELECT item_code,item_name,sum(totalset) as no_of_set,sum(totalpiece) as no_of_pieces FROM (SELECT item_code,item_name,order_no,order_date,size_id,coalesce(sum(totalset),0) - coalesce(sum(dispatch_set),0) as totalset,coalesce(sum(totalpiece),0) - coalesce(sum(dispatch_pieces),0) as totalpiece FROM (
+            SELECT e.item_code,f.item_name,a.order_no,to_char(a.order_date,'DD-MM-YYYY') as order_date,b.size_id,coalesce(sum(qty),0) as totalset,coalesce(sum(qty*coalesce(c.total_set,'0')::Integer),0) as totalpiece,0 as dispatch_set,0 as dispatch_pieces FROM tbl_order_taking as a inner join tbl_order_taking_items as b on a.order_no = b.order_no 
+            inner join tbl_item_sizes as c ON c.size_id = b.size_id  
+            INNER JOIN tbl_item_management as e On e.trans_no = c.trans_no
+            INNER JOIN tbl_def_item AS f on f.item_id = e.item_code where to_char(a.order_date,'YYYY-MM-DD') :: date BETWEEN to_date('` + from_date + `','YYYY-MM-DD') and to_date('` + to_date + `','YYYY-MM-DD')  and ${customercode} and a.status_code = 1 and a.close_status=1 GROUP BY a.order_no,a.order_date,b.size_id,e.item_code,f.item_name
+                    UNION ALL
+            SELECT e.item_code,f.item_name,a.order_no,to_char(a.order_date,'DD-MM-YYYY') as order_date,b.size_id,0 as totalset,0 as totalpiece,
+            coalesce(sum(c.dispatch_set),0) as dispatch_set,coalesce(sum(c.dispatch_pieces),0) as dispatch_pieces FROM tbl_order_taking as a inner join tbl_order_taking_items as b on a.order_no = b.order_no INNER JOIN tbl_dispatch_details AS c on c.order_no = a.order_no and b.size_id = c.size_id 
+              inner join tbl_item_sizes as d ON d.size_id = c.size_id 
+            INNER JOIN tbl_item_management as e On e.trans_no = d.trans_no
+            INNER JOIN tbl_def_item AS f on f.item_id = e.item_code where 
+            to_char(a.order_date,'YYYY-MM-DD') :: date BETWEEN to_date('` + from_date + `','YYYY-MM-DD') and to_date('` + to_date + `','YYYY-MM-DD')  and ${customercode} and a.status_code = 1 and a.close_status=1 GROUP BY a.order_no,b.size_id,a.order_date,e.item_code,f.item_name) AS DERV GROUP BY item_code,item_name,order_no,size_id,order_date) AS DEV WHERE totalset > 0 GROUP BY item_code,item_name`);
+          let Close_catagory_widget = close_Item_sets && close_Item_sets.rows ? close_Item_sets.rows : []; 
+
+       /******************* Closed Order End *******************/ 
+  
+          
+      const company_details = await client.query(`SELECT  print_id, company_name, addressline1, addressline2, area, city, gstin, mobile_number, telephone_number, status_id, footer_name
+      FROM  tbl_print_setting where  print_id = 1`);
+
+      let company_data = company_details && company_details.rows ? company_details.rows : [];          
+         
 
           if (client) {
             client.end();
           }
-          responseData = { "TotalOrderCount" : TotalCountOrder, "TotalOrders":TotalOrders, "TotalCancelledOrder": Total_Cancel_Order, "HoldOrder": Total_Hold, "PendingOrderSet": Pending_Order, "TotalDispatch": Total_dispatch, "TotalPendingOrders": TotalPendingOrders, "TotalDispatchOrders": TotalDispatchOrders, "CancelledOrder": TotalCancelOrders, "TotalHoldOrder": TotalHoldOrders,"CancelledOrders": Cancelled_Orders,  "HoldOrders": Hold_Orders,  "DispatchOrders": Dispatch_Orders,  "PendingOrders": Pending_Orders, "company_details": company_data, "HoldCatagorys": Hold_catagory_widget, "CancelCatagorys": Cancel_catagory_widget, "PendingCatagorys": Pending_catagory_widget, "DispatchCatagorys": Dispatch_catagory_widget }
+          responseData = { "TotalOrderCount" : TotalCountOrder, "TotalOrders":TotalOrders, "TotalCancelledOrder": Total_Cancel_Order, "HoldOrder": Total_Hold, "PendingOrderSet": Pending_Order, "TotalDispatch": Total_dispatch, "TotalPendingOrders": TotalPendingOrders, "TotalDispatchOrders": TotalDispatchOrders, "CancelledOrder": TotalCancelOrders, "TotalHoldOrder": TotalHoldOrders,"CancelledOrders": Cancelled_Orders,  "HoldOrders": Hold_Orders,  "DispatchOrders": Dispatch_Orders,  "PendingOrders": Pending_Orders, "company_details": company_data, "HoldCatagorys": Hold_catagory_widget, "CancelCatagorys": Cancel_catagory_widget, "PendingCatagorys": Pending_catagory_widget, "DispatchCatagorys": Dispatch_catagory_widget,"CloseOrder": Total_Close, "TotalCloseOrder": TotalCloseOrders,"CloseOrders": Close_Orders,"CloseCatagorys": Close_catagory_widget }
           if (responseData) {
             return responseData;
           }
           else {
-            return { "TotalOrderCount" : [], "TotalOrders":[],"CancelledOrders": [],  "HoldOrders": [],  "DispatchOrders": [],  "PendingOrders": [], "company_details": [] };
+            return { "TotalOrderCount" : [], "TotalOrders":[],"CancelledOrders": [],  "HoldOrders": [],  "DispatchOrders": [],  "PendingOrders": [], "company_details": [],"CloseOrder": [], "TotalCloseOrder": [],"CloseOrders": [],"CloseCatagorys": [] };
           }
         }
       }

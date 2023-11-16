@@ -387,3 +387,9 @@ WHERE a.status_code in (1,3) ORDER BY order_date asc
 
 /******************* 14-11-2023 *******************/
 INSERT INTO tbl_def_menu_details (menu_id,menu_name) VALUES (1,'Dashboard')
+
+
+/******************* 14-11-2023 *******************/
+/******************* Close Pending Order *******************/
+ALTER TABLE IF EXISTS public.tbl_order_taking
+    ADD COLUMN IF NOT EXISTS close_status integer;

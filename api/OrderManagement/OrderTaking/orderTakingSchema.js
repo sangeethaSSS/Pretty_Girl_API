@@ -151,3 +151,17 @@ module.exports.updateBlockCustomerJwt = Joi.object().keys({
   jwtToken: Joi.string().allow(''), 
 });
 
+
+/******************* Close Pending Order *******************/
+module.exports.closePendingOrderListJwt = Joi.object().keys({
+  user_id: Joi.number().required(),
+  from_date:Joi.string().required(),
+  to_date: Joi.string().required(),
+  jwtToken: Joi.string().allow(''), 
+});
+
+module.exports.SaveClosePendingOrderJwt = Joi.object().keys({
+  user_id: Joi.number().required(),
+  order_details:Joi.array().required(),
+  jwtToken: Joi.string().allow(''), 
+});

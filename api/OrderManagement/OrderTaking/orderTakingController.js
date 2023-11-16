@@ -517,3 +517,67 @@ module.exports.updateBlockCustomer = async (req, res) => {
   }
   return res.send(response);
 }
+
+
+/******************* Close Pending Order *******************/
+
+//Create Order Taking JWt Module
+module.exports.closePendingOrderListJwt = async (req, res) => {
+  let response = {};
+  try {
+    const responseFromService = await orderTakingMgmtService.closePendingOrderListJwt(req.body);
+    if (!responseFromService.token) {
+      response.status = 200;
+    }
+    response.body = responseFromService;
+  } catch (error) {
+    response.message = error.message;
+  }
+  return res.send(response);
+}
+
+//Order Taking List Module
+module.exports.closePendingOrderList = async (req, res) => {
+  let response = {};
+  try {
+    const responseFromService = await orderTakingMgmtService.closePendingOrderList(req.body);
+    if (!responseFromService.token) {
+      response.status = 200;
+      response.message = constants.success_message.LISTED_SUCCESS;
+    }
+    response.body = responseFromService;
+  } catch (error) {
+    response.message = error.message;
+  }
+  return res.send(response);
+}
+
+module.exports.SaveClosePendingOrderJwt = async (req, res) => {
+  let response = {};
+  try {
+    const responseFromService = await orderTakingMgmtService.SaveClosePendingOrderJwt(req.body);
+    if (!responseFromService.token) {
+      response.status = 200;
+    }
+    response.body = responseFromService;
+  } catch (error) {
+    response.message = error.message;
+  }
+  return res.send(response);
+}
+
+//Order Taking List Module
+module.exports.SaveClosePendingOrder = async (req, res) => {
+  let response = {};
+  try {
+    const responseFromService = await orderTakingMgmtService.SaveClosePendingOrder(req.body);
+    if (!responseFromService.token) {
+      response.status = 200;
+      response.message = constants.success_message.LISTED_SUCCESS;
+    }
+    response.body = responseFromService;
+  } catch (error) {
+    response.message = error.message;
+  }
+  return res.send(response);
+}

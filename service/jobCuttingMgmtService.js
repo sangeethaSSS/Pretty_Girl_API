@@ -205,7 +205,7 @@ module.exports.getColorsForJobCutting = async (req) => {
       if (decoded != null) {
         const { item_id, design_id, end_size, start_size } = decoded.data
 
-        const Item_list = await client.query(`SELECT a.color_id AS value, color_name AS label FROM  tbl_item_sizes AS a INNER JOIN tbl_item_management as b ON a.trans_no = b. trans_no INNER JOIN tbl_color AS c ON a.color_id = c.color_id WHERE item_code = ${item_id} AND design_id='` + design_id + `' and end_size = '` + end_size + `' AND start_size='` + start_size + `' ORDER BY color_name`)
+        const Item_list = await client.query(`SELECT a.color_id AS value, color_name AS label FROM  tbl_item_sizes AS a INNER JOIN tbl_item_management as b ON a.trans_no = b. trans_no LEFT JOIN tbl_color AS c ON a.color_id = c.color_id WHERE item_code = ${item_id} AND design_id='` + design_id + `' and end_size = '` + end_size + `' AND start_size='` + start_size + `' ORDER BY color_name`)
 
         if (client) { client.end(); }
         let List_Array = Item_list && Item_list.rows ? Item_list.rows : [];
@@ -348,7 +348,7 @@ module.exports.saveJobCutting = async (req) => {
           // }
 
           // const jobcard_Result = await client.query(`SELECT a.job_date,a.job_id,b.employee_name,a.employee_id,a.machine_id,a.design_id,a.completed_date,a.total_pieces,a.jobtype_id,extract(day from CURRENT_DATE::timestamp - a.job_date::date ) as noofdays,c.item_name,d.machine_no,f.qr_code as design_no,g.status_name,a.status_id,'' as itemgroup_id,h.color_name,k.jobtype_name,a.salary_status_id,l.salary_status_name, concat_ws(' - ',f.start_size, f.end_size) as size from tbl_job_details  as a inner join tbl_employee_details as b on a.employee_id = b.employee_id inner join tbl_def_item as c on a.item_id = c.item_id inner join tbl_machine as d on a.machine_id = d.machine_id 
-          // left join tbl_item_sizes as f on f.size_id = a.design_id inner join tbl_def_status as g on g.status_id =  a.status_id inner join tbl_color as h on h.color_id = a.color_id   
+          // left join tbl_item_sizes as f on f.size_id = a.design_id inner join tbl_def_status as g on g.status_id =  a.status_id left join tbl_color as h on h.color_id = a.color_id   
           // inner join tbl_def_jobtype as k on a.jobtype_id = k.jobtype_id 
           // inner join tbl_def_salary_status as l on a.salary_status_id = l.salary_status_id  where  a.job_id =$1`, [maxjobcard]);
           // let Jobcard_json = jobcard_Result && jobcard_Result.rows ? jobcard_Result.rows[0] : {};
@@ -387,7 +387,7 @@ module.exports.saveJobCutting = async (req) => {
             }
 
             // const jobcard_Result = await client.query(`SELECT a.job_date,a.job_id,b.employee_name,a.employee_id,a.machine_id,a.design_id,a.completed_date,a.total_pieces,a.jobtype_id,extract(day from CURRENT_DATE::timestamp - a.job_date::date ) as noofdays,c.item_name,d.machine_no,f.qr_code as design_no,g.status_name,a.status_id,'' as itemgroup_id,h.color_name,k.jobtype_name,a.salary_status_id,l.salary_status_name, concat_ws(' - ',f.start_size, f.end_size) as size from tbl_job_details  as a inner join tbl_employee_details as b on a.employee_id = b.employee_id inner join tbl_def_item as c on a.item_id = c.item_id inner join tbl_machine as d on a.machine_id = d.machine_id 
-            // left join tbl_item_sizes as f on f.size_id = a.design_id inner join tbl_def_status as g on g.status_id =  a.status_id inner join tbl_color as h on h.color_id = a.color_id   
+            // left join tbl_item_sizes as f on f.size_id = a.design_id inner join tbl_def_status as g on g.status_id =  a.status_id left join tbl_color as h on h.color_id = a.color_id   
             // inner join tbl_def_jobtype as k on a.jobtype_id = k.jobtype_id 
             // inner join tbl_def_salary_status as l on a.salary_status_id = l.salary_status_id  where  a.job_id =$1`, [job_id]);
             // let Jobcard_json = jobcard_Result && jobcard_Result.rows ? jobcard_Result.rows[0] : {};
@@ -509,7 +509,7 @@ module.exports.jobcuttingList = async (req) => {
           tbl_machine as e on a.machine_id = e.machine_id 
           LEFT JOIN tbl_item_sizes as f on f.size_id = b.size_id 
           INNER JOIN tbl_def_status as g on g.status_id = a.status_id 
-          INNER JOIN tbl_color as h on h.color_id = b.color_id
+          LEFT JOIN tbl_color as h on h.color_id = b.color_id
           INNER JOIN tbl_def_salary_status as l on a.salary_status_id = l.salary_status_id 
           WHERE ` + datediff + ` AND ` + tot_status + ` AND ` + item_group + ` AND ` + sizeid + ` AND ` + employee + ` AND ` + color + `
           GROUP BY a.job_cutting_id,a.job_cutting_seq_no,a.job_cutting_date,a.employee_id,c.employee_name,a.machine_id,a.completed_date,a.status_id,a.salary_status_id,
@@ -522,7 +522,7 @@ module.exports.jobcuttingList = async (req) => {
           tbl_machine as e on a.machine_id = e.machine_id 
           LEFT JOIN tbl_item_sizes as f on f.size_id = b.size_id 
           INNER JOIN tbl_def_status as g on g.status_id = a.status_id 
-          INNER JOIN tbl_color as h on h.color_id = b.color_id
+          LEFT JOIN tbl_color as h on h.color_id = b.color_id
           INNER JOIN tbl_def_salary_status as l on a.salary_status_id = l.salary_status_id 
           WHERE ` + datediff + ` AND ` + tot_status + ` AND ` + item_group + ` AND ` + sizeid + ` AND ` + employee + ` AND ` + color + `
           GROUP BY a.job_cutting_id,a.job_cutting_seq_no,a.job_cutting_date,a.employee_id,c.employee_name,a.machine_id,a.completed_date,a.status_id,a.salary_status_id,
@@ -543,14 +543,14 @@ module.exports.jobcuttingList = async (req) => {
           tbl_machine AS e ON a.machine_id = e.machine_id 
           LEFT JOIN tbl_item_sizes AS f ON f.size_id = b.size_id 
           INNER JOIN tbl_def_status AS g ON g.status_id = a.status_id 
-          INNER JOIN tbl_color AS h ON h.color_id = b.color_id
+          LEFT JOIN tbl_color AS h ON h.color_id = b.color_id
           INNER JOIN tbl_def_salary_status AS l ON a.salary_status_id = l.salary_status_id   WHERE ` + datediff + ` AND ` + tot_status + ` AND ` + item_group + ` AND ` + sizeid + ` AND ` + employee + ` AND ` + color + ``);
           const total_Count = await client.query(`SELECT COUNT(job_cutting_id) as total_job FROM (SELECT DISTINCT a.job_cutting_id FROM tbl_job_cutting AS a INNER JOIN                tbl_job_cutting_item_details AS b ON a.job_cutting_id = b.job_cutting_id INNER JOIN tbl_employee_details AS c ON a.employee_id = c.employee_id
           INNER JOIN tbl_def_item AS d ON b.item_id = d.item_id INNER JOIN 
           tbl_machine AS e ON a.machine_id = e.machine_id 
           LEFT JOIN tbl_item_sizes AS f ON f.size_id = b.size_id 
           INNER JOIN tbl_def_status AS g ON g.status_id = a.status_id 
-          INNER JOIN tbl_color AS h ON h.color_id = b.color_id
+          LEFT JOIN tbl_color AS h ON h.color_id = b.color_id
           INNER JOIN tbl_def_salary_status AS l ON a.salary_status_id = l.salary_status_id  
           WHERE ` + datediff + ` AND ` + tot_status + ` AND ` + item_group + ` AND ` + sizeid + ` AND ` +employee + ` AND ` + color + `) AS DERV`)
      
@@ -561,7 +561,7 @@ module.exports.jobcuttingList = async (req) => {
           tbl_machine AS e ON a.machine_id = e.machine_id 
           LEFT JOIN tbl_item_sizes AS f ON f.size_id = b.size_id 
           INNER JOIN tbl_def_status AS g ON g.status_id = a.status_id 
-          INNER JOIN tbl_color AS h ON h.color_id = b.color_id
+          LEFT JOIN tbl_color AS h ON h.color_id = b.color_id
           INNER JOIN tbl_def_salary_status AS l ON a.salary_status_id = l.salary_status_id   WHERE ` + datediff + ` AND ` + pend_status + ` AND ` + item_group + ` AND ` + sizeid + ` AND ` + employee + ` AND ` + color + ``);
 
           const pending_Count = await client.query(`SELECT COUNT(job_cutting_id) as pending_job FROM (SELECT DISTINCT a.job_cutting_id FROM tbl_job_cutting AS a INNER JOIN tbl_job_cutting_item_details AS b ON a.job_cutting_id = b.job_cutting_id
@@ -570,7 +570,7 @@ module.exports.jobcuttingList = async (req) => {
           tbl_machine AS e ON a.machine_id = e.machine_id 
           LEFT JOIN tbl_item_sizes AS f ON f.size_id = b.size_id 
           INNER JOIN tbl_def_status AS g ON g.status_id = a.status_id 
-          INNER JOIN tbl_color AS h ON h.color_id = b.color_id
+          LEFT JOIN tbl_color AS h ON h.color_id = b.color_id
           INNER JOIN tbl_def_salary_status AS l ON a.salary_status_id = l.salary_status_id   WHERE ` + datediff + ` AND ` + pend_status + ` AND ` + item_group + ` AND ` + sizeid + ` AND ` + employee + ` AND ` + color + `) AS DERV`);
 
           const completedCount = await client.query(`SELECT SUM(coalesce(job_cutting_set,0)) AS total_set,SUM(coalesce(job_cutting_set * job_cutting_pieces,0)) AS total_piece FROM tbl_job_cutting AS a INNER JOIN tbl_job_cutting_item_details AS b ON a.job_cutting_id = b.job_cutting_id
@@ -579,7 +579,7 @@ module.exports.jobcuttingList = async (req) => {
           tbl_machine AS e ON a.machine_id = e.machine_id 
           LEFT JOIN tbl_item_sizes AS f ON f.size_id = b.size_id 
           INNER JOIN tbl_def_status AS g ON g.status_id = a.status_id 
-          INNER JOIN tbl_color AS h ON h.color_id = b.color_id
+          LEFT JOIN tbl_color AS h ON h.color_id = b.color_id
           INNER JOIN tbl_def_salary_status AS l ON a.salary_status_id = l.salary_status_id   WHERE ` + completed_date + ` AND ` + com_status + ` AND ` + item_group + ` AND ` + sizeid + ` AND ` + employee + ` AND ` + color + ``);
 
           const completed_Count = await client.query(`SELECT COUNT(job_cutting_id) as completed_job FROM (SELECT DISTINCT a.job_cutting_id FROM tbl_job_cutting AS a INNER JOIN tbl_job_cutting_item_details AS b ON a.job_cutting_id = b.job_cutting_id
@@ -588,7 +588,7 @@ module.exports.jobcuttingList = async (req) => {
           tbl_machine AS e ON a.machine_id = e.machine_id 
           LEFT JOIN tbl_item_sizes AS f ON f.size_id = b.size_id 
           INNER JOIN tbl_def_status AS g ON g.status_id = a.status_id 
-          INNER JOIN tbl_color AS h ON h.color_id = b.color_id
+          LEFT JOIN tbl_color AS h ON h.color_id = b.color_id
           INNER JOIN tbl_def_salary_status AS l ON a.salary_status_id = l.salary_status_id   WHERE ` + completed_date + ` AND ` + com_status + ` AND ` + item_group + ` AND ` + sizeid + ` AND ` + employee + ` AND ` + color + `) AS DERV`);
 
          
@@ -671,12 +671,12 @@ module.exports.editJobCutting = async (req) => {
           const { job_cutting_id } = decoded.data;
           if (decoded) {
               const jobcard_Result = await client.query(`SELECT a.job_cutting_date,a.job_cutting_id,b.job_cutting_set,b.job_cutting_pieces,b.total_amount,a.job_cutting_seq_no,a.employee_id,
-              c.employee_name,a.machine_id,e.machine_no,b.design_id,f.qr_code as design_no,b.item_id,d.item_name,b.color_id,h.color_name,b.size_id,concat_ws(' - ', f.start_size, f.end_size) as size_name,a.status_id,g.status_name, extract(day from CURRENT_DATE::timestamp - a.job_cutting_date::date ) as noofdays,a.salary_status_id,a.completed_date from tbl_job_cutting AS a INNER JOIN tbl_job_cutting_item_details AS b ON a.job_cutting_id = b.job_cutting_id             INNER JOIN tbl_employee_details AS c ON a.employee_id = c.employee_id                            INNER JOIN tbl_def_item AS d ON b.item_id = d.item_id INNER JOIN                               tbl_machine AS e ON a.machine_id = e.machine_id INNER JOIN tbl_item_sizes AS f ON f.size_id = b.size_id INNER JOIN tbl_def_status AS g ON g.status_id = a.status_id INNER JOIN tbl_color AS h ON h.color_id = b.color_id WHERE a.job_cutting_id = ` + job_cutting_id);
+              c.employee_name,a.machine_id,e.machine_no,b.design_id,f.qr_code as design_no,b.item_id,d.item_name,b.color_id,h.color_name,b.size_id,concat_ws(' - ', f.start_size, f.end_size) as size_name,a.status_id,g.status_name, extract(day from CURRENT_DATE::timestamp - a.job_cutting_date::date ) as noofdays,a.salary_status_id,a.completed_date from tbl_job_cutting AS a INNER JOIN tbl_job_cutting_item_details AS b ON a.job_cutting_id = b.job_cutting_id             INNER JOIN tbl_employee_details AS c ON a.employee_id = c.employee_id                            INNER JOIN tbl_def_item AS d ON b.item_id = d.item_id INNER JOIN                               tbl_machine AS e ON a.machine_id = e.machine_id INNER JOIN tbl_item_sizes AS f ON f.size_id = b.size_id INNER JOIN tbl_def_status AS g ON g.status_id = a.status_id LEFT JOIN tbl_color AS h ON h.color_id = b.color_id WHERE a.job_cutting_id = ` + job_cutting_id);
 
               const jobcutting_itemArray = await client.query(`SELECT b.item_id AS item_code, b.item_sub_category_id AS sub_category_id,b.design_id,b.size_id,d.start_size,d.end_size,d.qr_code,b.job_cutting_pieces as no_of_piece,b.job_cutting_set as qty, 
               CASE WHEN a.salary_status_id = 0 THEN (SELECT price FROM tbl_item_sub_category WHERE sub_category_id = b.item_sub_category_id) ELSE b.total_amount END AS price
               ,b.color_id from tbl_job_cutting AS a INNER JOIN tbl_job_cutting_item_details AS b ON a.job_cutting_id = b.job_cutting_id  INNER JOIN tbl_def_item AS c ON b.item_id = c.item_id 
-               INNER JOIN tbl_item_sizes AS d ON d.size_id = b.size_id INNER JOIN tbl_color AS e ON e.color_id = b.color_id WHERE a.job_cutting_id = ` + job_cutting_id)
+               INNER JOIN tbl_item_sizes AS d ON d.size_id = b.size_id LEFT JOIN tbl_color AS e ON e.color_id = b.color_id WHERE a.job_cutting_id = ` + job_cutting_id)
 
                let jobcutting_item_Array = jobcutting_itemArray && jobcutting_itemArray.rows ? jobcutting_itemArray.rows : [];
 
@@ -814,11 +814,11 @@ module.exports.printJobCutting = async (req) => {
               ON a.job_cutting_id = b.job_cutting_id INNER JOIN tbl_employee_details AS c ON 
               a.employee_id = c.employee_id INNER JOIN tbl_def_item AS d ON b.item_id = d.item_id 
               INNER JOIN  tbl_machine AS e ON a.machine_id = e.machine_id INNER JOIN tbl_item_sizes 
-              AS f ON f.size_id = b.size_id INNER JOIN tbl_def_status AS g ON g.status_id = a.status_id INNER JOIN tbl_color AS h ON h.color_id = b.color_id WHERE a.job_cutting_id =` + job_cutting_id);
+              AS f ON f.size_id = b.size_id INNER JOIN tbl_def_status AS g ON g.status_id = a.status_id LEFT JOIN tbl_color AS h ON h.color_id = b.color_id WHERE a.job_cutting_id =` + job_cutting_id);
 
               const jobcutting_itemArray = await client.query(`SELECT c.item_name,b.item_id AS item_code, f.short_name,b.item_sub_category_id AS sub_category_id,b.design_id,b.size_id,d.start_size,
               d.end_size,d.qr_code,(b.job_cutting_set * b.job_cutting_pieces) as no_of_piece,b.job_cutting_set as qty,CASE WHEN a.salary_status_id = 0 THEN (SELECT price FROM tbl_item_sub_category 
-              WHERE sub_category_id = b.item_sub_category_id) ELSE b.total_amount END AS price                 ,b.color_id,e.color_name,concat_ws(' - ', d.start_size, d.end_size) as size_name from tbl_job_cutting AS a INNER JOIN tbl_job_cutting_item_details AS b ON a.job_cutting_id = b.job_cutting_id  INNER JOIN tbl_def_item AS c ON b.item_id = c.item_id                          INNER JOIN tbl_item_sizes AS d ON d.size_id = b.size_id INNER JOIN tbl_color AS 
+              WHERE sub_category_id = b.item_sub_category_id) ELSE b.total_amount END AS price                 ,b.color_id,e.color_name,concat_ws(' - ', d.start_size, d.end_size) as size_name from tbl_job_cutting AS a INNER JOIN tbl_job_cutting_item_details AS b ON a.job_cutting_id = b.job_cutting_id  INNER JOIN tbl_def_item AS c ON b.item_id = c.item_id                          INNER JOIN tbl_item_sizes AS d ON d.size_id = b.size_id LEFT JOIN tbl_color AS 
               e ON e.color_id = b.color_id INNER JOIN tbl_item_sub_category as f on f.sub_category_id = 
               b.item_sub_category_id  WHERE a.job_cutting_id = ` + job_cutting_id)
 

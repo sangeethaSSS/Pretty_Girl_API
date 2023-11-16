@@ -44,18 +44,41 @@ module.exports.itemCustomerWiseList = async (req) => {
          let sizeid_val = '1=1';
          if(size_id  && size_id != "" && size_id != "0"){
            const size_id_val = size_id ? '\'' + size_id.split(',').join('\',\'') + '\'' : '' 
-           sizeid_val = ` b.size_id in (${size_id_val})`
+           sizeid_val = ` size_id in (${size_id_val})`
          }
-         item_exec_Result_total = await client.query(` SELECT size_id,qr_code FROM (SELECT a.order_no,b.size_id,qr_code,to_char(a.order_date,'DD-MM-YYYY') as order_date,sum(b.qty)::Integer - coalesce((select sum(coalesce(dispatch_set,0)) from tbl_dispatch_details   where status_flag = 1 and order_no=a.order_no and size_id = b.size_id),0) as total_piece,COALESCE(coalesce((select sum(coalesce(no_of_set,0)) from tbl_fg_items where size_id=b.size_id),0) + COALESCE((SELECT sum(goods_return_set) from tbl_goods_return where status_flag = 1 AND  size_id = b.size_id ),0),0) - coalesce((select sum(coalesce(dispatch_set,0)) from tbl_dispatch_details  where status_flag = 1 and size_id=b.size_id),0) as fg_qty FROM tbl_order_taking as a inner join tbl_order_taking_items as b on a.order_no=b.order_no inner join tbl_item_sizes as c on b.size_id=c.size_id where a.status_code = 1 and ${sizeid_val} group by a.order_no,b.size_id,qr_code,a.order_date ) as dev where total_piece > 0 and fg_qty > 0 group by size_id,qr_code`)
-         item_exec_Result = await client.query(` SELECT size_id,qr_code FROM (SELECT a.order_no,b.size_id,qr_code,to_char(a.order_date,'DD-MM-YYYY') as order_date,sum(b.qty)::Integer - coalesce((select sum(coalesce(dispatch_set,0)) from tbl_dispatch_details   where status_flag = 1 and order_no=a.order_no and size_id = b.size_id),0) as total_piece,COALESCE(coalesce((select sum(coalesce(no_of_set,0)) from tbl_fg_items where size_id=b.size_id),0) + COALESCE((SELECT sum(goods_return_set) from tbl_goods_return where status_flag = 1 AND  size_id = b.size_id ),0),0) - coalesce((select sum(coalesce(dispatch_set,0)) from tbl_dispatch_details  where status_flag = 1 and size_id=b.size_id),0) as fg_qty FROM tbl_order_taking as a inner join tbl_order_taking_items as b on a.order_no=b.order_no inner join tbl_item_sizes as c on b.size_id=c.size_id where a.status_code = 1 and ${sizeid_val} group by a.order_no,b.size_id,qr_code,a.order_date ) as dev where total_piece > 0 and fg_qty > 0 group by size_id,qr_code LIMIT ${limit} OFFSET ${offset}`)
+        //  item_exec_Result_total = await client.query(` SELECT size_id,qr_code FROM (SELECT a.order_no,b.size_id,qr_code,to_char(a.order_date,'DD-MM-YYYY') as order_date,sum(b.qty)::Integer - coalesce((select sum(coalesce(dispatch_set,0)) from tbl_dispatch_details   where status_flag = 1 and order_no=a.order_no and size_id = b.size_id),0) as total_piece,COALESCE(coalesce((select sum(coalesce(no_of_set,0)) from tbl_fg_items where size_id=b.size_id),0) + COALESCE((SELECT sum(goods_return_set) from tbl_goods_return where status_flag = 1 AND  size_id = b.size_id ),0),0) - coalesce((select sum(coalesce(dispatch_set,0)) from tbl_dispatch_details  where status_flag = 1 and size_id=b.size_id),0) as fg_qty FROM tbl_order_taking as a inner join tbl_order_taking_items as b on a.order_no=b.order_no inner join tbl_item_sizes as c on b.size_id=c.size_id where a.status_code = 1 and (a.close_status != 1 or a.close_status is null) and a.close_status = 1 and ${sizeid_val} group by a.order_no,b.size_id,qr_code,a.order_date ) as dev where total_piece > 0 and fg_qty > 0 group by size_id,qr_code`)
+
+        
+
+         item_exec_Result = await client.query(`SELECT qr_code, size_id  FROM (SELECT c.qr_code,b.size_id,a.order_no,to_char(a.order_date,'DD-MM-YYYY') AS order_date,a.customer_code,sum(pending_dispatch) as pending_set FROM tbl_order_taking  AS a INNER JOIN tbl_order_taking_items AS b ON a.order_no=b.order_no INNER JOIN  tbl_item_sizes AS c ON b.size_id=c.size_id  WHERE 
+             a.status_code = 1 AND (a.close_status != 1 OR a.close_status is null) GROUP BY 
+             b.size_id,c.qr_code,a.order_no,order_date,a.customer_code) AS D1 WHERE pending_set > 0  
+             AND  ${sizeid_val} AND size_id in (SELECT size_id FROM (SELECT size_id, sum(inward) - SUM(outward) AS current_stock FROM
+                 (SELECT size_id,coalesce(no_of_set,0) AS inward, 0 AS outward FROM tbl_fg_items 
+                 UNION ALL
+                 SELECT size_id,coalesce(goods_return_set,0) AS inward, 0 AS outward FROM tbl_goods_return 
+              WHERE status_flag = 1
+                 UNION ALL
+                 SELECT size_id,0 AS inward, coalesce(dispatch_set,0) AS outward FROM tbl_dispatch_details 
+              WHERE status_flag = 1
+                 ) AS DERV GROUP BY size_id) AS D2 WHERE current_stock > 0) GROUP BY size_id 
+             ,qr_code ORDER BY qr_code`)
          // item_exec_Result = await client.query(`Select * from (select a.order_no,a.ref_no,to_char(a.order_date,'DD-MM-YYYY') as order_date,a.customer_code, b.size_id,sum(b.qty)::Integer - coalesce((select sum(coalesce(dispatch_set,0)) from tbl_dispatch_details   where status_flag = 1 and order_no=a.order_no),0) as total_piece,d.customer_name,d.mobile_no, coalesce(d.city,'')||' - '||coalesce(d.pincode,'') as city,'0' as dispatch_qty, coalesce((select sum(coalesce(no_of_set,0)) from tbl_fg_items where size_id=b.size_id),0) - coalesce((select sum(coalesce(dispatch_set,0)) from tbl_dispatch_details  where status_flag = 1 and size_id=b.size_id),0) as fg_qty from tbl_order_taking as a inner join tbl_order_taking_items as b on a.order_no=b.order_no  inner join tbl_item_sizes as c on b.size_id=c.size_id inner join tbl_customer as d  on d.customer_code=a.customer_code where  ${sizeid_val} group by a.order_no,a.ref_no,a.order_date,a.customer_code,b.size_id,d.customer_name,d.mobile_no,d.city,d.pincode) as dev where total_piece > 0 and fg_qty > 0`);
          let dispatch_array = item_exec_Result && item_exec_Result.rows ? item_exec_Result.rows : [];      
          result = [];
+
+         item_exec_Result_total = dispatch_array.length
          
          
          if (dispatch_array.length > 0) {
            for (let i = 0; i < dispatch_array.length; i++) {
-             const item_Result = await client.query(` Select * from (select a.order_no,a.ref_no,to_char(a.order_date,'DD-MM-YYYY') as order_date,a.customer_code, b.size_id,sum(b.qty)::Integer - coalesce((select sum(coalesce(dispatch_set,0)) from tbl_dispatch_details   where status_flag = 1 and order_no=a.order_no and size_id = b.size_id),0) as total_piece,d.customer_name,d.mobile_no, coalesce(d.city,'')||' - '||coalesce(d.pincode,'') as city,'0' as dispatch_qty, COALESCE(coalesce((select sum(coalesce(no_of_set,0)) from tbl_fg_items where size_id=b.size_id),0) + COALESCE((SELECT sum(goods_return_set) from tbl_goods_return where status_flag = 1 AND  size_id = b.size_id ),0),0) - coalesce((select sum(coalesce(dispatch_set,0)) from tbl_dispatch_details  where status_flag = 1 and size_id=b.size_id),0) as fg_qty,COALESCE(coalesce((select sum(coalesce(no_of_set,0)) from tbl_fg_items where size_id=b.size_id),0) + COALESCE((SELECT sum(goods_return_set) from tbl_goods_return where status_flag = 1 AND  size_id = b.size_id ),0),0) - coalesce((select sum(coalesce(dispatch_set,0)) from tbl_dispatch_details  where status_flag = 1 and size_id=b.size_id),0) as org_fg_qty from tbl_order_taking as a inner join tbl_order_taking_items as b on a.order_no=b.order_no  inner join tbl_item_sizes as c on b.size_id=c.size_id inner join tbl_customer as d  on d.customer_code=a.customer_code where a.status_code = 1 and b.size_id= $1 group by a.order_no,a.ref_no,a.order_date,a.customer_code,b.size_id,d.customer_name,d.mobile_no,d.city,d.pincode) as dev where total_piece > 0 and fg_qty > 0`,[dispatch_array[i].size_id] );
+            //  const item_Result = await client.query(` Select * from (select a.order_no,a.ref_no,to_char(a.order_date,'DD-MM-YYYY') as order_date,a.customer_code, b.size_id,sum(b.qty)::Integer - coalesce((select sum(coalesce(dispatch_set,0)) from tbl_dispatch_details   where status_flag = 1 and order_no=a.order_no and size_id = b.size_id),0) as total_piece,d.customer_name,d.mobile_no, coalesce(d.city,'')||' - '||coalesce(d.pincode,'') as city,'0' as dispatch_qty, COALESCE(coalesce((select sum(coalesce(no_of_set,0)) from tbl_fg_items where size_id=b.size_id),0) + COALESCE((SELECT sum(goods_return_set) from tbl_goods_return where status_flag = 1 AND  size_id = b.size_id ),0),0) - coalesce((select sum(coalesce(dispatch_set,0)) from tbl_dispatch_details  where status_flag = 1 and size_id=b.size_id),0) as fg_qty,COALESCE(coalesce((select sum(coalesce(no_of_set,0)) from tbl_fg_items where size_id=b.size_id),0) + COALESCE((SELECT sum(goods_return_set) from tbl_goods_return where status_flag = 1 AND  size_id = b.size_id ),0),0) - coalesce((select sum(coalesce(dispatch_set,0)) from tbl_dispatch_details  where status_flag = 1 and size_id=b.size_id),0) as org_fg_qty from tbl_order_taking as a inner join tbl_order_taking_items as b on a.order_no=b.order_no  inner join tbl_item_sizes as c on b.size_id=c.size_id inner join tbl_customer as d  on d.customer_code=a.customer_code where a.status_code = 1 and (a.close_status != 1 or a.close_status is null) and b.size_id= $1 group by a.order_no,a.ref_no,a.order_date,a.customer_code,b.size_id,d.customer_name,d.mobile_no,d.city,d.pincode) as dev where total_piece > 0 and fg_qty > 0`,[dispatch_array[i].size_id] );
+            const item_Result = await client.query(` SELECT order_no,ref_no,order_date,customer_code,D1.size_id,pending_set AS total_piece,customer_name,mobile_no,city, '0' AS dispatch_qty,current_stock AS fg_qty,current_stock AS org_fg_qty FROM (SELECT b.size_id,a.order_no,a.ref_no,to_char(a.order_date,'DD-MM-YYYY') AS order_date,a.customer_code,d.customer_name,d.mobile_no,coalesce(d.city,'')||' - '||coalesce(d.pincode,'') as city,sum(b.qty) AS order_qty,sum(pending_dispatch) as pending_set FROM tbl_order_taking AS a INNER JOIN tbl_order_taking_items AS b ON a.order_no=b.order_no INNER JOIN tbl_item_sizes AS c ON b.size_id=c.size_id  
+             INNER JOIN tbl_customer as d on a.customer_code = d.customer_code WHERE a.status_code = 1 AND     (a.close_status != 1 OR a.close_status is null) AND b.size_id= $1 GROUP BY a.order_no,a.ref_no,order_date,a.customer_code,b.size_id,d.customer_name,d.mobile_no,d.city,d.pincode) AS D1  INNER JOIN (SELECT size_id, sum(inward) - SUM(outward) AS current_stock FROM                     (SELECT size_id,coalesce(no_of_set,0) AS inward, 0 AS outward FROM tbl_fg_items 
+                                            UNION ALL
+              SELECT size_id,coalesce(goods_return_set,0) AS inward, 0 AS outward FROM tbl_goods_return       WHERE status_flag = 1
+                                            UNION ALL
+              SELECT size_id,0 AS inward, coalesce(dispatch_set,0) AS outward FROM tbl_dispatch_details        WHERE status_flag = 1 ) AS DERV GROUP BY size_id) AS D2 on D1.size_id = D2.size_id WHERE pending_set > 0 AND current_stock > 0  GROUP BY order_no,ref_no,order_date,customer_code,D1.size_id,customer_name,mobile_no,city,current_stock,pending_set ORDER BY order_no,order_date`,[dispatch_array[i].size_id] );
              let item_Array = item_Result && item_Result.rows ? item_Result.rows : []; 
              let obj = dispatch_array[i]
              obj['ItemArray'] = item_Array
@@ -112,7 +135,7 @@ module.exports.itemCustomerWiseList = async (req) => {
         // SELECT size_id,0 AS inward, coalesce(dispatch_set,0) AS outward FROM tbl_dispatch_details WHERE status_flag = 1
         // ) AS DERV GROUP BY size_id) AS D2 WHERE current_stock > 0) ORDER BY customer_name `) 
 
-        item_exec_Result = await client.query(`SELECT DISTINCT D1.customer_code,customer_name FROM (SELECT b.size_id,a.order_no,to_char(a.order_date,'DD-MM-YYYY') AS order_date,a.customer_code,sum(pending_dispatch) as pending_set FROM tbl_order_taking  AS a INNER JOIN tbl_order_taking_items AS b ON a.order_no=b.order_no INNER JOIN  tbl_item_sizes AS c ON b.size_id=c.size_id  WHERE a.status_code = 1 AND ${customercode_val}  GROUP BY b.size_id,a.order_no,order_date,a.customer_code) AS D1 
+        item_exec_Result = await client.query(`SELECT DISTINCT D1.customer_code,customer_name FROM (SELECT b.size_id,a.order_no,to_char(a.order_date,'DD-MM-YYYY') AS order_date,a.customer_code,sum(pending_dispatch) as pending_set FROM tbl_order_taking  AS a INNER JOIN tbl_order_taking_items AS b ON a.order_no=b.order_no INNER JOIN  tbl_item_sizes AS c ON b.size_id=c.size_id  WHERE a.status_code = 1 AND (a.close_status != 1 OR a.close_status is null) AND ${customercode_val}  GROUP BY b.size_id,a.order_no,order_date,a.customer_code) AS D1 
         INNER JOIN tbl_customer as d on D1.customer_code = d.customer_code WHERE pending_set > 0  AND size_id in (SELECT size_id FROM (SELECT size_id, sum(inward) - SUM(outward) AS current_stock FROM
         (SELECT size_id,coalesce(no_of_set,0) AS inward, 0 AS outward FROM tbl_fg_items 
         UNION ALL
@@ -153,7 +176,7 @@ module.exports.itemCustomerWiseList = async (req) => {
             //  `,[dispatch_array[i].customer_code] );
 
             const item_Result = await client.query(`SELECT order_no,ref_no,order_date,customer_code,qr_code,D1.size_id,current_stock AS fg_qty,current_stock AS org_fg_qty, pending_set AS total_piece,'0' AS dispatch_qty FROM (SELECT b.size_id,a.order_no,a.ref_no,to_char(a.order_date,'DD-MM-YYYY') AS order_date,a.customer_code,sum(b.qty) AS order_qty,sum(pending_dispatch) as pending_set
-            ,c.qr_code FROM tbl_order_taking AS a INNER JOIN tbl_order_taking_items AS b ON a.order_no=b.order_no INNER JOIN tbl_item_sizes AS c ON b.size_id=c.size_id  WHERE a.status_code = 1 AND  a.customer_code = $1 GROUP BY a.order_no,a.ref_no,order_date,a.customer_code,b.size_id,c.qr_code		  ) AS D1  INNER JOIN (SELECT size_id, sum(inward) - SUM(outward) AS current_stock FROM
+            ,c.qr_code FROM tbl_order_taking AS a INNER JOIN tbl_order_taking_items AS b ON a.order_no=b.order_no INNER JOIN tbl_item_sizes AS c ON b.size_id=c.size_id  WHERE a.status_code = 1 AND (a.close_status != 1 OR a.close_status is null) AND  a.customer_code = $1 GROUP BY a.order_no,a.ref_no,order_date,a.customer_code,b.size_id,c.qr_code		  ) AS D1  INNER JOIN (SELECT size_id, sum(inward) - SUM(outward) AS current_stock FROM
             (SELECT size_id,coalesce(no_of_set,0) AS inward, 0 AS outward FROM tbl_fg_items 
                                 UNION ALL
              SELECT size_id,coalesce(goods_return_set,0) AS inward, 0 AS outward FROM tbl_goods_return WHERE status_flag = 1
@@ -177,7 +200,8 @@ module.exports.itemCustomerWiseList = async (req) => {
         if (client) {
           client.end();
         }  
-        let dispatch_total = item_exec_Result_total && item_exec_Result_total.rowCount ? item_exec_Result_total.rowCount : 0;     
+        // let dispatch_total = item_exec_Result_total && item_exec_Result_total.rowCount ? item_exec_Result_total.rowCount : 0;     
+        let dispatch_total = item_exec_Result_total ? item_exec_Result_total : 0;     
        //  let item_Array = item_exec_Result && item_exec_Result.rows ? item_exec_Result.rows : [];
         responseData = { "itemArray": result, "dispatchTotal":dispatch_total, "statusFlag": result && result.length > 0 ? 1 : 0}
        //  responseData = { "itemArray": item_Array }
@@ -216,72 +240,120 @@ module.exports.itemCustomerWiseList = async (req) => {
  }
  // Get design list  
  module.exports.designList = async (req) => {
-   const client = new Client({
-     user: connectionString.user,
-     host: connectionString.host,
-     database: connectionString.database,
-     password: connectionString.password,
-     port: connectionString.port,
-   });
-   await client.connect();
-   try {
-     if (req.jwtToken) {
-       var responseData = {}
-       const decoded = await commonService.jwtVerify(req.jwtToken);  
-       if (decoded) {   
-         // const item_exec_Result = await client.query(`SELECT 'All' as label,'0' as value, 0 as total_piece, '0' as fg_id 
-         // UNION ALL
-         // SELECT * FROM (select * from (select qr_code as label,a.size_id as value,sum(coalesce(no_of_set,0))-coalesce((select  sum(coalesce(dispatch_set,0)) from  tbl_dispatch_details where status_flag = 1 and size_id=a.size_id),0)  as total_piece,  string_agg(fg_id::text,',') as fg_id from tbl_fg_items as a inner join tbl_item_sizes as b on a.size_id=b.size_id 	inner join tbl_order_taking_items as c on a.size_id=c.size_id  group by a.size_id,qr_code) as dev where total_piece > 0 order by label) as d`); 
-         // const customer_exec_Result = await client.query(`SELECT 'All' as label,'0' as value, 0 as total_piece, '0' as fg_id
-         // UNION ALL
-         // SELECT * FROM (select distinct label,value,sum(total_piece) as total_piece,fg_id from (select  coalesce(d.customer_name,'') ||' - '||  coalesce(d.mobile_no,'') as label,d.customer_code  as value,sum(b.qty)::Integer -  coalesce((select sum(coalesce(dispatch_set,0)) from tbl_dispatch_details  where status_flag = 1 and order_no=a.order_no),0) as order_qty,coalesce((select sum(coalesce(no_of_set,0)) from tbl_fg_items where size_id=b.size_id),0) - coalesce((select sum(coalesce(dispatch_set,0)) from tbl_dispatch_details  where status_flag = 1 and size_id=b.size_id),0) as total_piece,(select  string_agg(fg_id::text,',') from tbl_fg_items where size_id=b.size_id) as fg_id  from tbl_order_taking as a inner join tbl_order_taking_items as b on a.order_no=b.order_no inner join tbl_item_sizes as c on b.size_id=c.size_id inner join tbl_customer  as d on d.customer_code=a.customer_code  and c.size_id in  (select size_id from tbl_fg_items) group by a.order_no,d.customer_name, d.mobile_no,d.customer_code,b.size_id ) as dev where order_qty > 0 and total_piece > 0  group by label,value,fg_id) as d`); 
-         // const item_exec_Result = await client.query(`SELECT 'All' as label,'0' as value, 0 as total_piece
-         // UNION ALL SELECT * FROM (select * from (select qr_code as label,a.size_id as value,sum(coalesce(no_of_set,0))-coalesce((select  sum(coalesce(dispatch_set,0)) from  tbl_dispatch_details where status_flag = 1 and size_id=a.size_id),0)  as total_piece from tbl_fg_items as a inner join tbl_item_sizes as b on a.size_id=b.size_id 	inner join tbl_order_taking_items as c on a.size_id=c.size_id where c.status_code = 1 group by a.size_id,qr_code) as dev where total_piece > 0 order by label) as d`); 
-         // const item_exec_Result = await client.query(`SELECT 'All' as label,'0' as value, 0 as total_piece
-         // UNION ALL SELECT * FROM (select distinct label,value,sum(total_piece) as total_piece from (select qr_code as label,b.size_id as value,sum(b.qty)::Integer - coalesce((select sum(coalesce(dispatch_set,0)) from tbl_dispatch_details where status_flag = 1 and order_no=a.order_no and size_id = b.size_id),0) as order_qty,coalesce(coalesce((select sum(coalesce(no_of_set,0)) from tbl_fg_items where size_id=b.size_id),0) + COALESCE((SELECT sum(goods_return_set) from tbl_goods_return where status_flag = 1 AND  size_id = b.size_id ),0),0)-coalesce((select  sum(coalesce(dispatch_set,0)) from  tbl_dispatch_details where status_flag = 1 and size_id=b.size_id),0)  as total_piece from tbl_order_taking as a inner join tbl_order_taking_items as b on a.order_no=b.order_no inner join tbl_item_sizes as c on b.size_id=c.size_id where a.status_code = 1 group by a.order_no,b.size_id,qr_code) as dev where order_qty > 0  and total_piece > 0 group by label,value order by label) as d`); 
-         const item_exec_Result = await client.query(`SELECT 'All' as label,'0' as value, 0 as total_piece  
-         UNION ALL 
-         select qr_code as label,b.size_id as 
-         value , 0  as total_piece from tbl_order_taking as a inner join tbl_order_taking_items as b
-         on a.order_no=b.order_no inner join tbl_item_sizes as c on b.size_id=c.size_id where a.status_code = 1 `)
+  const client = new Client({
+    user: connectionString.user,
+    host: connectionString.host,
+    database: connectionString.database,
+    password: connectionString.password,
+    port: connectionString.port,
+  });
+  await client.connect();
+  try {
+    if (req.jwtToken) {
+      var responseData = {}
+      const decoded = await commonService.jwtVerify(req.jwtToken);  
+      if (decoded) {   
+        // const item_exec_Result = await client.query(`SELECT 'All' as label,'0' as value, 0 as total_piece, '0' as fg_id 
+        // UNION ALL
+        // SELECT * FROM (select * from (select qr_code as label,a.size_id as value,sum(coalesce(no_of_set,0))-coalesce((select  sum(coalesce(dispatch_set,0)) from  tbl_dispatch_details where status_flag = 1 and size_id=a.size_id),0)  as total_piece,  string_agg(fg_id::text,',') as fg_id from tbl_fg_items as a inner join tbl_item_sizes as b on a.size_id=b.size_id 	inner join tbl_order_taking_items as c on a.size_id=c.size_id  group by a.size_id,qr_code) as dev where total_piece > 0 order by label) as d`); 
+        // const customer_exec_Result = await client.query(`SELECT 'All' as label,'0' as value, 0 as total_piece, '0' as fg_id
+        // UNION ALL
+        // SELECT * FROM (select distinct label,value,sum(total_piece) as total_piece,fg_id from (select  coalesce(d.customer_name,'') ||' - '||  coalesce(d.mobile_no,'') as label,d.customer_code  as value,sum(b.qty)::Integer -  coalesce((select sum(coalesce(dispatch_set,0)) from tbl_dispatch_details  where status_flag = 1 and order_no=a.order_no),0) as order_qty,coalesce((select sum(coalesce(no_of_set,0)) from tbl_fg_items where size_id=b.size_id),0) - coalesce((select sum(coalesce(dispatch_set,0)) from tbl_dispatch_details  where status_flag = 1 and size_id=b.size_id),0) as total_piece,(select  string_agg(fg_id::text,',') from tbl_fg_items where size_id=b.size_id) as fg_id  from tbl_order_taking as a inner join tbl_order_taking_items as b on a.order_no=b.order_no inner join tbl_item_sizes as c on b.size_id=c.size_id inner join tbl_customer  as d on d.customer_code=a.customer_code  and c.size_id in  (select size_id from tbl_fg_items) group by a.order_no,d.customer_name, d.mobile_no,d.customer_code,b.size_id ) as dev where order_qty > 0 and total_piece > 0  group by label,value,fg_id) as d`); 
+        // const item_exec_Result = await client.query(`SELECT 'All' as label,'0' as value, 0 as total_piece
+        // UNION ALL SELECT * FROM (select * from (select qr_code as label,a.size_id as value,sum(coalesce(no_of_set,0))-coalesce((select  sum(coalesce(dispatch_set,0)) from  tbl_dispatch_details where status_flag = 1 and size_id=a.size_id),0)  as total_piece from tbl_fg_items as a inner join tbl_item_sizes as b on a.size_id=b.size_id 	inner join tbl_order_taking_items as c on a.size_id=c.size_id where c.status_code = 1 group by a.size_id,qr_code) as dev where total_piece > 0 order by label) as d`); 
+        // const item_exec_Result = await client.query(`SELECT 'All' as label,'0' as value, 0 as total_piece
+        // UNION ALL SELECT * FROM (select distinct label,value,sum(total_piece) as total_piece from (select qr_code as label,b.size_id as value,sum(b.qty)::Integer - coalesce((select sum(coalesce(dispatch_set,0)) from tbl_dispatch_details where status_flag = 1 and order_no=a.order_no and size_id = b.size_id),0) as order_qty,coalesce(coalesce((select sum(coalesce(no_of_set,0)) from tbl_fg_items where size_id=b.size_id),0) + COALESCE((SELECT sum(goods_return_set) from tbl_goods_return where status_flag = 1 AND  size_id = b.size_id ),0),0)-coalesce((select  sum(coalesce(dispatch_set,0)) from  tbl_dispatch_details where status_flag = 1 and size_id=b.size_id),0)  as total_piece from tbl_order_taking as a inner join tbl_order_taking_items as b on a.order_no=b.order_no inner join tbl_item_sizes as c on b.size_id=c.size_id where a.status_code = 1 group by a.order_no,b.size_id,qr_code) as dev where order_qty > 0  and total_piece > 0 group by label,value order by label) as d`); 
+      // 2nd try
+      
+        //  const item_exec_Result = await client.query(`SELECT 'All' as label,'0' as value, 0 as total_piece  
+       //  UNION ALL 
+       //  select qr_code as label,b.size_id as 
+       //  value , 0  as total_piece from tbl_order_taking as a inner join tbl_order_taking_items as b
+       //  on a.order_no=b.order_no inner join tbl_item_sizes as c on b.size_id=c.size_id where a.status_code = 1 `)
+
+       const item_exec_Result = await client.query(`SELECT 'All' as label,'0' as value, 0 as total_piece 
+       union all  
+       SELECT label,value,total_piece FROM 
+       (SELECT qr_code as label,size_id as value,sum(pending_set) as total_piece  
+       FROM (SELECT c.qr_code,b.size_id,a.order_no,to_char(a.order_date,'DD-MM-YYYY') AS order_date,a.customer_code,
+           sum(pending_dispatch) as pending_set FROM tbl_order_taking  AS a INNER JOIN tbl_order_taking_items 
+           AS b ON a.order_no=b.order_no INNER JOIN  tbl_item_sizes AS c ON b.size_id=c.size_id  WHERE 
+           a.status_code = 1 AND (a.close_status != 1 OR a.close_status is null) GROUP BY 
+           b.size_id,c.qr_code,a.order_no,order_date,a.customer_code) AS D1 
+               WHERE pending_set > 0  
+           AND size_id in (SELECT size_id FROM (SELECT size_id, sum(inward) - SUM(outward) AS current_stock FROM
+               (SELECT size_id,coalesce(no_of_set,0) AS inward, 0 AS outward FROM tbl_fg_items 
+               UNION ALL
+               SELECT size_id,coalesce(goods_return_set,0) AS inward, 0 AS outward FROM tbl_goods_return 
+            WHERE status_flag = 1
+               UNION ALL
+               SELECT size_id,0 AS inward, coalesce(dispatch_set,0) AS outward FROM tbl_dispatch_details 
+            WHERE status_flag = 1
+               ) AS DERV GROUP BY size_id) AS D2 WHERE current_stock > 0) GROUP BY size_id 
+           ,qr_code ORDER BY qr_code) AS DERV `)
+
          
-         
-         // const customer_exec_Result = await client.query(` SELECT 'All' as label,'0' as value, 0 as total_piece
-         // UNION ALL SELECT * FROM (select distinct label,value,sum(total_piece) as total_piece from (select  coalesce(d.customer_name,'') ||' - '||  coalesce(d.mobile_no,'') as label,d.customer_code  as value,sum(b.qty)::Integer - coalesce((select sum(coalesce(dispatch_set,0)) from tbl_dispatch_details  where status_flag = 1 and order_no=a.order_no and size_id = b.size_id),0) as order_qty,COALESCE(coalesce((select sum(coalesce(no_of_set,0)) from tbl_fg_items where size_id=b.size_id),0) + COALESCE((SELECT sum(goods_return_set) from tbl_goods_return where status_flag = 1 AND  size_id = b.size_id ),0),0) - coalesce((select sum(coalesce(dispatch_set,0)) from tbl_dispatch_details  where status_flag = 1 and size_id=b.size_id),0) as total_piece,(select  string_agg(fg_id::text,',')  from tbl_fg_items where size_id=b.size_id) as fg_id  from tbl_order_taking as a inner join  tbl_order_taking_items as b on a.order_no=b.order_no inner join tbl_item_sizes as c on b.size_id=c.size_id inner join tbl_customer  as d on d.customer_code=a.customer_code and c.size_id in  (select size_id from tbl_fg_items) where a.status_code = 1 group by a.order_no,d.customer_name,d.mobile_no,d.customer_code,b.size_id ) as dev where order_qty > 0 and total_piece > 0  group by label,value) as d`);
-         const customer_exec_Result = await client.query(`SELECT 'All' as label,'0' as value, 0 as total_piece union all select distinct coalesce(d.customer_name,'') || ' - '  || coalesce(d.mobile_no,'') as  label, a.customer_code as value ,0 as total_piece   from tbl_order_taking as a 
-         inner join tbl_customer  as d on d.customer_code=a.customer_code   where a.status_code = 1 `);
         
-         const company_Result = await client.query(`SELECT * from tbl_print_setting`);
-         if (client) {
-           client.end();
-         }  
-         let item_Array = item_exec_Result && item_exec_Result.rows ? item_exec_Result.rows : [];
-         let Customer_Array = customer_exec_Result && customer_exec_Result.rows ? customer_exec_Result.rows : [];
-         let Company_Array = company_Result && company_Result.rows ? company_Result.rows : []; 
-         responseData = { "DesignArray": item_Array , "Customer_Array":Customer_Array, "Company_Array":Company_Array }
-         if (responseData) {
-           return responseData;
-         }
-         else {
-           return '';
-         }
-       }
-       else {
-         if (client) { client.end(); }
-       }
-     } else {
-       if (client) { client.end(); }
-       throw new Error(constants.userMessage.TOKEN_MISSING);
-     }
-   } catch (error) {
-     if (client) { client.end(); }
-     throw new Error(error);
-   }
- 
-   finally {
-     if (client) { client.end(); }// always close the resource
-   }
- }
+        
+        // const customer_exec_Result = await client.query(` SELECT 'All' as label,'0' as value, 0 as total_piece
+        // UNION ALL SELECT * FROM (select distinct label,value,sum(total_piece) as total_piece from (select  coalesce(d.customer_name,'') ||' - '||  coalesce(d.mobile_no,'') as label,d.customer_code  as value,sum(b.qty)::Integer - coalesce((select sum(coalesce(dispatch_set,0)) from tbl_dispatch_details  where status_flag = 1 and order_no=a.order_no and size_id = b.size_id),0) as order_qty,COALESCE(coalesce((select sum(coalesce(no_of_set,0)) from tbl_fg_items where size_id=b.size_id),0) + COALESCE((SELECT sum(goods_return_set) from tbl_goods_return where status_flag = 1 AND  size_id = b.size_id ),0),0) - coalesce((select sum(coalesce(dispatch_set,0)) from tbl_dispatch_details  where status_flag = 1 and size_id=b.size_id),0) as total_piece,(select  string_agg(fg_id::text,',')  from tbl_fg_items where size_id=b.size_id) as fg_id  from tbl_order_taking as a inner join  tbl_order_taking_items as b on a.order_no=b.order_no inner join tbl_item_sizes as c on b.size_id=c.size_id inner join tbl_customer  as d on d.customer_code=a.customer_code and c.size_id in  (select size_id from tbl_fg_items) where a.status_code = 1 group by a.order_no,d.customer_name,d.mobile_no,d.customer_code,b.size_id ) as dev where order_qty > 0 and total_piece > 0  group by label,value) as d`);
+
+       //  const customer_exec_Result = await client.query(`SELECT 'All' as label,'0' as value, 0 as total_piece union all select distinct coalesce(d.customer_name,'') || ' - '  || coalesce(d.mobile_no,'') as  label, a.customer_code as value ,0 as total_piece   from tbl_order_taking as a 
+       //  inner join tbl_customer  as d on d.customer_code=a.customer_code   where a.status_code = 1 `);
+
+       const customer_exec_Result = await client.query(`SELECT 'All' as label,'0' as value, 0 as total_piece 
+       union all  
+       SELECT label,value,total_piece FROM (SELECT coalesce(d.customer_name,'') ||' - '||  coalesce(d.city,'') as label,D1.customer_code as value,sum(pending_set) as total_piece  
+       FROM (SELECT b.size_id,a.order_no,to_char(a.order_date,'DD-MM-YYYY') AS order_date,a.customer_code,
+           sum(pending_dispatch) as pending_set FROM tbl_order_taking  AS a INNER JOIN tbl_order_taking_items 
+           AS b ON a.order_no=b.order_no INNER JOIN  tbl_item_sizes AS c ON b.size_id=c.size_id  WHERE 
+           a.status_code = 1 AND (a.close_status != 1 OR a.close_status is null) GROUP BY 
+           b.size_id,a.order_no,order_date,a.customer_code) AS D1 
+               INNER JOIN tbl_customer as d on D1.customer_code = d.customer_code WHERE pending_set > 0  
+           AND size_id in (SELECT size_id FROM (SELECT size_id, sum(inward) - SUM(outward) AS current_stock FROM
+               (SELECT size_id,coalesce(no_of_set,0) AS inward, 0 AS outward FROM tbl_fg_items 
+               UNION ALL
+               SELECT size_id,coalesce(goods_return_set,0) AS inward, 0 AS outward FROM tbl_goods_return 
+            WHERE status_flag = 1
+               UNION ALL
+               SELECT size_id,0 AS inward, coalesce(dispatch_set,0) AS outward FROM tbl_dispatch_details 
+            WHERE status_flag = 1
+               ) AS DERV GROUP BY size_id) AS D2 WHERE current_stock > 0) GROUP BY customer_name 
+           ,D1.customer_code,d.city ORDER BY customer_name) AS DERV `);
+
+       
+       
+        const company_Result = await client.query(`SELECT * from tbl_print_setting`);
+        if (client) {
+          client.end();
+        }  
+        let item_Array = item_exec_Result && item_exec_Result.rows ? item_exec_Result.rows : [];
+        let Customer_Array = customer_exec_Result && customer_exec_Result.rows ? customer_exec_Result.rows : [];
+        let Company_Array = company_Result && company_Result.rows ? company_Result.rows : []; 
+        responseData = { "DesignArray": item_Array , "Customer_Array":Customer_Array, "Company_Array":Company_Array }
+        if (responseData) {
+          return responseData;
+        }
+        else {
+          return '';
+        }
+      }
+      else {
+        if (client) { client.end(); }
+      }
+    } else {
+      if (client) { client.end(); }
+      throw new Error(constants.userMessage.TOKEN_MISSING);
+    }
+  } catch (error) {
+    if (client) { client.end(); }
+    throw new Error(error);
+  }
+
+  finally {
+    if (client) { client.end(); }// always close the resource
+  }
+}
 
  
 //create jwt 

@@ -464,7 +464,7 @@ module.exports.orderTakingList = async (req) => {
         if (status_id != "0" && status_id != 0) {
           status_code = `a.status_code='` + status_id + `' `;
         }
-        const order_Result = await client.query(`select a.ref_no,a.order_no,b.customer_code,b.customer_name,b.city,b.contact_person,b.mobile_no,b.gstin_no,b.alternative_mobile_no,(select coalesce(sum(qty),0) from tbl_order_taking_items where order_no= a.order_no) as totalset,a.order_date as order_date,(select user_name from tbl_user where user_id = (select user_id from tbl_userlog  where autonum = a.maker_id limit 1)) as employeename,(select coalesce(to_char(log_date,'DD-MM-YYYY HH12:MI PM'),'') from tbl_userlog where autonum = a.maker_id limit 1) as createddate,a.type, (SELECT count(dispatch_no) FROM tbl_dispatch_details where order_no = a.order_no and status_flag = 1) as dispatch_count,a.status_code,case when a.status_code=1 then 'Active' else case when a.status_code=3 then 'Hold' else 'Cancelled' end end as statusname from tbl_order_taking as a inner join tbl_customer as b on a.customer_code = b.customer_code where ` + datediff + ` and ` + status_code + ` order by a.created_date desc`);
+        const order_Result = await client.query(`SELECT a.ref_no,a.order_no,b.customer_code,b.customer_name,b.city,b.contact_person,b.mobile_no,b.gstin_no,b.alternative_mobile_no,(SELECT coalesce(sum(qty),0) FROM tbl_order_taking_items WHERE order_no= a.order_no) AS totalset,a.order_date AS order_date,(SELECT user_name FROM tbl_user WHERE user_id = (SELECT user_id FROM tbl_userlog  WHERE autonum = a.maker_id limit 1)) AS employeename,(SELECT coalesce(to_char(log_date,'DD-MM-YYYY HH12:MI PM'),'') FROM tbl_userlog WHERE autonum = a.maker_id limit 1) AS createddate,a.type, (SELECT count(dispatch_no) FROM tbl_dispatch_details WHERE order_no = a.order_no AND status_flag = 1) AS dispatch_count,a.status_code,case when a.status_code=1 then 'Active' else case when a.status_code=3 then 'Hold' else 'Cancelled' end end as statusname FROM tbl_order_taking AS a inner join tbl_customer AS b ON a.customer_code = b.customer_code WHERE ` + datediff + ` AND ` + status_code + ` AND (a.close_status != 1 OR a.close_status is null) order by a.created_date desc`);
 
         let Lists = order_Result && order_Result.rows ? order_Result.rows : [];
 
@@ -1488,5 +1488,152 @@ module.exports.updateBlockCustomer = async (req) => {
   }
   finally {
     if (client) { client.end(); }// always close the resource
+  }
+}
+
+
+/******************* Close Pending Order *******************/
+
+//create Order Taking List jwt 
+module.exports.closePendingOrderListJwt = async (req) => {
+  try {
+    const token = await commonService.jwtCreate(req);
+    return { token };
+
+  } catch (error) {
+    throw new Error(error);
+  }
+}
+
+
+
+//create Order Taking LIST
+module.exports.closePendingOrderList = async (req) => {
+  const client = new Client({
+    user: connectionString.user,
+    host: connectionString.host,
+    database: connectionString.database,
+    password: connectionString.password,
+    port: connectionString.port,
+  });
+  await client.connect();
+  try {
+    if (req.jwtToken) {
+      const decoded = await commonService.jwtVerify(req.jwtToken);
+      const { from_date, to_date } = decoded.data;
+      var status_code = "1=1";
+      if (decoded) {
+        if (from_date && to_date) {
+          datediff = `to_char(a.order_date,'YYYY-MM-DD') :: date BETWEEN `
+            .concat(`to_date('` + from_date + `','YYYY-MM-DD') AND to_date('` + to_date + `','YYYY-MM-DD')`);
+        }
+        
+        const order_Result = await client.query(`SELECT order_no,order_date,customer_code,customer_name,mobile_no,city,sum(order_set) AS order_set,sum(order_pieces) AS order_pieces,sum(pending_dispatch) AS pending_set,
+        sum(pending_pieces) AS pending_pieces,'yes' as checked FROM(SELECT a.order_no,to_char(a.order_date,'DD-MM-YYYY') as order_date,a.customer_code,e.customer_name,e.mobile_no,e.city,sum(qty) as order_set,sum(total_set :: INTEGER * qty) AS order_pieces
+        ,sum(pending_dispatch) AS pending_dispatch,sum(total_set :: INTEGER * pending_dispatch) AS pending_pieces FROM tbl_order_taking AS a INNER JOIN tbl_order_taking_items AS b ON
+        a.order_no = b.order_no INNER JOIN tbl_item_sizes AS c ON b.size_id = c.size_id
+        INNER JOIN tbl_item_management as d on d.trans_no=c.trans_no 
+        INNER JOIN tbl_customer AS e ON a.customer_code = e.customer_code WHERE 
+        a.status_code = 1 AND close_status is null AND  ` + datediff + `
+        GROUP BY a.order_no,a.order_date,a.customer_code,e.customer_name,e.mobile_no,e.city
+        ORDER BY a.order_date desc) AS DERV WHERE pending_dispatch > 0
+        GROUP BY order_no,order_date,customer_code,customer_name,mobile_no,city ORDER BY order_date asc`);
+
+        let Lists = order_Result && order_Result.rows ? order_Result.rows : [];
+
+        if (client) {
+          client.end();
+        }
+        responseData = { "ClosePendingOrderList": Lists }
+        if (responseData) {
+          return responseData;
+        }
+        else {
+          return '';
+        }
+      }
+      else {
+        if (client) { client.end(); }
+      }
+    } else {
+      if (client) { client.end(); }
+      throw new Error(constants.userMessage.TOKEN_MISSING);
+    }
+  } catch (error) {
+    if (client) { client.end(); }
+    throw new Error(error);
+  }
+
+  finally {
+    if (client) { client.end(); }// always close the resource
+  }
+}
+
+
+module.exports.SaveClosePendingOrderJwt = async (req) => {
+  try {
+    const token = await commonService.jwtCreate(req);
+    return { token };
+
+  } catch (error) {
+    throw new Error(error);
+  }
+}
+
+module.exports.SaveClosePendingOrder = async (req) => {
+  const client = new Client({
+    user: connectionString.user,
+    host: connectionString.host,
+    database: connectionString.database,
+    password: connectionString.password,
+    port: connectionString.port,
+  });
+  await client.connect();
+  try {
+    if (req.jwtToken) {
+      const decoded = await commonService.jwtVerify(req.jwtToken);
+      if (decoded != null) {
+        const { user_id,order_details } = decoded.data
+
+        if (order_details && order_details.length > 0) {
+
+          for (let k = 0; k < order_details.length; k++) {
+            var maker_id = await commonService.insertLogs(user_id, "Close Order Taking");
+            const exeUserQuery = await client.query(`select count(1) as total from tbl_order_taking  where order_no =$1`, [order_details[k].order_no]);
+            let totalcount = exeUserQuery?.rows?.[0].total;
+            if (totalcount > 0) {
+              // await client.query(`Update tbl_order_taking_items set "close_status"=$1 ,"maker_id" = $2 where lower(order_no) = lower($3) `, [1, maker_id, order_no]);
+              const close_result = await client.query(`Update tbl_order_taking set "close_status"=$1 ,"maker_id" = $2 where lower(order_no) = lower($3) `, [1, maker_id, order_details[k].order_no]);
+              let closeresultcode = close_result && close_result.rowCount ? close_result.rowCount : 0;
+              if (closeresultcode == 1) {
+                responseData = { "message": constants.userMessage.ORDER_CLOSE, "statusFlag": 1 }
+                if (responseData) {
+                  return responseData;
+                }
+                else {
+                  return '';
+                }
+              }
+              else { return '' }
+              }
+          }
+
+        }
+        if (client) {
+          client.end();
+        }
+      } else {
+        if (client) { client.end(); }
+        throw new Error(constants.userMessage.USER_NOT_FOUND);
+      }
+    } else {
+      if (client) { client.end(); }
+      throw new Error(constants.token.INVALID_TOKEN);
+    }
+  } catch (error) {
+    if (client) { client.end(); }
+    throw new Error(error);
+  } finally {
+    if (client) { client.end(); }
   }
 }

@@ -157,4 +157,22 @@ joiSchemaValidation.validateBody(orderTakingSchema.updateBlockCustomerJwt),
 orderTakingController.updateBlockCustomer
 )
 
+/******************* Close Pending Order *******************/
+router.post('/closePendingOrderListJwt',
+joiSchemaValidation.validateBody(orderTakingSchema.closePendingOrderListJwt),
+orderTakingController.closePendingOrderListJwt
+)
+router.post('/closePendingOrderList',
+joiSchemaValidation.validateBody(orderTakingSchema.closePendingOrderListJwt),
+orderTakingController.closePendingOrderList
+)
+
+router.post('/SaveClosePendingOrderJwt',
+joiSchemaValidation.validateBody(orderTakingSchema.SaveClosePendingOrderJwt),
+orderTakingController.SaveClosePendingOrderJwt
+)
+router.post('/SaveClosePendingOrder',
+joiSchemaValidation.validateBody(orderTakingSchema.SaveClosePendingOrderJwt),
+orderTakingController.SaveClosePendingOrder
+)
 module.exports = router;

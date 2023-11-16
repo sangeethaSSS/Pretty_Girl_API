@@ -70,7 +70,7 @@ module.exports.ViewjobCuttings = async (req) => {
                 if (Lists.length > 0) {
                   for (let i = 0; i < Lists.length; i++) {
                         const Process_Result = await client.query(`select a.completed_date,a.job_cutting_id,j.total_amount as rate,(j.total_amount*j.job_cutting_pieces*j.job_cutting_set) as total_amount,j.size_id,
-                        a.employee_id,b.employee_name,b.employee_code,a.machine_id, d.machine_no,j.design_id,f.qr_code as design_no,j.item_id,c.item_name,j.color_id,h.color_name,j.job_cutting_set, j.job_cutting_pieces*j.job_cutting_set as job_cutting_pieces,a.job_cutting_id,a.job_cutting_date,a.created_date from tbl_job_cutting as a inner join tbl_employee_details as b on a.employee_id = b.employee_id inner join tbl_job_cutting_item_details as j on a.job_cutting_id = j.job_cutting_id inner join tbl_def_item as c on j.item_id = c.item_id inner join tbl_machine as d on a.machine_id = d.machine_id left join tbl_item_sizes as f on f.size_id = j.size_id inner join tbl_color as h on j.color_id =  h.color_id where a.employee_id = ` + Lists[i].employee_id + `  and ` + datediff + ` and a.status_id = ` + status_id + ` and a.salary_status_id = 0 order by a.completed_date`);
+                        a.employee_id,b.employee_name,b.employee_code,a.machine_id, d.machine_no,j.design_id,f.qr_code as design_no,j.item_id,c.item_name,j.color_id,h.color_name,j.job_cutting_set, j.job_cutting_pieces*j.job_cutting_set as job_cutting_pieces,a.job_cutting_id,a.job_cutting_date,a.created_date from tbl_job_cutting as a inner join tbl_employee_details as b on a.employee_id = b.employee_id inner join tbl_job_cutting_item_details as j on a.job_cutting_id = j.job_cutting_id inner join tbl_def_item as c on j.item_id = c.item_id inner join tbl_machine as d on a.machine_id = d.machine_id left join tbl_item_sizes as f on f.size_id = j.size_id left join tbl_color as h on j.color_id =  h.color_id where a.employee_id = ` + Lists[i].employee_id + `  and ` + datediff + ` and a.status_id = ` + status_id + ` and a.salary_status_id = 0 order by a.completed_date`);
 
                         let employeeList = Process_Result && Process_Result.rows ? Process_Result.rows : [];
                         let obj = Lists[i]
@@ -346,7 +346,7 @@ module.exports.editProcess = async (req) => {
                         inner join tbl_job_cutting as l on k.job_cutting_id = l.job_cutting_id 
                         inner join tbl_job_cutting_item_details as j on k.job_cutting_id = j.job_cutting_id and k.size_id = j.size_id
                         inner join tbl_def_item as c on j.item_id = c.item_id inner join tbl_machine as d on k.employee_id=d.employee_id
-                        left join tbl_item_sizes as f on f.size_id = j.size_id inner join tbl_color as h on j.color_id =  h.color_id
+                        left join tbl_item_sizes as f on f.size_id = j.size_id left join tbl_color as h on j.color_id =  h.color_id
                         where k.employee_id = ` + Lists[i].employee_id + ` and a.process_id =  `+ process_id+` order by l.completed_date` );
                         let employeeList = Process_Result && Process_Result.rows ? Process_Result.rows : [];
                         let obj = Lists[i]

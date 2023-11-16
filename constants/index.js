@@ -95,6 +95,7 @@ module.exports = {
     ORDER_STATUS: '1,3',
     CUSTOMER_BLOCKED:'Customer Blocked Successfully',
     ITEMSUBGROUP_DUPLICATION: 'Item sub category already exist for this item category',
+    ORDER_CLOSE:'Order Closed Successfully',
   },
   //login message 
   loginmessage:{
