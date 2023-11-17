@@ -495,6 +495,7 @@ module.exports.getCurrentStock = async (req) => {
           SELECT d.item_code,b.size_id,0 AS current_set,0 AS current_pieces,sum(pending_dispatch) AS pending_set,sum(pending_dispatch * c.total_set :: INTEGER) AS pending_pieces FROM tbl_order_taking AS a INNER JOIN tbl_order_taking_items AS b ON a.order_no = b.order_no
           INNER JOIN tbl_item_sizes AS c ON c.size_id =b.size_id
           INNER JOIN tbl_item_management AS d ON d.trans_no=c.trans_no 
+          INNER JOIN tbl_customer as e on e.customer_code =a.customer_code
           LEFT JOIN tbl_color AS f ON f.color_id =c.color_id
           WHERE ${designid_val}  AND ${getsettype} AND  a.status_code = 1 AND (a.close_status != 1 OR a.close_status is null) GROUP BY d.item_code,b.size_id) AS DERV GROUP BY item_code,size_id)
           AS DER RIGHT JOIN tbl_def_item  AS f ON DER.item_code = f.item_id WHERE COALESCE((pending_set-current_set),0) > 0  
@@ -525,6 +526,7 @@ module.exports.getCurrentStock = async (req) => {
           tbl_order_taking_items AS b ON a.order_no = b.order_no
           INNER JOIN tbl_item_sizes AS c on c.size_id =b.size_id
           INNER JOIN tbl_item_management as d on d.trans_no=c.trans_no 
+          INNER JOIN tbl_customer as e on e.customer_code =a.customer_code
           LEFT JOIN tbl_color as f on f.color_id =c.color_id
           WHERE a.status_code = 1 AND (a.close_status != 1 OR a.close_status is null) AND ${designid_val}  AND ${getsettype} GROUP BY d.item_code,b.size_id) AS DERV GROUP BY item_code,size_id)
           AS DER WHERE  current_set  > pending_set GROUP BY  item_code`);
@@ -742,6 +744,7 @@ module.exports.getAllStock = async (req) => {
         INNER JOIN tbl_item_management AS d ON d.trans_no=b.trans_no LEFT JOIN tbl_color AS f ON f.color_id =b.color_id WHERE d.item_code = ${item_code} AND ${designid_val}  AND ${getsettype} AND type!= 'Order' GROUP BY d.item_code,d.design_id,a.size_id
         UNION ALL
         SELECT d.item_code,d.design_id,b.size_id,0 AS current_set,0 AS current_pieces,sum(pending_dispatch) AS pending_set,sum(pending_dispatch * c.total_set :: INTEGER) AS pending_pieces FROM tbl_order_taking AS a INNER JOIN tbl_order_taking_items AS b ON a.order_no = b.order_no INNER JOIN tbl_item_sizes AS c ON c.size_id =b.size_id INNER JOIN tbl_item_management AS d ON d.trans_no=c.trans_no 
+        INNER JOIN tbl_customer as e on e.customer_code =a.customer_code
         LEFT JOIN tbl_color AS f ON f.color_id =c.color_id WHERE d.item_code = ${item_code} AND ${designid_val}  AND ${getsettype} AND  a.status_code = 1 AND (a.close_status != 1 OR a.close_status is null) GROUP BY d.item_code,d.design_id,b.size_id) AS DERV GROUP BY item_code,design_id,size_id)
         AS DER  WHERE COALESCE((pending_set-current_set),0) > 0  
         GROUP BY  item_code,design_id ORDER BY design_id`)
@@ -750,7 +753,7 @@ module.exports.getAllStock = async (req) => {
             SELECT d.item_code,d.design_id,a.size_id,sum(inward_set) - sum(outward_set) AS current_set,sum(inward_pieces) - sum(outward_pieces) AS current_pieces,0 AS pending_set,0 AS pending_pieces FROM tbl_stock_transaction AS a INNER JOIN tbl_item_sizes AS b ON a.size_id =b.size_id
             INNER JOIN tbl_item_management AS d ON d.trans_no=b.trans_no LEFT JOIN tbl_color AS f ON f.color_id =b.color_id WHERE d.item_code = ${item_code} AND ${designid_val}  AND ${getset_type} AND type!= 'Order' GROUP BY d.item_code,d.design_id,a.size_id
             UNION ALL
-            SELECT d.item_code,d.design_id,b.size_id,0 AS current_set,0 AS current_pieces,sum(pending_dispatch) AS pending_set,sum(pending_dispatch * c.total_set :: INTEGER) AS pending_pieces FROM tbl_order_taking AS a INNER JOIN tbl_order_taking_items AS b ON a.order_no = b.order_no INNER JOIN tbl_item_sizes AS c ON c.size_id =b.size_id INNER JOIN tbl_item_management AS d ON d.trans_no=c.trans_no 
+            SELECT d.item_code,d.design_id,b.size_id,0 AS current_set,0 AS current_pieces,sum(pending_dispatch) AS pending_set,sum(pending_dispatch * c.total_set :: INTEGER) AS pending_pieces FROM tbl_order_taking AS a INNER JOIN tbl_order_taking_items AS b ON a.order_no = b.order_no INNER JOIN tbl_item_sizes AS c ON c.size_id =b.size_id INNER JOIN tbl_item_management AS d ON d.trans_no=c.trans_no INNER JOIN tbl_customer as e on e.customer_code =a.customer_code
             LEFT JOIN tbl_color AS f ON f.color_id =c.color_id WHERE d.item_code = ${item_code} AND ${designid_val}  AND ${getsettype} AND  a.status_code = 1 AND (a.close_status != 1 OR a.close_status is null) GROUP BY d.item_code,d.design_id,b.size_id) AS DERV GROUP BY item_code,design_id,size_id)
             AS DER  WHERE COALESCE((pending_set-current_set),0) > 0  
             GROUP BY  item_code,design_id ORDER BY design_id ${get_limit}`)
@@ -778,6 +781,7 @@ module.exports.getAllStock = async (req) => {
                 SELECT d.item_code,d.design_id,b.size_id,c.qr_code,0 AS current_set,0 AS current_pieces,sum(pending_dispatch) AS pending_set,sum(pending_dispatch * c.total_set :: INTEGER) AS pending_pieces FROM tbl_order_taking AS a INNER JOIN tbl_order_taking_items AS b ON a.order_no = b.order_no
                 INNER JOIN tbl_item_sizes AS c ON c.size_id =b.size_id
                 INNER JOIN tbl_item_management AS d ON d.trans_no=c.trans_no 
+                INNER JOIN tbl_customer as e on e.customer_code =a.customer_code
                 LEFT JOIN tbl_color AS f ON f.color_id =c.color_id
                 WHERE ${getset_type} AND d.design_id = $1 AND  a.status_code = 1 AND (a.close_status != 1 OR a.close_status is null) GROUP BY d.item_code,d.design_id,b.size_id,c.qr_code) AS DERV GROUP BY item_code,design_id,size_id,qr_code)
                 AS DER  WHERE COALESCE((pending_set-current_set),0) > 0  
@@ -811,6 +815,7 @@ module.exports.getAllStock = async (req) => {
           tbl_order_taking_items AS b ON a.order_no = b.order_no
           INNER JOIN tbl_item_sizes AS c on c.size_id =b.size_id
           INNER JOIN tbl_item_management as d on d.trans_no=c.trans_no 
+          INNER JOIN tbl_customer as e on e.customer_code =a.customer_code
           LEFT JOIN tbl_color as f on f.color_id =c.color_id
           WHERE ${designid_val}  AND ${getsettype} AND d.item_code = ${item_code} AND a.status_code = 1 AND (a.close_status != 1 OR a.close_status is null) GROUP BY d.item_code,d.design_id,b.size_id) AS DERV GROUP BY item_code,design_id,size_id)
           AS DER WHERE  current_set  > pending_set GROUP BY  item_code,design_id ORDER BY design_id `)
@@ -827,6 +832,7 @@ module.exports.getAllStock = async (req) => {
             tbl_order_taking_items AS b ON a.order_no = b.order_no
             INNER JOIN tbl_item_sizes AS c on c.size_id =b.size_id
             INNER JOIN tbl_item_management as d on d.trans_no=c.trans_no 
+            INNER JOIN tbl_customer as e on e.customer_code =a.customer_code
             LEFT JOIN tbl_color as f on f.color_id =c.color_id
             WHERE ${designid_val}  AND ${getsettype} AND d.item_code = ${item_code} AND a.status_code = 1 AND (a.close_status != 1 OR a.close_status is null) GROUP BY d.item_code,d.design_id,b.size_id) AS DERV GROUP BY item_code,design_id,size_id)
             AS DER WHERE  current_set  > pending_set GROUP BY  item_code,design_id ORDER BY design_id  ${get_limit}`)
@@ -855,6 +861,7 @@ module.exports.getAllStock = async (req) => {
                 tbl_order_taking_items AS b ON a.order_no = b.order_no
                 INNER JOIN tbl_item_sizes AS c on c.size_id =b.size_id
                 INNER JOIN tbl_item_management as d on d.trans_no=c.trans_no 
+                INNER JOIN tbl_customer as e on e.customer_code =a.customer_code
                 LEFT JOIN tbl_color as f on f.color_id =c.color_id
                 WHERE  ${designid_val}  AND ${getsettype} AND d.design_id = $1 AND a.status_code = 1 AND (a.close_status != 1 OR a.close_status is null)  GROUP BY d.item_code,d.design_id,b.size_id,c.qr_code) AS DERV GROUP BY item_code,design_id,size_id,qr_code)  AS DER WHERE  current_set  > pending_set GROUP BY  item_code,design_id,qr_code ORDER BY design_id`,[Excess_stock_array[i].design_id] );
                 let item_Array = item_Result && item_Result.rows ? item_Result.rows : []; 
