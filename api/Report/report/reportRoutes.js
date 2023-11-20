@@ -111,4 +111,33 @@ joiSchemaValidation.validateBody(reportSchema.employeePerformanceFilterListJwt),
 reportController.employeePerformanceFilterList
 )
 
+/******************* Employee Performance for job cutting *******************/
+
+router.post('/employeeJobCuttingPerformanceFilterListJwt',
+joiSchemaValidation.validateBody(reportSchema.employeeJobCuttingPerformanceFilterListJwt),
+reportController.employeeJobCuttingPerformanceFilterListJwt
+)
+router.post('/employeeJobCuttingPerformanceFilterList',
+joiSchemaValidation.validateBody(reportSchema.employeeJobCuttingPerformanceFilterListJwt),
+reportController.employeeJobCuttingPerformanceFilterList
+)
+
+router.post('/employeeJobCuttingPerformanceReportListJwt',
+joiSchemaValidation.validateBody(reportSchema.employeeJobCuttingPerformanceReportListJwt),
+reportController.employeeJobCuttingPerformanceReportListJwt
+)
+router.post('/employeeJobCuttingPerformanceReportList',
+joiSchemaValidation.validateBody(reportSchema.employeeJobCuttingPerformanceReportListJwt),
+reportController.employeeJobCuttingPerformanceReportList
+)
+
+router.post('/specificJobCuttingEmployeeListJwt',
+joiSchemaValidation.validateBody(reportSchema.specificJobCuttingEmployeeListJwt),
+reportController.specificJobCuttingEmployeeListJwt
+)
+router.post('/specificJobCuttingEmployeeList',
+joiSchemaValidation.validateBody(reportSchema.specificJobCuttingEmployeeListJwt),
+reportController.specificJobCuttingEmployeeList
+)
+
 module.exports = router;

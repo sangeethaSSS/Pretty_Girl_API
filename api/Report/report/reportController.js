@@ -409,3 +409,100 @@ try {
 }
 return res.send(response);
 }
+
+
+/******************* Employee Performance for job cutting *******************/ 
+
+
+//Get Employee Performance filter list JWt Module
+module.exports.employeeJobCuttingPerformanceFilterListJwt = async (req, res) => {
+  let response = {};
+  try {
+    const responseFromService = await reportMgmtServices.employeeJobCuttingPerformanceFilterListJwt(req.body); 
+    if(!responseFromService.token) {
+      response.status = 200;
+    }    
+    response.body = responseFromService;
+  } catch (error) {
+    response.message = error.message;
+  }
+  return res.send(response);
+}
+
+//Get Employee Performance filter list Module
+module.exports.employeeJobCuttingPerformanceFilterList = async (req, res) => {
+let response = {};
+try {   
+  const responseFromService = await reportMgmtServices.employeeJobCuttingPerformanceFilterList(req.body); 
+  if(!responseFromService.token) {
+    response.status = 200;
+    response.message = constants.success_message.LISTED_SUCCESS;
+  }    
+  response.body = responseFromService;
+} catch (error) {
+  response.message = error.message;
+}
+return res.send(response);
+}
+
+
+module.exports.employeeJobCuttingPerformanceReportListJwt = async (req, res) => {
+  let response = {};
+  try {
+    const responseFromService = await reportMgmtServices.employeeJobCuttingPerformanceReportListJwt(req.body); 
+    if(!responseFromService.token) {
+      response.status = 200;
+    }    
+    response.body = responseFromService;
+  } catch (error) {
+    response.message = error.message;
+  }
+  return res.send(response);
+}
+
+//Get Employee Performance filter list Module
+module.exports.employeeJobCuttingPerformanceReportList = async (req, res) => {
+let response = {};
+try {   
+  const responseFromService = await reportMgmtServices.employeeJobCuttingPerformanceReportList(req.body); 
+  if(!responseFromService.token) {
+    response.status = 200;
+    response.message = constants.success_message.LISTED_SUCCESS;
+  }    
+  response.body = responseFromService;
+} catch (error) {
+  response.message = error.message;
+}
+return res.send(response);
+}
+
+module.exports.specificJobCuttingEmployeeListJwt = async (req, res) => {
+  let response = {};
+  try {
+    const responseFromService = await reportMgmtServices.specificJobCuttingEmployeeListJwt(req.body); 
+    if(!responseFromService.token) {
+      response.status = 200;
+    }    
+    response.body = responseFromService;
+  } catch (error) {
+    response.message = error.message;
+  }
+  return res.send(response);
+}
+
+//Get Employee Performance filter list Module
+module.exports.specificJobCuttingEmployeeList = async (req, res) => {
+let response = {};
+try {   
+  const responseFromService = await reportMgmtServices.specificJobCuttingEmployeeList(req.body); 
+  if(!responseFromService.token) {
+    response.status = 200;
+    response.message = constants.success_message.LISTED_SUCCESS;
+  }    
+  response.body = responseFromService;
+} catch (error) {
+  response.message = error.message;
+}
+return res.send(response);
+}
+

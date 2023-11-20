@@ -171,7 +171,7 @@
  
  
                              for (let i = 0; i < count_JobArray.length; i++) {
-                                 await client.query(`UPDATE "tbl_job_cutting" set salary_status_id=2,updated_date=CURRENT_TIMESTAMP where job_cutting_id = $1 `, [count_JobArray[i].job_id]);
+                                 await client.query(`UPDATE "tbl_job_cutting" set salary_status_id=2,updated_date=CURRENT_TIMESTAMP where job_cutting_id = $1 `, [count_JobArray[i].job_cutting_id]);
                              }
  
                             // Carryforward Entry

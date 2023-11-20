@@ -40,13 +40,12 @@ module.exports.employeePerformanceFilterList = async (req) => {
         const employee_Result = await client.query(`SELECT distinct 0 as value ,'All' as label FROM tbl_employee_details 
         UNION ALL  select  distinct a.employee_id as value,coalesce(b.machine_no,'')||' - '|| coalesce(a.employee_name,'')  
         as label from tbl_employee_details as a inner join tbl_machine as b on a.employee_id=b.employee_id 
-        INNER JOIN tbl_job_cutting as c on a.employee_id=c.employee_id  and c.machine_id = b.machine_id
+        INNER JOIN tbl_job_details as c on a.employee_id=c.employee_id  and c.machine_id = b.machine_id
         where a.status_id = 1 `);        
 
         const allitemgroup_Result = await client.query(`SELECT distinct 0 as value ,'All' as label 
         UNION ALL SELECT distinct a.item_id as value,item_name as label from tbl_def_item as
-        a INNER JOIN tbl_job_cutting_item_details AS b on a.item_id = b.item_id 
-        INNER JOIN tbl_job_cutting AS c on b.job_cutting_id = c.job_cutting_id `);
+        a INNER JOIN tbl_job_details AS b on a.item_id = b.item_id  `);
 
         if (client) {
           client.end();
@@ -407,7 +406,7 @@ module.exports.specificEmployeeList = async (req) => {
           item = ' 1=1'
         }
         else {
-          item = ` e.item_id = ` + item_id
+          item = ` c.item_id = ` + item_id
         }
         const Specific_Employee_Result = await client.query(`select distinct a.employee_id,a.completed_date,b.employee_name,b.employee_code,a.machine_id,d.machine_no,a.design_id,f.qr_code as design_no,a.item_id,c.item_name,a.color_id,h.color_name,a.number_set,a.total_pieces,a.rate,a.total_amount,a.job_id,a.job_date from tbl_job_details as a inner join tbl_employee_details as b on a.employee_id = b.employee_id inner join tbl_def_item as c on a.item_id = c.item_id  inner join tbl_machine as d on a.machine_id = d.machine_id left join tbl_item_sizes as f on f.size_id = a.design_id left join tbl_color as h on a.color_id =  h.color_id where a.employee_id = ` + employee_id + ` and ` + item + ` and ` + datediff + ` and a.salary_status_id = 2`);
 
@@ -2010,6 +2009,232 @@ AND a.status_code = 1 and (a.close_status != 1 OR a.close_status is null) and pe
           else {
             return { "TotalOrderCount" : [], "TotalOrders":[],"CancelledOrders": [],  "HoldOrders": [],  "DispatchOrders": [],  "PendingOrders": [], "company_details": [],"CloseOrder": [], "TotalCloseOrder": [],"CloseOrders": [],"CloseCatagorys": [] };
           }
+        }
+      }
+      else {
+        if (client) { client.end(); }
+      }
+    } else {
+      if (client) { client.end(); }
+      throw new Error(constants.userMessage.TOKEN_MISSING);
+    }
+  } catch (error) {
+    if (client) { client.end(); }
+    throw new Error(error);
+  }
+
+  finally {
+    if (client) { client.end(); }// always close the resource
+  }
+}
+
+/******************* Employee Performance for job cutting *******************/ 
+
+//create Employee Performance Report List jwt 
+module.exports.employeeJobCuttingPerformanceFilterListJwt = async (req) => {
+  try {
+    const token = await commonService.jwtCreate(req);
+    return { token };
+
+  } catch (error) {
+    throw new Error(error);
+  }
+}
+//create Employee Performance Report List
+module.exports.employeeJobCuttingPerformanceFilterList = async (req) => {
+  const client = new Client({
+    user: connectionString.user,
+    host: connectionString.host,
+    database: connectionString.database,
+    password: connectionString.password,
+    port: connectionString.port,
+  });
+  await client.connect();
+  try {
+    if (req.jwtToken) {
+      var responseData = {}
+      const decoded = await commonService.jwtVerify(req.jwtToken);
+      const { user_id } = decoded.data;
+      if (decoded) {
+        const employee_Result = await client.query(`SELECT distinct 0 as value ,'All' as label FROM tbl_employee_details 
+        UNION ALL  select  distinct a.employee_id as value,coalesce(b.machine_no,'')||' - '|| coalesce(a.employee_name,'')  
+        as label from tbl_employee_details as a inner join tbl_machine as b on a.employee_id=b.employee_id 
+        INNER JOIN tbl_job_cutting as c on a.employee_id=c.employee_id  and c.machine_id = b.machine_id
+        where a.status_id = 1 `);        
+
+        const allitemgroup_Result = await client.query(`SELECT distinct 0 as value ,'All' as label 
+        UNION ALL SELECT distinct a.item_id as value,item_name as label from tbl_def_item as
+        a INNER JOIN tbl_job_cutting_item_details AS b on a.item_id = b.item_id 
+        INNER JOIN tbl_job_cutting AS c on b.job_cutting_id = c.job_cutting_id `);
+
+        if (client) {
+          client.end();
+        }
+              
+        const Employee_Array = employee_Result && employee_Result.rows ? employee_Result.rows : [];        
+        const allitemgroup_Array = allitemgroup_Result && allitemgroup_Result.rows ? allitemgroup_Result.rows : [];
+      
+        responseData = {"EmployeeArray":Employee_Array,"allitemgroupArray":allitemgroup_Array}
+        if (responseData) {
+          return responseData;
+        }
+        else {
+          return '';
+        }
+      }
+      else {
+        if (client) { client.end(); }
+      }
+    } else {
+      if (client) { client.end(); }
+      throw new Error(constants.userMessage.TOKEN_MISSING);
+    }
+  } catch (error) {
+    if (client) { client.end(); }
+    throw new Error(error);
+  }
+
+  finally {
+    if (client) { client.end(); }// always close the resource
+  }
+}
+
+module.exports.employeeJobCuttingPerformanceReportListJwt = async (req) => {
+  try {
+    const token = await commonService.jwtCreate(req);
+    return { token };
+
+  } catch (error) {
+    throw new Error(error);
+  }
+}
+//create Employee Performance Report List
+module.exports.employeeJobCuttingPerformanceReportList = async (req) => {
+  const client = new Client({
+    user: connectionString.user,
+    host: connectionString.host,
+    database: connectionString.database,
+    password: connectionString.password,
+    port: connectionString.port,
+  });
+  await client.connect();
+  try {
+    if (req.jwtToken) {
+      var responseData = {}
+      const decoded = await commonService.jwtVerify(req.jwtToken);
+      const { from_date, to_date, item_id, employee_code } = decoded.data;
+      var datediff = '', item = '';
+      if (decoded) {
+        if (from_date && to_date) {
+          datediff = `to_char(a.created_date,'YYYY-MM-DD') :: date BETWEEN `
+            .concat(`to_date('` + from_date + `','YYYY-MM-DD') AND to_date('` + to_date + `','YYYY-MM-DD')`);
+        }
+        if (item_id == 0) {
+          item = ' 1=1'
+        }
+        else {
+          item = ` e.item_id = ` + item_id
+        }
+        let employeecode_val = '1=1';
+        if(employee_code && employee_code != "" && employee_code != "0"){
+          const employee_code_val = employee_code ? '\'' + employee_code.split(',').join('\',\'') + '\'' : ''
+          employeecode_val = `  c.employee_id in (${employee_code_val})`
+        }
+
+        const Total_Result = await client.query(`SELECT COALESCE(sum(c.job_cutting_pieces),0) AS total_pieces,COALESCE(sum(c.job_cutting_set),0) AS total_set FROM tbl_job_cutting_process_details AS a INNER JOIN tbl_job_cutting_salary_process AS c ON a.process_id = c.process_id INNER JOIN tbl_job_cutting AS d ON c.job_cutting_id = d.job_cutting_id AND c.employee_id = d.employee_id INNER JOIN tbl_job_cutting_item_details AS i on d.job_cutting_id = i.job_cutting_id AND c.size_id = i.size_id INNER JOIN tbl_employee_details AS b ON b.employee_id = c.employee_id INNER JOIN tbl_def_item AS e ON 
+        i.item_id = e.item_id LEFT JOIN tbl_machine AS f ON c.employee_id = f.employee_id INNER JOIN tbl_hr_details AS h ON c.employee_id = h.employee_id INNER JOIN tbl_department AS g ON h.department_id = g.department_id WHERE ` + datediff + ` and ` + item + ` and ` + employeecode_val + ` `)
+
+        const ItemCategory_Result = await client.query(`SELECT e.item_id,e.item_name,COALESCE(sum(c.job_cutting_pieces),0) AS total_pieces,COALESCE(sum(c.job_cutting_set),0) AS total_set FROM tbl_job_cutting_process_details AS a INNER JOIN tbl_job_cutting_salary_process AS c ON a.process_id = c.process_id INNER JOIN tbl_job_cutting AS d ON c.job_cutting_id = d.job_cutting_id AND c.employee_id = d.employee_id INNER JOIN tbl_job_cutting_item_details AS i on d.job_cutting_id = i.job_cutting_id AND c.size_id = i.size_id INNER JOIN tbl_employee_details AS b ON b.employee_id = c.employee_id INNER JOIN tbl_def_item AS e ON i.item_id = e.item_id LEFT JOIN tbl_machine AS f ON c.employee_id = f.employee_id INNER JOIN tbl_hr_details AS h ON c.employee_id = h.employee_id INNER JOIN tbl_department AS g ON h.department_id = g.department_id WHERE ` + datediff + ` and ` + item + ` and ` + employeecode_val + ` GROUP BY e.item_id,e.item_name`)
+        const Performance_Result = await client.query(`SELECT count(*) AS total_jobs,dev.employee_id,COALESCE(sum(dev.net_amount),0) AS net_amount,COALESCE(sum(dev.total_pieces),0) AS total_pieces,COALESCE(sum(dev.total_set),0) AS total_set,dev.employee_code,dev.machine_no,dev.employee_name,dev.department_name,dev.join_date,dev.last_date FROM (SELECT c.employee_id,f.machine_no,COALESCE(sum(c.net_amount),0) AS net_amount,COALESCE(sum(c.job_cutting_pieces),0) AS total_pieces,COALESCE(sum(c.job_cutting_set),0) AS total_set,b.employee_code,b.employee_name,g.department_name,(SELECT count (*) FROM tbl_job_cutting WHERE job_cutting_id = c.job_cutting_id),(SELECT completed_date FROM tbl_job_cutting WHERE employee_id = c.employee_id AND status_id = 3 ORDER BY completed_date ASC LIMIT 1) AS join_date,
+        (SELECT completed_date FROM tbl_job_cutting WHERE employee_id = c.employee_id AND 
+        status_id = 3 ORDER BY completed_date DESC LIMIT 1) as last_date FROM tbl_job_cutting_process_details AS a INNER JOIN tbl_job_cutting_salary_process AS c ON a.process_id = c.process_id  
+            INNER JOIN tbl_job_cutting AS d ON c.job_cutting_id = d.job_cutting_id AND c.employee_id = d.employee_id INNER JOIN tbl_job_cutting_item_details AS 
+            i ON d.job_cutting_id = i.job_cutting_id AND c.size_id = i.size_id INNER JOIN 
+            tbl_employee_details AS b ON b.employee_id = c.employee_id INNER JOIN tbl_def_item AS e ON 
+            i.item_id = e.item_id LEFT JOIN tbl_machine AS f ON c.employee_id = f.employee_id INNER 
+            JOIN tbl_hr_details AS h ON c.employee_id = h.employee_id INNER JOIN tbl_department 
+             AS g ON h.department_id = g.department_id  WHERE  ` + datediff + ` and ` + item + ` and ` + employeecode_val + ` GROUP BY c.employee_id,c.job_cutting_id,b.employee_code,
+                b.employee_name,f.machine_no,g.department_name) as  dev GROUP BY dev.employee_id,dev.employee_code,dev.employee_name,dev.machine_no,dev.department_name,dev.join_date,dev.last_date ORDER BY machine_no`);
+        if (client) { client.end(); }
+
+        let Performance_Array = Performance_Result && Performance_Result.rows ? Performance_Result.rows : [];
+        let ItemCategorye_Array = ItemCategory_Result && ItemCategory_Result.rows ? ItemCategory_Result.rows : [];    
+        let Total_Array = Total_Result && Total_Result.rows ? Total_Result.rows : [];       
+
+        responseData = { "PerformanceArray": Performance_Array,"ItemcategoryeArray": ItemCategorye_Array, "Total_Array": Total_Array }
+        if (responseData) {
+          return responseData;
+        }
+        else {
+          return '';
+        }
+      }
+      else {
+        if (client) { client.end(); }
+      }
+    } else {
+      if (client) { client.end(); }
+      throw new Error(constants.userMessage.TOKEN_MISSING);
+    }
+  } catch (error) {
+    if (client) { client.end(); }
+    throw new Error(error);
+  }
+
+  finally {
+    if (client) { client.end(); }// always close the resource
+  }
+}
+
+// 
+
+module.exports.specificJobCuttingEmployeeListJwt = async (req) => {
+  try {
+    const token = await commonService.jwtCreate(req);
+    return { token };
+
+  } catch (error) {
+    throw new Error(error);
+  }
+}
+//create Specific Employee Report List
+module.exports.specificJobCuttingEmployeeList = async (req) => {
+  const client = new Client({
+    user: connectionString.user,
+    host: connectionString.host,
+    database: connectionString.database,
+    password: connectionString.password,
+    port: connectionString.port,
+  });
+  await client.connect();
+  try {
+    if (req.jwtToken) {
+      var responseData = {}
+      const decoded = await commonService.jwtVerify(req.jwtToken);
+      const { from_date, to_date, item_id, employee_id } = decoded.data;
+      var datediff = '', item = '';
+      if (decoded) {
+        if (from_date && to_date) {
+          datediff = `to_char(a.completed_date,'YYYY-MM-DD') :: date BETWEEN `
+            .concat(`to_date('` + from_date + `','YYYY-MM-DD') AND to_date('` + to_date + `','YYYY-MM-DD')`);
+        }
+        if (item_id == 0) {
+          item = ' 1=1'
+        }
+        else {
+          item = ` d.item_id = ` + item_id
+        }
+        const Specific_Employee_Result = await client.query(`SELECT distinct a.employee_id,a.completed_date,c.employee_name,c.employee_code, a.machine_id,e.machine_no,b.size_id,f.qr_code as design_no,b.item_id,d.item_name,b.color_id,h.color_name,b.job_cutting_set AS number_set,(b.job_cutting_set * b.job_cutting_pieces) AS total_pieces,total_amount as rate,COALESCE((total_amount*job_cutting_pieces*b.job_cutting_set),0) AS 
+        total_amount,a.job_cutting_id,a.job_cutting_date FROM tbl_job_cutting AS a INNER JOIN          tbl_job_cutting_item_details AS b ON a.job_cutting_id = b.job_cutting_id INNER JOIN tbl_employee_details AS c ON a.employee_id = c.employee_id INNER JOIN tbl_def_item AS d ON b.item_id = d.item_id  INNER JOIN tbl_machine AS e ON a.machine_id = e.machine_id LEFT JOIN tbl_item_sizes AS f ON f.size_id = b.size_id LEFT JOIN tbl_color AS h ON b.color_id =  h.color_id WHERE a.employee_id = ` + employee_id + ` and ` + item + ` and ` + datediff + ` and a.salary_status_id = 2`);
+
+        let Specific_Employee_Array = Specific_Employee_Result && Specific_Employee_Result.rows ? Specific_Employee_Result.rows : [];
+
+        responseData = { "SpecificEmployeeArray": Specific_Employee_Array }
+        if (responseData) {
+          return responseData;
+        }
+        else {
+          return '';
         }
       }
       else {

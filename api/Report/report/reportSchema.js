@@ -108,3 +108,28 @@ module.exports.pendingJobReportListjwt = Joi.object().keys({
     customer_name: Joi.string().required(),
     jwtToken: Joi.string().allow(''),
   });
+
+
+  /******************* Employee Performance for job cutting *******************/   
+  module.exports.employeeJobCuttingPerformanceFilterListJwt = Joi.object().keys({
+    user_id: Joi.number().required(),
+    jwtToken: Joi.string().allow(""), 
+  });
+  module.exports.employeeJobCuttingPerformanceReportListJwt = Joi.object().keys({
+    user_id: Joi.number().required(),
+    item_id:Joi.number().required(),
+    from_date:Joi.string().required(),
+    to_date:Joi.string().required(),
+    employee_code:Joi.string().allow(''),
+    jwtToken: Joi.string().allow(''),
+  });
+
+  module.exports.specificJobCuttingEmployeeListJwt = Joi.object().keys({
+    employee_id: Joi.number().required(),
+    user_id: Joi.number().required(),
+    item_id:Joi.number().required(),
+    from_date:Joi.string().required(),
+    to_date:Joi.string().required(),
+    jwtToken: Joi.string().allow(''),
+  });
+  
