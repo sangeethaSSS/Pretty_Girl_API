@@ -1078,7 +1078,7 @@ module.exports.sendOrderToWhatsapp = async (req) => {
               let responseData = {
                 "OrderSlip": order_item_details, "CustomerArray": order_customer_details, "CompanyArray": Company_Array, "order_id": order_id, "user_mobile_no": user_mobileno, "ItemLists": ItemLists
               }
-              // await generateOrderPDF(responseData,req, order_details[k]);
+              await generateOrderPDF(responseData,req, order_details[k]);
             }
           }
 
@@ -1594,29 +1594,48 @@ module.exports.SaveClosePendingOrder = async (req) => {
       const decoded = await commonService.jwtVerify(req.jwtToken);
       if (decoded != null) {
         const { user_id,order_details } = decoded.data
-
+        console.log("Start")
         if (order_details && order_details.length > 0) {
-
-          for (let k = 0; k < order_details.length; k++) {
+          try {
+            console.log(order_details, "order_details")
+            await client.query('BEGIN')
+            let closeresultcode = 0
             var maker_id = await commonService.insertLogs(user_id, "Close Order Taking");
-            const exeUserQuery = await client.query(`select count(1) as total from tbl_order_taking  where order_no =$1`, [order_details[k].order_no]);
-            let totalcount = exeUserQuery?.rows?.[0].total;
-            if (totalcount > 0) {
-              // await client.query(`Update tbl_order_taking_items set "close_status"=$1 ,"maker_id" = $2 where lower(order_no) = lower($3) `, [1, maker_id, order_no]);
-              const close_result = await client.query(`Update tbl_order_taking set "close_status"=$1 ,"maker_id" = $2 where lower(order_no) = lower($3) `, [1, maker_id, order_details[k].order_no]);
-              let closeresultcode = close_result && close_result.rowCount ? close_result.rowCount : 0;
-              if (closeresultcode == 1) {
-                responseData = { "message": constants.userMessage.ORDER_CLOSE, "statusFlag": 1 }
-                if (responseData) {
-                  return responseData;
+            for (let k = 0; k < order_details.length; k++) {
+              const exeUserQuery = await client.query(`select count(1) as total from tbl_order_taking  where order_no =$1`, [order_details[k].order_no]);
+              let totalcount = exeUserQuery?.rows?.[0].total;
+              console.log(totalcount, "totalcount")
+              if (totalcount > 0) {
+                // await client.query(`Update tbl_order_taking_items set "close_status"=$1 ,"maker_id" = $2 where lower(order_no) = lower($3) `, [1, maker_id, order_no]);
+                console.log(`Update tbl_order_taking set close_status=$1 ,maker_id = $2 where lower(order_no) = lower($3) `, [1, maker_id, order_details[k].order_no]);
+                const close_result = await client.query(`Update tbl_order_taking set close_status=$1 ,maker_id = $2 where lower(order_no) = lower($3) `, [1, maker_id, order_details[k].order_no]);
+                let closeresultcode1 = close_result && close_result.rowCount ? close_result.rowCount : 0;
+                closeresultcode = closeresultcode + closeresultcode1                
                 }
-                else {
-                  return '';
-                }
-              }
-              else { return '' }
-              }
+            }
+
+                // Commit Changes
+          await client.query('COMMIT')
+
+          if (closeresultcode > 0) {
+            responseData = { "message": constants.userMessage.ORDER_CLOSE, "statusFlag": 1 }
+            if (responseData) {
+              return responseData;
+            }
+            else {
+              return '';
+            }
           }
+          else { return '' }
+      
+          } catch (error) {
+            console.logg(error,"error")
+            await client.query('ROLLBACK')
+            if (client) { client.end(); }
+            throw new Error(error);
+          }
+
+          
 
         }
         if (client) {
