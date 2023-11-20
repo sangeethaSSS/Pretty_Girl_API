@@ -1078,7 +1078,7 @@ module.exports.sendOrderToWhatsapp = async (req) => {
               let responseData = {
                 "OrderSlip": order_item_details, "CustomerArray": order_customer_details, "CompanyArray": Company_Array, "order_id": order_id, "user_mobile_no": user_mobileno, "ItemLists": ItemLists
               }
-              await generateOrderPDF(responseData,req, order_details[k]);
+              // await generateOrderPDF(responseData,req, order_details[k]);
             }
           }
 
