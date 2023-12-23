@@ -84,3 +84,9 @@ module.exports.holdOrderSchema = Joi.object().keys({
   jsonOrder: Joi.object(), 
   jwtToken: Joi.string().allow(''), 
 }); 
+
+module.exports.getStockDetails = Joi.object().keys({
+  device_id: Joi.string().required(),
+  size_id: Joi.string().required(), 
+  // qty: Joi.string().allow('')
+}); 

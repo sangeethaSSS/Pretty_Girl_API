@@ -11,5 +11,10 @@ const connectionString ={
   database: 'db_pretty_girl',
   password: 'postgres',
   port: 5432,
+  // user: 'postgres',
+  // host: 'localhost',
+  // database: 'dbprettygirl',
+  // password: 'Shiva@88685',
+  // port: 5432,
 }
 module.exports = connectionString;

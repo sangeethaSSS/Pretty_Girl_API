@@ -155,4 +155,9 @@ joiSchemaValidation.validateBody(loginSchema.holdOrderSchema),
 appController.holdOrderTaking
 )
 
+router.post('/getStockDetails',
+joiSchemaValidation.validateBody(loginSchema.checkStock),
+appController.getStockDetails
+)
+
 module.exports = router;

@@ -437,11 +437,11 @@ module.exports.getItemManagement = async (req) => {
          let exeQuery3;
          if (exit_check > 0) {
            exeQuery3 = await client.query(
-             " SELECT 'Insert' as process , autonum, trans_no, start_size, end_size, total_set, created_date ,size_id,color_id,qr_code,current_stock from tbl_item_sizes where (select syncdate from tbl_sync_details where device_id=$1 and syncfile='itemSizes' order by syncdate desc limit 1 ) <= created_date   ",[device_id]
+             " SELECT 'Insert' as process , autonum, trans_no, start_size, end_size, total_set, created_date ,size_id,color_id,qr_code,current_stock,settype from tbl_item_sizes where (select syncdate from tbl_sync_details where device_id=$1 and syncfile='itemSizes' order by syncdate desc limit 1 ) <= created_date   ",[device_id]
            );
          } else {
            exeQuery3 = await client.query(
-             "SELECT  'Insert' as process , autonum, trans_no, start_size, end_size, total_set, created_date,size_id,color_id,qr_code,current_stock from tbl_item_sizes order by created_date "
+             "SELECT  'Insert' as process , autonum, trans_no, start_size, end_size, total_set, created_date,size_id,color_id,qr_code,current_stock,settype from tbl_item_sizes order by created_date "
            );
          } 
        
@@ -590,10 +590,14 @@ module.exports.insertOrderTaking = async (req) => {
                   if (ListsItems[j].order_no == Lists[i].order_no && ListsItems[j].device_code == Lists[i].device_code) {
 
                     // const exeUserQuery = await client.query(`select count(1) as total from tbl_order_taking_items  where order_no=$1 and item_code =$2 and design_code=$3 and size_id=$4 and color_id=$5  and device_code=$6`, [ListsItems[i].order_no,ListsItems[i].item_code,ListsItems[i].design_code,ListsItems[i].size_id,ListsItems[i].color,ListsItems[i].device_code]);
-                
+           
                     var makerid = await commonService.insertLogs(ListsItems[j].device_code, "Insert Order Taking Items Via Mobile - " + ListsItems[j].device_code+" - "+ListsItems[j].order_no);
                     //Insert User Log
-                  const exeUserQuerys = await client.query(`INSERT INTO tbl_order_taking_items(order_no, item_code, design_code, color_id, item_size, qty, created_date,device_code,status_code,sync_date,maker_id,size_id,pending_dispatch) values ($1, $2, $3, $4, $5, $6, $7, $8,$9,now(),$10,$11,$12) RETURNING order_no`, [ListsItems[j].order_no, ListsItems[j].item_code, ListsItems[j].design_code, ListsItems[j].color, ListsItems[j].item_size, ListsItems[j].qty, ListsItems[j].created_date, ListsItems[j].device_code, ListsItems[j].status_code, makerid,ListsItems[j].size_id,ListsItems[j].qty]);
+                    let color_id = null
+                    if (!(ListsItems[j].color === undefined || ListsItems[j].color === null || ListsItems[j].color === "null" || ListsItems[j].color === "undefined")) {
+                      color_id === ListsItems[j].color
+                    }
+                  const exeUserQuerys = await client.query(`INSERT INTO tbl_order_taking_items(order_no, item_code, design_code, color_id, item_size, qty, created_date,device_code,status_code,sync_date,maker_id,size_id,pending_dispatch) values ($1, $2, $3, $4, $5, $6, $7, $8,$9,now(),$10,$11,$12) RETURNING order_no`, [ListsItems[j].order_no, ListsItems[j].item_code, ListsItems[j].design_code, color_id, ListsItems[j].item_size, ListsItems[j].qty, ListsItems[j].created_date, ListsItems[j].device_code, ListsItems[j].status_code, makerid,ListsItems[j].size_id,ListsItems[j].qty]);
                   response1.push(exeUserQuerys.rows[0].order_no);   
                 
               
@@ -617,15 +621,12 @@ module.exports.insertOrderTaking = async (req) => {
                   var makerid = await commonService.insertLogs(ListsItems[j].device_code, "Insert Stock Order Taking Items Via Mobile - " + ListsItems[j].device_code+" - "+ListsItems[j].order_no);
                   
                   //  await client.query(`INSERT INTO tbl_stock_transaction(stock_date, size_id, trans_no, inward_set, outward_set, user_id, created_date, sync_date, maker_id) values ($1, $2, $3, $4, $5, $6, $7, now(),$8 ) RETURNING size_id`, [ListsItems[i].created_date, ListsItems[i].size_id, ListsItems[i].order_no,'0', ListsItems[i].qty, ListsItems[i].device_code, ListsItems[i].created_date ,makerid ]);
-
                   let total_set =  await client.query(`SELECT total_set::INTEGER FROM tbl_item_sizes where size_id = `+ListsItems[j].size_id+``)
                   var total_pieces = total_set && total_set.rows[0] ? total_set.rows[0].total_set : 0;
                   total_pieces = total_pieces * Number(ListsItems[j].qty)
 
-
                     await client.query(`INSERT INTO tbl_stock_transaction(stock_date,size_id,trans_no,inward_set,outward_set,user_id,created_date,sync_date,maker_id,inward_pieces,outward_pieces,customer_code,type) values ($1, $2, $3, $4, $5, $6, $7, now(),$8,$9,$10,$11,$12) `, [ListsItems[j].created_date, ListsItems[j].size_id, ListsItems[j].order_no,'0', ListsItems[j].qty, ListsItems[j].device_code, ListsItems[j].created_date ,makerid ,0,total_pieces,Lists[i].customer_code,'Order']);
 
-                  
               
                 // const exeStockQuery = await client.query(`select count(1) as total from tbl_stock_transaction  where size_id=$1 and trans_no =$2 and  user_id=$3`, [ListsItems[i].size_id,ListsItems[i].order_no,ListsItems[i].device_code ]);
                 // let totalstockcount = exeStockQuery?.rows?.[0].total;
@@ -1115,9 +1116,11 @@ module.exports.checkStockDetails = async (req) => {
            
             // const exeQuery = await client.query(
             //   `select count(1) as totalcount from (select (sum(coalesce(inward,0))+coalesce(b.current_stock,0)-sum(coalesce(outward,0)))  as sumqty  from tbl_stock_transaction as  a right join  tbl_item_sizes as b on a.size_id=b.size_id where b.size_id='` + size_id + `' group by b.size_id) as dev where dev.sumqty >= ` + getqty + ` `);
+              // const exeQuery = await client.query(
+              //   `select count(1) as totalcount from (select (COALESCE(sum(a.no_of_set) + COALESCE((SELECT sum(goods_return_set) from tbl_goods_return WHERE status_flag = 1 and 
+              //   size_id = b.size_id ),0),0) - coalesce((SELECT sum(dispatch_set) from tbl_dispatch_details where status_flag = 1 and size_id = b.size_id ),0))  as sumqty  from tbl_fg_items as  a  right join  tbl_item_sizes as b on a.size_id=b.size_id where b.size_id='` + size_id + `' group by b.size_id) as dev where dev.sumqty >= ` + getqty + ` `);
               const exeQuery = await client.query(
-                `select count(1) as totalcount from (select (COALESCE(sum(a.no_of_set) + COALESCE((SELECT sum(goods_return_set) from tbl_goods_return WHERE status_flag = 1 and 
-                size_id = b.size_id ),0),0) - coalesce((SELECT sum(dispatch_set) from tbl_dispatch_details where status_flag = 1 and size_id = b.size_id ),0))  as sumqty  from tbl_fg_items as  a  right join  tbl_item_sizes as b on a.size_id=b.size_id where b.size_id='` + size_id + `' group by b.size_id) as dev where dev.sumqty >= ` + getqty + ` `);
+                `select count(1) as totalcount from (SELECT size_id,(sum(coalesce(inward_set,0))-sum(coalesce(outward_set,0)))  as sumqty FROM tbl_stock_transaction where type!='Order' AND size_id='` + size_id + `' group by size_id) as dev where dev.sumqty >= ` + getqty + ` `);
             let stockcount = exeQuery?.rows?.length > 0 ? exeQuery.rows[0].totalcount : 0;
             response = { stockList: stockcount };
             if (client) {
@@ -1262,18 +1265,24 @@ module.exports.GetCurrentStock = async (req) => {
         get_item_code= `d.item_code = ` + item_code_val + ` `;
       }
       if (device_id) {
-        const currentStockWidget = await client.query(`SELECT item_name,item_id,sum(current_pieces) as current_pieces,sum(current_set) as current_set from (select d.item_code,coalesce(COALESCE(sum(coalesce(no_of_set,0)) + COALESCE((SELECT sum(goods_return_set) from tbl_goods_return WHERE status_flag = 1 and size_id = a.size_id ),0),0)- coalesce((SELECT sum(dispatch_set) from tbl_dispatch_details where status_flag = 1 and size_id = a.size_id ),0),0) as current_set,coalesce(COALESCE(sum(coalesce(no_of_pieces,0)) + COALESCE((SELECT sum(goods_return_pieces) from tbl_goods_return WHERE status_flag = 1 and size_id = a.size_id ),0),0) - (SELECT coalesce(sum(dispatch_pieces),0) from tbl_dispatch_details where status_flag = 1 and size_id = a.size_id )) as current_pieces from tbl_fg_items as a inner join tbl_item_sizes as c on c.size_id=a.size_id inner join tbl_item_management as d on c.trans_no=d.trans_no  left join tbl_color as f on f.color_id =c.color_id where ` + getsettype + ` and ` + designid_val +` and `+ get_item_code +`   group by d.item_code,a.size_id order by d.item_code ) as dev inner join tbl_def_item as e on dev.item_code = e.item_id  group by item_name,item_id order by item_id`); 
-        const exeUserQuery = await client.query(`SELECT item_name,item_id,design_id,sum(current_pieces) as current_pieces,sum(current_set) as current_set,count(item_id) as count from (select d.item_code,d.design_id,coalesce(COALESCE(sum(coalesce(no_of_set,0)) + COALESCE((SELECT sum(goods_return_set) from tbl_goods_return WHERE status_flag = 1 and size_id = a.size_id ),0),0) - coalesce((SELECT sum(dispatch_set) from tbl_dispatch_details where status_flag = 1 and size_id = a.size_id ),0),0) as current_set,coalesce(COALESCE(sum(coalesce(no_of_pieces,0)) + COALESCE((SELECT sum(goods_return_pieces) from tbl_goods_return WHERE status_flag = 1 and size_id = a.size_id ),0),0) - (SELECT coalesce(sum(dispatch_pieces),0) from tbl_dispatch_details where status_flag = 1 and size_id = a.size_id )) as current_pieces from tbl_fg_items as a inner join tbl_item_sizes as c on c.size_id=a.size_id inner join tbl_item_management as d on c.trans_no=d.trans_no  left join tbl_color as f on f.color_id =c.color_id where ` + getsettype + ` and ` + designid_val +` and `+ get_item_code +` group by d.item_code,d.design_id,a.size_id,d.design_id   order by d.item_code ) as dev inner join tbl_def_item as e on dev.item_code = e.item_id
-        where current_set > 0  group by item_name,item_id,design_id order by item_id`); 
+        // const currentStockWidget = await client.query(`SELECT item_name,item_id,sum(current_pieces) as current_pieces,sum(current_set) as current_set from (select d.item_code,coalesce(COALESCE(sum(coalesce(no_of_set,0)) + COALESCE((SELECT sum(goods_return_set) from tbl_goods_return WHERE status_flag = 1 and size_id = a.size_id ),0),0)- coalesce((SELECT sum(dispatch_set) from tbl_dispatch_details where status_flag = 1 and size_id = a.size_id ),0),0) as current_set,coalesce(COALESCE(sum(coalesce(no_of_pieces,0)) + COALESCE((SELECT sum(goods_return_pieces) from tbl_goods_return WHERE status_flag = 1 and size_id = a.size_id ),0),0) - (SELECT coalesce(sum(dispatch_pieces),0) from tbl_dispatch_details where status_flag = 1 and size_id = a.size_id )) as current_pieces from tbl_fg_items as a inner join tbl_item_sizes as c on c.size_id=a.size_id inner join tbl_item_management as d on c.trans_no=d.trans_no  left join tbl_color as f on f.color_id =c.color_id where ` + getsettype + ` and ` + designid_val +` and `+ get_item_code +`   group by d.item_code,a.size_id order by d.item_code ) as dev inner join tbl_def_item as e on dev.item_code = e.item_id  group by item_name,item_id order by item_id`); 
+        const currentStockWidget = await client.query(`SELECT item_name,item_id,sum(COALESCE(current_set,0)) as current_set,sum(COALESCE(current_pieces,0)) as current_pieces FROM (SELECT d.item_code,a.size_id,(sum(inward_set) - sum(outward_set)) as current_set,(sum(inward_pieces) - sum(outward_pieces)) as current_pieces FROM tbl_stock_transaction AS a INNER JOIN tbl_item_sizes as c on c.size_id=a.size_id  INNER JOIN tbl_item_management as d on c.trans_no=d.trans_no LEFT JOIN tbl_color as f on f.color_id =c.color_id WHERE type!='Order' AND ` + getsettype + ` and ` + designid_val +` and `+ get_item_code +` group by d.item_code,a.size_id) AS DERV INNER JOIN tbl_def_item as e on DERV.item_code = e.item_id GROUP BY item_name,item_id ORDER BY item_id`)
+
+        // const exeUserQuery = await client.query(`SELECT item_name,item_id,design_id,sum(current_pieces) as current_pieces,sum(current_set) as current_set,count(item_id) as count from (select d.item_code,d.design_id,coalesce(COALESCE(sum(coalesce(no_of_set,0)) + COALESCE((SELECT sum(goods_return_set) from tbl_goods_return WHERE status_flag = 1 and size_id = a.size_id ),0),0) - coalesce((SELECT sum(dispatch_set) from tbl_dispatch_details where status_flag = 1 and size_id = a.size_id ),0),0) as current_set,coalesce(COALESCE(sum(coalesce(no_of_pieces,0)) + COALESCE((SELECT sum(goods_return_pieces) from tbl_goods_return WHERE status_flag = 1 and size_id = a.size_id ),0),0) - (SELECT coalesce(sum(dispatch_pieces),0) from tbl_dispatch_details where status_flag = 1 and size_id = a.size_id )) as current_pieces from tbl_fg_items as a inner join tbl_item_sizes as c on c.size_id=a.size_id inner join tbl_item_management as d on c.trans_no=d.trans_no  left join tbl_color as f on f.color_id =c.color_id where ` + getsettype + ` and ` + designid_val +` and `+ get_item_code +` group by d.item_code,d.design_id,a.size_id,d.design_id   order by d.item_code ) as dev inner join tbl_def_item as e on dev.item_code = e.item_id
+        // where current_set > 0  group by item_name,item_id,design_id order by item_id`); 
+
+        const exeUserQuery = await client.query(`SELECT item_name,item_id,design_id,sum(COALESCE(current_set,0)) as current_set,sum(COALESCE(current_pieces,0)) as current_pieces ,count(item_id) as count FROM (SELECT d.design_id,d.item_code,a.size_id,(sum(inward_set) - sum(outward_set)) as current_set,         (sum(inward_pieces) - sum(outward_pieces)) as current_pieces FROM tbl_stock_transaction AS a           INNER JOIN tbl_item_sizes as c on c.size_id=a.size_id  INNER JOIN tbl_item_management as d on          c.trans_no=d.trans_no LEFT JOIN tbl_color as f on f.color_id =c.color_id WHERE type!='Order'          AND ` + getsettype + ` and ` + designid_val +` and `+ get_item_code +`  group by d.item_code,d.design_id,a.size_id) AS DERV RIGHT JOIN tbl_def_item as e on DERV.item_code = e.item_id where current_set > 0 GROUP BY item_name,item_id,design_id ORDER BY item_id`); 
 
         
         let CurrentStock_Array = exeUserQuery && exeUserQuery.rows ? exeUserQuery.rows : [];
         let result = [];
         if (CurrentStock_Array.length > 0) {
           for (let i = 0; i < CurrentStock_Array.length; i++) {
-            const item_Result = await client.query(`SELECT size_id,sum(qty) as qty,sum(current_pieces) as current_pieces,user_id,qr_code,user_name,design_id from (select a.size_id,(COALESCE(sum(a.no_of_set) + COALESCE((SELECT sum(goods_return_set) from tbl_goods_return WHERE status_flag = 1 and size_id = a.size_id ),0),0) - coalesce((SELECT sum(dispatch_set) from tbl_dispatch_details where status_flag = 1 and size_id = a.size_id ),0)) as qty,coalesce(COALESCE(sum(coalesce(no_of_pieces,0)) + COALESCE((SELECT sum(goods_return_pieces) from tbl_goods_return WHERE status_flag = 1 and size_id = a.size_id ),0),0) - (SELECT coalesce(sum(dispatch_pieces),0) from tbl_dispatch_details where status_flag = 1 and size_id = a.size_id )) as current_pieces,a.user_id,b.qr_code,c.user_name,d.design_id from tbl_fg_items as a  
-            inner join tbl_item_sizes as b on a.size_id=b.size_id  inner join tbl_user as c on c.user_id=a.user_id  inner join tbl_item_management as d on d.trans_no =b.trans_no left join tbl_color as f on f.color_id =b.color_id  inner join tbl_def_item as e on 
-            d.item_code = e.item_id where ` + getset_type + ` and `+ get_item_code +` and d.design_id = $1 group by a.size_id,a.user_id,b.qr_code,c.user_name,d.design_id order by d.design_id) as dev where qty > 0 group by size_id,user_id,qr_code,user_name,design_id order by design_id`,[CurrentStock_Array[i].design_id] );
+            // const item_Result = await client.query(`SELECT size_id,sum(qty) as qty,sum(current_pieces) as current_pieces,user_id,qr_code,user_name,design_id from (select a.size_id,(COALESCE(sum(a.no_of_set) + COALESCE((SELECT sum(goods_return_set) from tbl_goods_return WHERE status_flag = 1 and size_id = a.size_id ),0),0) - coalesce((SELECT sum(dispatch_set) from tbl_dispatch_details where status_flag = 1 and size_id = a.size_id ),0)) as qty,coalesce(COALESCE(sum(coalesce(no_of_pieces,0)) + COALESCE((SELECT sum(goods_return_pieces) from tbl_goods_return WHERE status_flag = 1 and size_id = a.size_id ),0),0) - (SELECT coalesce(sum(dispatch_pieces),0) from tbl_dispatch_details where status_flag = 1 and size_id = a.size_id )) as current_pieces,a.user_id,b.qr_code,c.user_name,d.design_id from tbl_fg_items as a  
+            // inner join tbl_item_sizes as b on a.size_id=b.size_id  inner join tbl_user as c on c.user_id=a.user_id  inner join tbl_item_management as d on d.trans_no =b.trans_no left join tbl_color as f on f.color_id =b.color_id  inner join tbl_def_item as e on 
+            // d.item_code = e.item_id where ` + getset_type + ` and `+ get_item_code +` and d.design_id = $1 group by a.size_id,a.user_id,b.qr_code,c.user_name,d.design_id order by d.design_id) as dev where qty > 0 group by size_id,user_id,qr_code,user_name,design_id order by design_id`,[CurrentStock_Array[i].design_id] );
+
+            const item_Result = await client.query(`SELECT design_id,size_id,qr_code,sum(COALESCE(current_set,0)) as qty,sum(COALESCE(current_pieces,0)) as current_pieces FROM (SELECT d.design_id,d.item_code,a.size_id,qr_code,(sum(inward_set) - sum(outward_set)) as current_set,(sum(inward_pieces) - sum(outward_pieces)) as current_pieces FROM tbl_stock_transaction AS a INNER JOIN tbl_item_sizes as c on c.size_id=a.size_id  INNER JOIN tbl_item_management as d on c.trans_no=d.trans_no LEFT JOIN tbl_color as f on f.color_id =c.color_id WHERE type!='Order' AND ` + getsettype + ` and `+ get_item_code +` and d.design_id = $1 group by d.item_code,d.design_id,a.size_id,qr_code) AS DERV RIGHT JOIN tbl_def_item as e on DERV.item_code = e.item_id where current_set > 0 GROUP BY design_id,size_id,qr_code ORDER BY design_id`,[CurrentStock_Array[i].design_id] );
             let item_Array = item_Result && item_Result.rows ? item_Result.rows : []; 
             let obj = CurrentStock_Array[i]
             obj['ItemArray'] = item_Array
@@ -1282,13 +1291,13 @@ module.exports.GetCurrentStock = async (req) => {
         }
         const currentStockDesign = await client.query(`SELECT '0' as value,'All' as label
         union all
-        SELECT * from (SELECT distinct c.design_id as value,c.design_id as label from tbl_fg_items as a 
-        inner join tbl_item_sizes as b on b.size_id=a.size_id inner join tbl_item_management as c on b.trans_no=c.trans_no order by c.design_id ) as dev`);
+        SELECT * from (SELECT DISTINCT design_id AS value, design_id AS label
+          FROM (SELECT d.design_id,d.item_code,a.size_id,qr_code,(sum(inward_set) - sum(outward_set)) as current_set,(sum(inward_pieces) - sum(outward_pieces)) as current_pieces FROM tbl_stock_transaction AS a INNER JOIN tbl_item_sizes as c on c.size_id=a.size_id  INNER JOIN tbl_item_management as d on 
+           c.trans_no=d.trans_no LEFT JOIN tbl_color as f on f.color_id =c.color_id WHERE type!='Order' group by d.item_code,d.design_id,a.size_id,qr_code) AS DERV where current_set > 0 GROUP BY design_id,size_id,qr_code ORDER BY design_id ) as dev`);
         let currentStockDesign_Array = currentStockDesign && currentStockDesign.rows ? currentStockDesign.rows : [];
         const currentStockItemCategory = await client.query(`SELECT '0' as value,'All' as label
         union all
-        SELECT * from (SELECT distinct c.item_code as value,item_name as label from tbl_fg_items as a 
-        inner join tbl_item_sizes as b on b.size_id=a.size_id inner join tbl_item_management as c on b.trans_no=c.trans_no inner join tbl_def_item as d on c.item_code = d.item_id order by item_name ) as dev`);
+        SELECT * from (SELECT item_code AS value ,item_name AS label FROM (SELECT d.design_id,d.item_code,a.size_id,qr_code,(sum(inward_set) - sum(outward_set)) as current_set,(sum(inward_pieces) - sum(outward_pieces)) as current_pieces FROM tbl_stock_transaction AS a INNER JOIN tbl_item_sizes as c on c.size_id=a.size_id  INNER JOIN tbl_item_management as d on c.trans_no=d.trans_no LEFT JOIN tbl_color as f on f.color_id =c.color_id WHERE type!='Order' group by d.item_code,d.design_id,a.size_id,qr_code) AS DERV INNER JOIN tbl_def_item as e on DERV.item_code = e.item_id where current_set > 0 GROUP BY item_code,item_name ORDER BY item_name) as dev`);
         let currentStockItemcategory_Array = currentStockItemCategory && currentStockItemCategory.rows ? currentStockItemCategory.rows : [];
 
         const currentStockType = await client.query(`SELECT '0' as value,'All' as label
@@ -1364,12 +1373,11 @@ module.exports.GetDispatchReportList = async (req) => {
           const user_code = await client.query(`SELECT user_id FROM tbl_user where devices_id = `+ deviceid +``);
           const  userid = user_code && user_code.rows[0] && user_code.rows[0].user_id ? user_code.rows[0].user_id : ''
           if(userid && userid !=''){
-            getuser_code = `a.user_id = `+userid+``;
+            getuser_code = `(f.user_id = `+userid+` OR f.device_code = `+userid+`)`;
           }
         }        
         const DispatchListData = await client.query(`SELECT dispatch_id,dispatch_no,to_char(dispatch_date, 'dd-MM-YYYY') as dispatch_date,sum(coalesce(dispatch_set,0)) as dispatch_set ,sum(coalesce(dispatch_pieces,0)) as dispatch_pieces,a.user_id,string_agg(distinct customer_name, ',') as customer_name from tbl_dispatch_details a inner join tbl_item_sizes as b ON b.size_id = a.size_id inner join tbl_item_management as c on c.trans_no=b.trans_no inner join tbl_customer as d on 
-          a.customer_code = d.customer_code inner join tbl_agent as e on d.agent_code = e.agent_code where 
-          a.status_flag = 1 and  ` + dispatch_date +` and `+ getCompany_code +` and `+getuser_code+` group by dispatch_id,a.user_id,dispatch_no,dispatch_date order by dispatch_id desc`); 
+          a.customer_code = d.customer_code inner join tbl_agent as e on d.agent_code = e.agent_code INNER JOIN tbl_order_taking AS f on f.order_no = a.order_no where a.status_flag = 1 and  ` + dispatch_date +` and `+ getCompany_code +` and `+getuser_code+` group by dispatch_id,a.user_id,dispatch_no,dispatch_date order by dispatch_id desc`); 
           Dispatch_Array = DispatchListData && DispatchListData.rows ? DispatchListData.rows : [];
                
         const DispatchCustomerList = await client.query(`select 'All' as label, '0' as value union all select DISTINCT c.customer_name || '-'||c.city as label,a.customer_code as value  
@@ -1450,6 +1458,68 @@ module.exports.holdOrderTaking = async (req) => {
         }
         return {order: [] };
       }
+    } else {
+      if (client) {
+        client.end();
+      }
+      throw new Error(constants.userMessage.TOKEN_MISSING);
+    }
+  } catch (error) {
+    if (client) {
+      client.end();
+    }
+    throw new Error(error);
+  } finally {
+    if (client) {
+      client.end();
+    } // always close the resource
+  }
+};
+
+
+//get Stock for each item
+module.exports.getStockDetails = async (req) => {
+  const client = new Client({
+    user: connectionString.user,
+    host: connectionString.host,
+    database: connectionString.database,
+    password: connectionString.password,
+    port: connectionString.port,
+  });
+  await client.connect();
+  try {
+    if (req) {
+      // , qty 
+      const { device_id, size_id} = req;
+      var response = {};
+      if (device_id) {
+
+        const exeQuery_stock = await client.query(
+          `SELECT to_char(CURRENT_DATE,'YYYY-MM-DD') AS stock_date ,row_number() over(order by size_id) AS stock_code,sum(coalesce(inward_set,0)) AS inward,sum(coalesce(outward_set,0)) AS outward,size_id,    sum(coalesce(current_set,0)) AS current_stock FROM (SELECT sum(coalesce(inward_set,0)) AS inward_set,sum(coalesce(outward_set,0)) AS outward_set,b.size_id,CASE WHEN type!='Order' then  coalesce(sum(inward_set) - sum(outward_set),0)  ELSE 0 END AS current_set FROM tbl_stock_transaction AS a       RIGHT JOIN tbl_item_sizes AS b ON a.size_id=b.size_id WHERE  a.size_id  ='` + size_id + `' GROUP BY b.size_id,a.type) AS DEV GROUP BY size_id `
+        );
+        const exeQuery_Order = await client.query(
+          `select to_char(CURRENT_DATE,'YYYY-MM-DD') as order_date,sum(qty) as qty, size_id from tbl_order_taking_items as a inner join tbl_order_taking as b on a.order_no=b.order_no where b.order_date=CURRENT_DATE and b.status_code=1 AND size_id  ='` + size_id + `'group by size_id `);
+
+          let stocklist = exeQuery_stock?.rows ? exeQuery_stock.rows : [];
+          let orderlist = exeQuery_Order?.rows ? exeQuery_Order.rows : [];
+          let stockcount = 0;
+        // if (qty != '' || qty != null || qty != 0) {
+        //   let getqty = Number(qty);
+          
+
+        //   const exeQuery = await client.query(
+        //     `select count(1) as totalcount from (SELECT size_id,(sum(coalesce(inward_set,0))-sum(coalesce(outward_set,0)))  as sumqty FROM tbl_stock_transaction where type!='Order' AND size_id  ='` + size_id + `' group by size_id) as dev where dev.sumqty >= ` + getqty + ` `);
+        //   stockcount = exeQuery?.rows?.length > 0 ? exeQuery.rows[0].totalcount : 0;
+
+        // }
+        response = { stockCount: stockcount, stockList: stocklist, orderList: orderlist };
+        if (client) {
+          client.end();
+        }
+        return response;
+
+      }
+   
     } else {
       if (client) {
         client.end();
