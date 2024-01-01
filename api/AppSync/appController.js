@@ -268,3 +268,17 @@ module.exports.holdOrderTaking = async (req, res) => {
   }
   return res.send(response);
   }
+
+  module.exports.getStockDetails = async (req, res) => {
+    let response = {};
+    try {   
+      const responseFromService = await appService.getStockDetails(req.body); 
+      if(!responseFromService.token) {
+        response.status = 200;
+      }    
+      response.body = responseFromService;
+    } catch (error) {
+      response.message = error.message;
+    }
+    return res.send(response);
+    }
